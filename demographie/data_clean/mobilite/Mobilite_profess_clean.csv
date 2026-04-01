@@ -652,22 +652,6 @@ code_residence,commune_residence,dep_residence,code_travail,commune_travail,dep_
 34095,Fabrègues,34,34341,Villeveyrac,34,5.25,2019
 34095,Fabrègues,34,77058,Bussy-Saint-Georges,77,4.96,2019
 34095,Fabrègues,34,84007,Avignon,84,5.54,2019
-34102,Fontanès,34,13015,Bouc-Bel-Air,13,5.0,2019
-34102,Fontanès,34,30007,Alès,30,5.03,2019
-34102,Fontanès,34,30189,Nîmes,30,5.0,2019
-34102,Fontanès,34,34014,Assas,34,5.03,2019
-34102,Fontanès,34,34032,Béziers,34,5.05,2019
-34102,Fontanès,34,34033,Boisseron,34,5.0,2019
-34102,Fontanès,34,34057,Castelnau-le-Lez,34,5.02,2019
-34102,Fontanès,34,34078,Claret,34,5.02,2019
-34102,Fontanès,34,34102,Fontanès,34,50.18,2019
-34102,Fontanès,34,34120,Jacou,34,5.05,2019
-34102,Fontanès,34,34172,Montpellier,34,50.18,2019
-34102,Fontanès,34,34276,Saint-Mathieu-de-Tréviers,34,5.0,2019
-34102,Fontanès,34,34309,Teyran,34,9.99,2019
-34102,Fontanès,34,34318,Vacquières,34,5.03,2019
-34102,Fontanès,34,93066,Saint-Denis,93,5.03,2019
-34102,Fontanès,34,ZZZZZ,Individus travaillant à l'étranger (sans précision de commune),ZZ,5.0,2019
 34116,Grabels,34,03185,Montluçon,03,5.34,2019
 34116,Grabels,34,07148,Malbosc,07,5.38,2019
 34116,Grabels,34,11069,Carcassonne,11,5.28,2019
@@ -6298,31 +6282,6 @@ code_residence,commune_residence,dep_residence,code_travail,commune_travail,dep_
 35363,Pont-Péan,35,60414,Montataire,60,5.03,2019
 35363,Pont-Péan,35,72181,Le Mans,72,5.03,2019
 35363,Pont-Péan,35,92023,Clamart,92,5.03,2019
-38033,Beaulieu,38,26129,Eymeux,26,5.02,2019
-38033,Beaulieu,38,26231,Peyrins,26,5.02,2019
-38033,Beaulieu,38,26362,Valence,26,15.05,2019
-38033,Beaulieu,38,38033,Beaulieu,38,50.16,2019
-38033,Beaulieu,38,38095,Chatte,38,10.03,2019
-38033,Beaulieu,38,38118,Colombe,38,5.02,2019
-38033,Beaulieu,38,38130,La Côte-Saint-André,38,5.02,2019
-38033,Beaulieu,38,38158,Eybens,38,5.02,2019
-38033,Beaulieu,38,38169,Fontaine,38,5.02,2019
-38033,Beaulieu,38,38182,Le Grand-Lemps,38,5.02,2019
-38033,Beaulieu,38,38185,Grenoble,38,20.06,2019
-38033,Beaulieu,38,38309,Poisat,38,5.02,2019
-38033,Beaulieu,38,38332,Renage,38,5.02,2019
-38033,Beaulieu,38,38416,Saint-Marcellin,38,40.13,2019
-38033,Beaulieu,38,38453,Saint-Romans,38,5.02,2019
-38033,Beaulieu,38,38454,Saint-Sauveur,38,5.02,2019
-38033,Beaulieu,38,38463,Saint-Vérand,38,5.02,2019
-38033,Beaulieu,38,38500,Têche,38,5.02,2019
-38033,Beaulieu,38,38517,Tullins,38,10.03,2019
-38033,Beaulieu,38,38540,Veurey-Voroize,38,5.02,2019
-38033,Beaulieu,38,38559,Vinay,38,35.11,2019
-38033,Beaulieu,38,38563,Voiron,38,10.03,2019
-38033,Beaulieu,38,38565,Voreppe,38,5.02,2019
-38033,Beaulieu,38,42218,Saint-Étienne,42,5.02,2019
-38033,Beaulieu,38,69034,Caluire-et-Cuire,69,5.02,2019
 38057,Bresson,38,38052,Le Bourg-d'Oisans,38,5.05,2019
 38057,Bresson,38,38057,Bresson,38,45.47,2019
 38057,Bresson,38,38140,Crolles,38,15.16,2019
@@ -7912,28 +7871,6 @@ code_residence,commune_residence,dep_residence,code_travail,commune_travail,dep_
 38235,Miribel-Lanchâtre,38,38485,Seyssinet-Pariset,38,5.0,2019
 38235,Miribel-Lanchâtre,38,38524,Varces-Allières-et-Risset,38,15.0,2019
 38235,Miribel-Lanchâtre,38,38545,Vif,38,25.0,2019
-38248,Montaud,38,38057,Bresson,38,5.0,2019
-38248,Montaud,38,38140,Crolles,38,5.0,2019
-38248,Montaud,38,38151,Échirolles,38,10.0,2019
-38248,Montaud,38,38158,Eybens,38,5.0,2019
-38248,Montaud,38,38185,Grenoble,38,55.0,2019
-38248,Montaud,38,38200,Jarrie,38,5.0,2019
-38248,Montaud,38,38248,Montaud,38,25.0,2019
-38248,Montaud,38,38249,Montbonnot-Saint-Martin,38,5.0,2019
-38248,Montaud,38,38382,Saint-Égrève,38,20.0,2019
-38248,Montaud,38,38400,Saint-Jean-de-Moirans,38,5.0,2019
-38248,Montaud,38,38416,Saint-Marcellin,38,10.0,2019
-38248,Montaud,38,38421,Saint-Martin-d'Hères,38,5.0,2019
-38248,Montaud,38,38423,Saint-Martin-le-Vinoux,38,5.0,2019
-38248,Montaud,38,38450,Saint-Quentin-sur-Isère,38,10.0,2019
-38248,Montaud,38,38474,Sassenage,38,10.0,2019
-38248,Montaud,38,38516,La Tronche,38,5.0,2019
-38248,Montaud,38,38517,Tullins,38,10.0,2019
-38248,Montaud,38,38540,Veurey-Voroize,38,10.0,2019
-38248,Montaud,38,38563,Voiron,38,10.0,2019
-38248,Montaud,38,38565,Voreppe,38,5.0,2019
-38248,Montaud,38,38567,Chamrousse,38,5.0,2019
-38248,Montaud,38,69029,Bron,69,5.0,2019
 38252,Montchaboud,38,38140,Crolles,38,4.72,2019
 38252,Montchaboud,38,38151,Échirolles,38,10.17,2019
 38252,Montchaboud,38,38158,Eybens,38,4.96,2019
@@ -16245,6 +16182,183 @@ code_residence,commune_residence,dep_residence,code_travail,commune_travail,dep_
 76475,Franqueville-Saint-Pierre,76,92012,Boulogne-Billancourt,92,5.0,2019
 76475,Franqueville-Saint-Pierre,76,92040,Issy-les-Moulineaux,92,5.0,2019
 76475,Franqueville-Saint-Pierre,76,93066,Saint-Denis,93,5.0,2019
+76484,Oissel,76,14118,Caen,14,5.7,2019
+76484,Oissel,76,14349,Laize-Clinchamps,14,3.82,2019
+76484,Oissel,76,14437,Mondeville,14,2.87,2019
+76484,Oissel,76,27008,Alizay,27,2.63,2019
+76484,Oissel,76,27016,Les Andelys,27,9.87,2019
+76484,Oissel,76,27022,Le Val d'Hazey,27,3.17,2019
+76484,Oissel,76,27039,Barneville-sur-Seine,27,2.77,2019
+76484,Oissel,76,27051,Beaumont-le-Roger,27,3.17,2019
+76484,Oissel,76,27056,Bernay,27,2.89,2019
+76484,Oissel,76,27058,Les Trois Lacs,27,2.9,2019
+76484,Oissel,76,27077,Boissey-le-Châtel,27,2.91,2019
+76484,Oissel,76,27090,Bosroumois,27,5.06,2019
+76484,Oissel,76,27102,Bouquetot,27,2.81,2019
+76484,Oissel,76,27103,Bourg-Achard,27,10.32,2019
+76484,Oissel,76,27105,Grand Bourgtheroulde,27,11.75,2019
+76484,Oissel,76,27133,Caumont,27,2.87,2019
+76484,Oissel,76,27151,Charleval,27,3.5,2019
+76484,Oissel,76,27188,Criquebeuf-sur-Seine,27,20.24,2019
+76484,Oissel,76,27203,Douains,27,2.53,2019
+76484,Oissel,76,27214,Écouis,27,2.87,2019
+76484,Oissel,76,27229,Évreux,27,41.53,2019
+76484,Oissel,76,27246,Fleury-sur-Andelle,27,15.86,2019
+76484,Oissel,76,27275,Gaillon,27,5.6,2019
+76484,Oissel,76,27299,Gravigny,27,2.53,2019
+76484,Oissel,76,27306,Guichainville,27,2.63,2019
+76484,Oissel,76,27332,Heudebouville,27,5.23,2019
+76484,Oissel,76,27339,Hondouville,27,6.54,2019
+76484,Oissel,76,27348,Igoville,27,6.86,2019
+76484,Oissel,76,27351,Incarville,27,18.04,2019
+76484,Oissel,76,27365,Léry,27,3.09,2019
+76484,Oissel,76,27375,Louviers,27,8.14,2019
+76484,Oissel,76,27377,Lyons-la-Forêt,27,2.62,2019
+76484,Oissel,76,27385,Manneville-sur-Risle,27,2.81,2019
+76484,Oissel,76,27386,Le Manoir,27,2.71,2019
+76484,Oissel,76,27393,Martainville,27,2.82,2019
+76484,Oissel,76,27394,Martot,27,3.21,2019
+76484,Oissel,76,27412,Terres de Bord,27,2.53,2019
+76484,Oissel,76,27428,Le Neubourg,27,8.8,2019
+76484,Oissel,76,27448,Pacy-sur-Eure,27,2.81,2019
+76484,Oissel,76,27453,Perriers-sur-Andelle,27,5.22,2019
+76484,Oissel,76,27456,Pinterville,27,2.72,2019
+76484,Oissel,76,27458,Pîtres,27,5.55,2019
+76484,Oissel,76,27467,Pont-Audemer,27,5.61,2019
+76484,Oissel,76,27469,Pont-de-l'Arche,27,5.67,2019
+76484,Oissel,76,27470,Pont-Saint-Pierre,27,6.72,2019
+76484,Oissel,76,27493,Romilly-sur-Andelle,27,2.62,2019
+76484,Oissel,76,27517,Saint-Aubin-sur-Gaillon,27,2.81,2019
+76484,Oissel,76,27528,Le Vaudreuil,27,18.54,2019
+76484,Oissel,76,27562,Saint-Marcel,27,2.81,2019
+76484,Oissel,76,27580,Saint-Ouen-de-Thouberville,27,1.41,2019
+76484,Oissel,76,27582,Saint-Ouen-du-Tilleul,27,2.8,2019
+76484,Oissel,76,27599,Saint-Pierre-la-Garenne,27,2.78,2019
+76484,Oissel,76,27638,Le Thuit de l'Oison,27,9.32,2019
+76484,Oissel,76,27681,Vernon,27,12.36,2019
+76484,Oissel,76,27697,Vironvay,27,2.53,2019
+76484,Oissel,76,27701,Val-de-Reuil,27,55.47,2019
+76484,Oissel,76,29019,Brest,29,7.83,2019
+76484,Oissel,76,35278,Saint-Grégoire,35,2.89,2019
+76484,Oissel,76,40012,Artassenx,40,3.17,2019
+76484,Oissel,76,42218,Saint-Étienne,42,2.89,2019
+76484,Oissel,76,45272,Saint-Cyr-en-Val,45,5.79,2019
+76484,Oissel,76,49007,Angers,49,2.81,2019
+76484,Oissel,76,50580,Sotteville,50,2.78,2019
+76484,Oissel,76,53245,Saint-Pierre-des-Landes,53,5.23,2019
+76484,Oissel,76,56186,Quiberon,56,3.17,2019
+76484,Oissel,76,59273,Gravelines,59,2.77,2019
+76484,Oissel,76,60577,Saint-Germer-de-Fly,60,2.63,2019
+76484,Oissel,76,66136,Perpignan,66,2.89,2019
+76484,Oissel,76,71422,Saint-Germain-lès-Buxy,71,5.0,2019
+76484,Oissel,76,72008,Arnage,72,2.89,2019
+76484,Oissel,76,75102,Paris 2e Arrondissement,75,5.48,2019
+76484,Oissel,76,75103,Paris 3e Arrondissement,75,2.81,2019
+76484,Oissel,76,75105,Paris 5e Arrondissement,75,2.52,2019
+76484,Oissel,76,75106,Paris 6e Arrondissement,75,1.41,2019
+76484,Oissel,76,75108,Paris 8e Arrondissement,75,10.59,2019
+76484,Oissel,76,75109,Paris 9e Arrondissement,75,4.09,2019
+76484,Oissel,76,75110,Paris 10e Arrondissement,75,13.8,2019
+76484,Oissel,76,75111,Paris 11e Arrondissement,75,2.52,2019
+76484,Oissel,76,75112,Paris 12e Arrondissement,75,5.18,2019
+76484,Oissel,76,75113,Paris 13e Arrondissement,75,6.59,2019
+76484,Oissel,76,75115,Paris 15e Arrondissement,75,2.89,2019
+76484,Oissel,76,75116,Paris 16e Arrondissement,75,2.62,2019
+76484,Oissel,76,75117,Paris 17e Arrondissement,75,2.9,2019
+76484,Oissel,76,75118,Paris 18e Arrondissement,75,3.15,2019
+76484,Oissel,76,75119,Paris 19e Arrondissement,75,2.9,2019
+76484,Oissel,76,76005,Amfreville-la-Mi-Voie,76,2.61,2019
+76484,Oissel,76,76039,Les Authieux-sur-le-Port-Saint-Ouen,76,2.53,2019
+76484,Oissel,76,76057,Barentin,76,9.44,2019
+76484,Oissel,76,76069,Belbeuf,76,6.11,2019
+76484,Oissel,76,76095,Bihorel,76,9.29,2019
+76484,Oissel,76,76103,Bonsecours,76,11.88,2019
+76484,Oissel,76,76108,Bois-Guillaume,76,43.74,2019
+76484,Oissel,76,76111,Bois-l'Évêque,76,2.87,2019
+76484,Oissel,76,76114,Bolbec,76,2.62,2019
+76484,Oissel,76,76116,Boos,76,17.07,2019
+76484,Oissel,76,76122,Callengeville,76,7.96,2019
+76484,Oissel,76,76125,Bosc-le-Hard,76,2.53,2019
+76484,Oissel,76,76141,Bréauté,76,2.8,2019
+76484,Oissel,76,76146,Buchy,76,7.15,2019
+76484,Oissel,76,76147,Bully,76,2.87,2019
+76484,Oissel,76,76157,Canteleu,76,12.92,2019
+76484,Oissel,76,76159,Cany-Barville,76,2.53,2019
+76484,Oissel,76,76165,Caudebec-lès-Elbeuf,76,22.45,2019
+76484,Oissel,76,76178,Cléon,76,185.01,2019
+76484,Oissel,76,76212,Darnétal,76,15.66,2019
+76484,Oissel,76,76216,Déville-lès-Rouen,76,25.41,2019
+76484,Oissel,76,76217,Dieppe,76,2.63,2019
+76484,Oissel,76,76222,Duclair,76,0.95,2019
+76484,Oissel,76,76231,Elbeuf,76,87.12,2019
+76484,Oissel,76,76258,Terres-de-Caux,76,1.35,2019
+76484,Oissel,76,76276,Forges-les-Eaux,76,2.62,2019
+76484,Oissel,76,76282,Freneuse,76,8.53,2019
+76484,Oissel,76,76305,Gonfreville-l'Orcher,76,2.9,2019
+76484,Oissel,76,76313,Gouy,76,2.87,2019
+76484,Oissel,76,76319,Grand-Couronne,76,72.31,2019
+76484,Oissel,76,76322,Le Grand-Quevilly,76,190.7,2019
+76484,Oissel,76,76351,Le Havre,76,26.87,2019
+76484,Oissel,76,76377,Isneauville,76,12.36,2019
+76484,Oissel,76,76392,Londinières,76,1.0,2019
+76484,Oissel,76,76410,Maromme,76,16.81,2019
+76484,Oissel,76,76429,Le Mesnil-Esnard,76,13.26,2019
+76484,Oissel,76,76451,Mont-Saint-Aignan,76,46.97,2019
+76484,Oissel,76,76453,Morgny-la-Pommeraye,76,2.54,2019
+76484,Oissel,76,76474,Notre-Dame-de-Bondeville,76,3.66,2019
+76484,Oissel,76,76475,Franqueville-Saint-Pierre,76,14.46,2019
+76484,Oissel,76,76484,Oissel,76,1567.66,2019
+76484,Oissel,76,76497,Petit-Couronne,76,23.93,2019
+76484,Oissel,76,76498,Le Petit-Quevilly,76,110.67,2019
+76484,Oissel,76,76503,Pissy-Pôville,76,3.01,2019
+76484,Oissel,76,76540,Rouen,76,726.98,2019
+76484,Oissel,76,76545,Rouxmesnil-Bouteilles,76,2.62,2019
+76484,Oissel,76,76558,Saint-Aubin-Celloville,76,2.78,2019
+76484,Oissel,76,76561,Saint-Aubin-lès-Elbeuf,76,52.87,2019
+76484,Oissel,76,76575,Saint-Étienne-du-Rouvray,76,476.86,2019
+76484,Oissel,76,76591,Saint-Jacques-sur-Darnétal,76,2.63,2019
+76484,Oissel,76,76593,Saint-Jean-de-la-Neuville,76,2.55,2019
+76484,Oissel,76,76594,Saint-Jean-du-Cardonnay,76,2.8,2019
+76484,Oissel,76,76599,Saint-Léger-du-Bourg-Denis,76,2.9,2019
+76484,Oissel,76,76610,Sainte-Marie-des-Champs,76,2.89,2019
+76484,Oissel,76,76617,Saint-Martin-du-Vivier,76,2.8,2019
+76484,Oissel,76,76618,Petit-Caux,76,2.9,2019
+76484,Oissel,76,76640,Saint-Pierre-lès-Elbeuf,76,13.86,2019
+76484,Oissel,76,76660,Sandouville,76,2.9,2019
+76484,Oissel,76,76681,Sotteville-lès-Rouen,76,222.33,2019
+76484,Oissel,76,76682,Sotteville-sous-le-Val,76,3.61,2019
+76484,Oissel,76,76705,Tourville-la-Rivière,76,176.29,2019
+76484,Oissel,76,76709,Le Trait,76,2.89,2019
+76484,Oissel,76,76750,Yainville,76,2.62,2019
+76484,Oissel,76,76758,Yvetot,76,2.9,2019
+76484,Oissel,76,77288,Melun,77,2.9,2019
+76484,Oissel,76,77511,Villeneuve-sous-Dammartin,77,3.61,2019
+76484,Oissel,76,78005,Achères,78,5.8,2019
+76484,Oissel,76,78118,Buchelay,78,2.91,2019
+76484,Oissel,76,78165,Les Clayes-sous-Bois,78,2.91,2019
+76484,Oissel,76,78335,Limay,78,2.81,2019
+76484,Oissel,76,78423,Montigny-le-Bretonneux,78,5.58,2019
+76484,Oissel,76,78501,Porcheville,78,1.05,2019
+76484,Oissel,76,78640,Vélizy-Villacoublay,78,2.9,2019
+76484,Oissel,76,78646,Versailles,78,2.8,2019
+76484,Oissel,76,80721,Saint-Valery-sur-Somme,80,3.21,2019
+76484,Oissel,76,91228,Évry-Courcouronnes,91,8.71,2019
+76484,Oissel,76,91425,Montlhéry,91,1.05,2019
+76484,Oissel,76,92004,Asnières-sur-Seine,92,2.78,2019
+76484,Oissel,76,92012,Boulogne-Billancourt,92,2.9,2019
+76484,Oissel,76,92025,Colombes,92,1.41,2019
+76484,Oissel,76,92048,Meudon,92,1.05,2019
+76484,Oissel,76,92050,Nanterre,92,4.02,2019
+76484,Oissel,76,92062,Puteaux,92,5.35,2019
+76484,Oissel,76,92064,Saint-Cloud,92,5.5,2019
+76484,Oissel,76,92078,Villeneuve-la-Garenne,92,2.77,2019
+76484,Oissel,76,94017,Champigny-sur-Marne,94,2.55,2019
+76484,Oissel,76,95018,Argenteuil,95,2.62,2019
+76484,Oissel,76,95074,Boisemont,95,2.62,2019
+76484,Oissel,76,95127,Cergy,95,5.77,2019
+76484,Oissel,76,95370,Marines,95,2.63,2019
+76484,Oissel,76,95510,Puiseux-Pontoise,95,2.72,2019
+76484,Oissel,76,97309,Remire-Montjoly,97,3.01,2019
 76486,Orival,76,27188,Criquebeuf-sur-Seine,27,5.05,2019
 76486,Orival,76,27213,Vexin-sur-Epte,27,5.05,2019
 76486,Orival,76,27229,Évreux,27,5.05,2019
@@ -19372,21 +19486,6 @@ code_residence,commune_residence,dep_residence,code_travail,commune_travail,dep_
 34095,Fabrègues,34,94028,Créteil,94,5.01,2022
 34095,Fabrègues,34,95527,Roissy-en-France,95,5.01,2022
 34095,Fabrègues,34,ZZZZZ,Individus travaillant à l'étranger (sans précision de commune),ZZ,5.01,2022
-34102,Fontanès,34,30341,Vauvert,30,4.81,2022
-34102,Fontanès,34,34057,Castelnau-le-Lez,34,4.8,2022
-34102,Fontanès,34,34078,Claret,34,4.8,2022
-34102,Fontanès,34,34102,Fontanès,34,23.98,2022
-34102,Fontanès,34,34153,Les Matelles,34,4.81,2022
-34102,Fontanès,34,34154,Mauguio,34,4.8,2022
-34102,Fontanès,34,34169,Montferrier-sur-Lez,34,4.8,2022
-34102,Fontanès,34,34172,Montpellier,34,62.28,2022
-34102,Fontanès,34,34198,Pérols,34,4.8,2022
-34102,Fontanès,34,34247,Saint-Clément-de-Rivière,34,9.6,2022
-34102,Fontanès,34,34248,Sainte-Croix-de-Quintillargues,34,4.81,2022
-34102,Fontanès,34,34255,Saint-Gély-du-Fesc,34,4.81,2022
-34102,Fontanès,34,34274,Saint-Martin-de-Londres,34,4.81,2022
-34102,Fontanès,34,34276,Saint-Mathieu-de-Tréviers,34,14.4,2022
-34102,Fontanès,34,34327,Vendargues,34,4.79,2022
 34116,Grabels,34,13014,Berre-l'Étang,13,5.0,2022
 34116,Grabels,34,13213,Marseille 13e Arrondissement,13,15.0,2022
 34116,Grabels,34,14366,Lisieux,14,5.0,2022
@@ -25171,31 +25270,6 @@ code_residence,commune_residence,dep_residence,code_travail,commune_travail,dep_
 35363,Pont-Péan,35,60414,Montataire,60,4.54,2022
 35363,Pont-Péan,35,72181,Le Mans,72,5.31,2022
 35363,Pont-Péan,35,92023,Clamart,92,4.72,2022
-38033,Beaulieu,38,26129,Eymeux,26,4.79,2022
-38033,Beaulieu,38,26231,Peyrins,26,4.9,2022
-38033,Beaulieu,38,26362,Valence,26,14.6,2022
-38033,Beaulieu,38,38033,Beaulieu,38,48.9,2022
-38033,Beaulieu,38,38095,Chatte,38,9.8,2022
-38033,Beaulieu,38,38118,Colombe,38,4.49,2022
-38033,Beaulieu,38,38130,La Côte-Saint-André,38,5.01,2022
-38033,Beaulieu,38,38158,Eybens,38,4.9,2022
-38033,Beaulieu,38,38169,Fontaine,38,4.79,2022
-38033,Beaulieu,38,38182,Le Grand-Lemps,38,4.79,2022
-38033,Beaulieu,38,38185,Grenoble,38,19.4,2022
-38033,Beaulieu,38,38309,Poisat,38,4.9,2022
-38033,Beaulieu,38,38332,Renage,38,4.9,2022
-38033,Beaulieu,38,38416,Saint-Marcellin,38,38.45,2022
-38033,Beaulieu,38,38453,Saint-Romans,38,4.79,2022
-38033,Beaulieu,38,38454,Saint-Sauveur,38,5.12,2022
-38033,Beaulieu,38,38463,Saint-Vérand,38,4.9,2022
-38033,Beaulieu,38,38500,Têche,38,4.9,2022
-38033,Beaulieu,38,38517,Tullins,38,9.8,2022
-38033,Beaulieu,38,38540,Veurey-Voroize,38,4.79,2022
-38033,Beaulieu,38,38559,Vinay,38,34.63,2022
-38033,Beaulieu,38,38563,Voiron,38,10.02,2022
-38033,Beaulieu,38,38565,Voreppe,38,4.79,2022
-38033,Beaulieu,38,42218,Saint-Étienne,42,5.01,2022
-38033,Beaulieu,38,69034,Caluire-et-Cuire,69,4.79,2022
 38057,Bresson,38,38052,Le Bourg-d'Oisans,38,5.28,2022
 38057,Bresson,38,38057,Bresson,38,46.37,2022
 38057,Bresson,38,38140,Crolles,38,15.69,2022
@@ -26765,28 +26839,6 @@ code_residence,commune_residence,dep_residence,code_travail,commune_travail,dep_
 38235,Miribel-Lanchâtre,38,38485,Seyssinet-Pariset,38,5.45,2022
 38235,Miribel-Lanchâtre,38,38524,Varces-Allières-et-Risset,38,14.8,2022
 38235,Miribel-Lanchâtre,38,38545,Vif,38,25.48,2022
-38248,Montaud,38,38057,Bresson,38,4.91,2022
-38248,Montaud,38,38140,Crolles,38,4.72,2022
-38248,Montaud,38,38151,Échirolles,38,10.23,2022
-38248,Montaud,38,38158,Eybens,38,4.91,2022
-38248,Montaud,38,38185,Grenoble,38,56.69,2022
-38248,Montaud,38,38200,Jarrie,38,4.72,2022
-38248,Montaud,38,38248,Montaud,38,25.78,2022
-38248,Montaud,38,38249,Montbonnot-Saint-Martin,38,4.91,2022
-38248,Montaud,38,38382,Saint-Égrève,38,20.28,2022
-38248,Montaud,38,38400,Saint-Jean-de-Moirans,38,5.32,2022
-38248,Montaud,38,38416,Saint-Marcellin,38,9.83,2022
-38248,Montaud,38,38421,Saint-Martin-d'Hères,38,5.11,2022
-38248,Montaud,38,38423,Saint-Martin-le-Vinoux,38,5.32,2022
-38248,Montaud,38,38450,Saint-Quentin-sur-Isère,38,9.82,2022
-38248,Montaud,38,38474,Sassenage,38,9.63,2022
-38248,Montaud,38,38516,La Tronche,38,4.91,2022
-38248,Montaud,38,38517,Tullins,38,9.63,2022
-38248,Montaud,38,38540,Veurey-Voroize,38,10.23,2022
-38248,Montaud,38,38563,Voiron,38,10.23,2022
-38248,Montaud,38,38565,Voreppe,38,5.11,2022
-38248,Montaud,38,38567,Chamrousse,38,5.54,2022
-38248,Montaud,38,69029,Bron,69,5.32,2022
 38252,Montchaboud,38,38013,Apprieu,38,4.76,2022
 38252,Montchaboud,38,38053,Bourgoin-Jallieu,38,4.76,2022
 38252,Montchaboud,38,38059,Brié-et-Angonnes,38,4.75,2022
@@ -35040,6 +35092,145 @@ code_residence,commune_residence,dep_residence,code_travail,commune_travail,dep_
 76475,Franqueville-Saint-Pierre,76,92012,Boulogne-Billancourt,92,4.73,2022
 76475,Franqueville-Saint-Pierre,76,92040,Issy-les-Moulineaux,92,5.12,2022
 76475,Franqueville-Saint-Pierre,76,93066,Saint-Denis,93,4.99,2022
+76484,Oissel,76,06018,Biot,06,5.64,2022
+76484,Oissel,76,06088,Nice,06,4.14,2022
+76484,Oissel,76,14118,Caen,14,4.61,2022
+76484,Oissel,76,14349,Laize-Clinchamps,14,5.92,2022
+76484,Oissel,76,14715,Trouville-sur-Mer,14,3.2,2022
+76484,Oissel,76,27016,Les Andelys,27,5.46,2022
+76484,Oissel,76,27022,Le Val d'Hazey,27,4.14,2022
+76484,Oissel,76,27056,Bernay,27,3.39,2022
+76484,Oissel,76,27090,Bosroumois,27,7.26,2022
+76484,Oissel,76,27102,Bouquetot,27,4.61,2022
+76484,Oissel,76,27103,Bourg-Achard,27,10.23,2022
+76484,Oissel,76,27104,Bourg-Beaudouin,27,7.24,2022
+76484,Oissel,76,27105,Grand Bourgtheroulde,27,18.63,2022
+76484,Oissel,76,27151,Charleval,27,7.43,2022
+76484,Oissel,76,27174,Corneville-sur-Risle,27,11.71,2022
+76484,Oissel,76,27188,Criquebeuf-sur-Seine,27,9.5,2022
+76484,Oissel,76,27214,Écouis,27,3.17,2022
+76484,Oissel,76,27229,Évreux,27,27.87,2022
+76484,Oissel,76,27275,Gaillon,27,2.95,2022
+76484,Oissel,76,27299,Gravigny,27,2.95,2022
+76484,Oissel,76,27306,Guichainville,27,2.95,2022
+76484,Oissel,76,27332,Heudebouville,27,3.86,2022
+76484,Oissel,76,27339,Hondouville,27,1.42,2022
+76484,Oissel,76,27340,Honguemare-Guenouville,27,1.34,2022
+76484,Oissel,76,27348,Igoville,27,4.69,2022
+76484,Oissel,76,27351,Incarville,27,22.38,2022
+76484,Oissel,76,27365,Léry,27,3.86,2022
+76484,Oissel,76,27375,Louviers,27,23.56,2022
+76484,Oissel,76,27385,Manneville-sur-Risle,27,4.61,2022
+76484,Oissel,76,27394,Martot,27,10.74,2022
+76484,Oissel,76,27428,Le Neubourg,27,7.31,2022
+76484,Oissel,76,27448,Pacy-sur-Eure,27,4.61,2022
+76484,Oissel,76,27456,Pinterville,27,1.42,2022
+76484,Oissel,76,27467,Pont-Audemer,27,9.22,2022
+76484,Oissel,76,27469,Pont-de-l'Arche,27,3.43,2022
+76484,Oissel,76,27517,Saint-Aubin-sur-Gaillon,27,4.61,2022
+76484,Oissel,76,27528,Le Vaudreuil,27,10.92,2022
+76484,Oissel,76,27562,Saint-Marcel,27,7.87,2022
+76484,Oissel,76,27580,Saint-Ouen-de-Thouberville,27,3.56,2022
+76484,Oissel,76,27599,Saint-Pierre-la-Garenne,27,4.3,2022
+76484,Oissel,76,27602,Saint-Sébastien-de-Morsent,27,6.86,2022
+76484,Oissel,76,27638,Le Thuit de l'Oison,27,1.26,2022
+76484,Oissel,76,27681,Vernon,27,9.52,2022
+76484,Oissel,76,27701,Val-de-Reuil,27,80.94,2022
+76484,Oissel,76,29019,Brest,29,1.0,2022
+76484,Oissel,76,35238,Rennes,35,3.17,2022
+76484,Oissel,76,49007,Angers,49,4.61,2022
+76484,Oissel,76,50025,Avranches,50,4.98,2022
+76484,Oissel,76,50218,Granville,50,3.17,2022
+76484,Oissel,76,50580,Sotteville,50,4.3,2022
+76484,Oissel,76,59009,Villeneuve-d'Ascq,59,1.1,2022
+76484,Oissel,76,59527,Saint-André-lez-Lille,59,2.95,2022
+76484,Oissel,76,60057,Beauvais,60,1.24,2022
+76484,Oissel,76,60176,Crépy-en-Valois,60,2.92,2022
+76484,Oissel,76,60700,Warluis,60,3.62,2022
+76484,Oissel,76,62457,Houdain,62,4.98,2022
+76484,Oissel,76,69381,Lyon 1er Arrondissement,69,2.95,2022
+76484,Oissel,76,75101,Paris 1er Arrondissement,75,5.24,2022
+76484,Oissel,76,75103,Paris 3e Arrondissement,75,4.61,2022
+76484,Oissel,76,75108,Paris 8e Arrondissement,75,6.99,2022
+76484,Oissel,76,75110,Paris 10e Arrondissement,75,3.0,2022
+76484,Oissel,76,75111,Paris 11e Arrondissement,75,1.42,2022
+76484,Oissel,76,75112,Paris 12e Arrondissement,75,4.03,2022
+76484,Oissel,76,75115,Paris 15e Arrondissement,75,3.86,2022
+76484,Oissel,76,75117,Paris 17e Arrondissement,75,6.47,2022
+76484,Oissel,76,75119,Paris 19e Arrondissement,75,2.97,2022
+76484,Oissel,76,76005,Amfreville-la-Mi-Voie,76,4.14,2022
+76484,Oissel,76,76039,Les Authieux-sur-le-Port-Saint-Ouen,76,3.17,2022
+76484,Oissel,76,76057,Barentin,76,29.97,2022
+76484,Oissel,76,76069,Belbeuf,76,6.81,2022
+76484,Oissel,76,76095,Bihorel,76,7.27,2022
+76484,Oissel,76,76103,Bonsecours,76,1.26,2022
+76484,Oissel,76,76108,Bois-Guillaume,76,18.28,2022
+76484,Oissel,76,76116,Boos,76,11.07,2022
+76484,Oissel,76,76122,Callengeville,76,7.26,2022
+76484,Oissel,76,76125,Bosc-le-Hard,76,3.63,2022
+76484,Oissel,76,76142,Brémontier-Merval,76,4.02,2022
+76484,Oissel,76,76157,Canteleu,76,4.85,2022
+76484,Oissel,76,76165,Caudebec-lès-Elbeuf,76,16.24,2022
+76484,Oissel,76,76178,Cléon,76,137.67,2022
+76484,Oissel,76,76212,Darnétal,76,18.04,2022
+76484,Oissel,76,76216,Déville-lès-Rouen,76,12.45,2022
+76484,Oissel,76,76217,Dieppe,76,12.36,2022
+76484,Oissel,76,76231,Elbeuf,76,98.36,2022
+76484,Oissel,76,76282,Freneuse,76,2.7,2022
+76484,Oissel,76,76305,Gonfreville-l'Orcher,76,3.2,2022
+76484,Oissel,76,76319,Grand-Couronne,76,44.76,2022
+76484,Oissel,76,76322,Le Grand-Quevilly,76,138.59,2022
+76484,Oissel,76,76341,Harfleur,76,2.95,2022
+76484,Oissel,76,76351,Le Havre,76,34.34,2022
+76484,Oissel,76,76363,Hodeng-au-Bosc,76,1.0,2022
+76484,Oissel,76,76366,Le Houlme,76,3.86,2022
+76484,Oissel,76,76377,Isneauville,76,27.21,2022
+76484,Oissel,76,76384,Lillebonne,76,8.05,2022
+76484,Oissel,76,76402,Malaunay,76,6.88,2022
+76484,Oissel,76,76410,Maromme,76,14.87,2022
+76484,Oissel,76,76412,Martainville-Épreville,76,1.12,2022
+76484,Oissel,76,76429,Le Mesnil-Esnard,76,11.28,2022
+76484,Oissel,76,76451,Mont-Saint-Aignan,76,31.51,2022
+76484,Oissel,76,76453,Morgny-la-Pommeraye,76,3.96,2022
+76484,Oissel,76,76470,Normanville,76,3.17,2022
+76484,Oissel,76,76474,Notre-Dame-de-Bondeville,76,7.75,2022
+76484,Oissel,76,76475,Franqueville-Saint-Pierre,76,20.58,2022
+76484,Oissel,76,76476,Port-Jérôme-sur-Seine,76,4.02,2022
+76484,Oissel,76,76479,Nullemont,76,1.24,2022
+76484,Oissel,76,76484,Oissel,76,1613.33,2022
+76484,Oissel,76,76495,Pavilly,76,7.87,2022
+76484,Oissel,76,76497,Petit-Couronne,76,58.05,2022
+76484,Oissel,76,76498,Le Petit-Quevilly,76,118.49,2022
+76484,Oissel,76,76540,Rouen,76,814.46,2022
+76484,Oissel,76,76545,Rouxmesnil-Bouteilles,76,3.56,2022
+76484,Oissel,76,76558,Saint-Aubin-Celloville,76,4.3,2022
+76484,Oissel,76,76561,Saint-Aubin-lès-Elbeuf,76,57.41,2022
+76484,Oissel,76,76575,Saint-Étienne-du-Rouvray,76,464.43,2022
+76484,Oissel,76,76593,Saint-Jean-de-la-Neuville,76,4.03,2022
+76484,Oissel,76,76594,Saint-Jean-du-Cardonnay,76,8.32,2022
+76484,Oissel,76,76599,Saint-Léger-du-Bourg-Denis,76,2.95,2022
+76484,Oissel,76,76610,Sainte-Marie-des-Champs,76,1.04,2022
+76484,Oissel,76,76636,Saint-Pierre-de-Varengeville,76,3.86,2022
+76484,Oissel,76,76640,Saint-Pierre-lès-Elbeuf,76,27.43,2022
+76484,Oissel,76,76681,Sotteville-lès-Rouen,76,193.51,2022
+76484,Oissel,76,76705,Tourville-la-Rivière,76,165.78,2022
+76484,Oissel,76,76709,Le Trait,76,1.1,2022
+76484,Oissel,76,76728,La Vaupalière,76,2.65,2022
+76484,Oissel,76,76754,Yport,76,1.0,2022
+76484,Oissel,76,76758,Yvetot,76,3.43,2022
+76484,Oissel,76,78123,Carrières-sous-Poissy,78,0.95,2022
+76484,Oissel,76,78217,Épône,78,1.22,2022
+76484,Oissel,76,78297,Guyancourt,78,1.26,2022
+76484,Oissel,76,78335,Limay,78,4.61,2022
+76484,Oissel,76,78513,La Queue-les-Yvelines,78,2.95,2022
+76484,Oissel,76,91521,Ris-Orangis,91,2.67,2022
+76484,Oissel,76,91534,Saclay,91,5.39,2022
+76484,Oissel,76,92004,Asnières-sur-Seine,92,4.3,2022
+76484,Oissel,76,92049,Montrouge,92,2.97,2022
+76484,Oissel,76,92062,Puteaux,92,8.57,2022
+76484,Oissel,76,94017,Champigny-sur-Marne,94,4.03,2022
+76484,Oissel,76,95256,Frépillon,95,4.14,2022
+76484,Oissel,76,ZZZZZ,Individus travaillant à l'étranger (sans précision de commune),ZZ,1.1,2022
 76486,Orival,76,14118,Caen,14,5.06,2022
 76486,Orival,76,27188,Criquebeuf-sur-Seine,27,4.8,2022
 76486,Orival,76,27348,Igoville,27,9.6,2022
