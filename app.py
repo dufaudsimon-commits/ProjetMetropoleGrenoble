@@ -10,6 +10,8 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import os
+from pathlib import Path
+import unicodedata
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 1. CONFIGURATION
@@ -19,6 +21,9 @@ st.set_page_config(
     page_icon="🏙️",
     layout="wide",
 )
+
+if "page" not in st.session_state:
+    st.session_state.page = "home"
 
 st.markdown("""
 <style>
@@ -138,6 +143,23 @@ COULEURS = {
 }
 TOUTES = list(COMMUNES.keys())
 
+DEP_MAP = {
+    "Grenoble": "38",
+    "Rennes": "35",
+    "Rouen": "76",
+    "Saint-Étienne": "42",
+    "Montpellier": "34",
+}
+
+CSP_MAP = {
+    "Agriculteurs": "Agriculteurs",
+    "Artisans, commerçants, chefs d'entreprise": "Artisans & Chefs d'ent.",
+    "Cadres et professions intellectuelles supérieures": "Cadres & Prof. Sup.",
+    "Professions intermédiaires": "Prof. Intermédiaires",
+    "Employés": "Employés",
+    "Ouvriers": "Ouvriers",
+}
+
 # Nomenclature colonnes âge : ageq_recNNsXrpop2016
 # NN = 01..20 (tranches 5 ans), s1 = Hommes, s2 = Femmes
 LABEL_TRANCHE = {
@@ -153,17 +175,17 @@ TRANCHES_SENIORS = ["14","15","16","17","18","19","20"]  # 65 ans +
 # ──────────────────────────────────────────────────────────────────────────────
 # 3. CHARGEMENT
 # ──────────────────────────────────────────────────────────────────────────────
-DATA_DIR = "Donnees_clean"
+DATA_DIR = Path("demographie/data_clean")
 
 @st.cache_data
 def charger_generales():
-    p = os.path.join(DATA_DIR, "Donnees_generales_comparatives_clean.csv")
-    return pd.read_csv(p) if os.path.exists(p) else None
+    p = DATA_DIR / "population" / "Donnees_generales_comparatives_clean.csv"
+    return pd.read_csv(p) if p.exists() else None
 
 @st.cache_data
 def charger_pop_age():
-    p = os.path.join(DATA_DIR, "Population_tranche_age_clean.csv")
-    if not os.path.exists(p):
+    p = DATA_DIR / "population" / "Population_tranche_age_clean.csv"
+    if not p.exists():
         return None
     df = pd.read_csv(p)
     df["metropole"] = df["LIBELLE"].map(COMMUNE_VERS_METRO)
@@ -171,8 +193,8 @@ def charger_pop_age():
 
 @st.cache_data
 def charger_men_age():
-    p = os.path.join(DATA_DIR, "Menage_age_situation_clean.csv")
-    if not os.path.exists(p):
+    p = DATA_DIR / "menages" / "Menage_age_situation_clean.csv"
+    if not p.exists():
         return None
     df = pd.read_csv(p)
     df["metropole"] = df["LIBGEO"].map(COMMUNE_VERS_METRO)
@@ -180,8 +202,8 @@ def charger_men_age():
 
 @st.cache_data
 def charger_men_csp():
-    p = os.path.join(DATA_DIR, "Menages_csp_nbpers_clean.csv")
-    if not os.path.exists(p):
+    p = DATA_DIR / "menages" / "Menages_csp_nbpers_clean.csv"
+    if not p.exists():
         return None
     df = pd.read_csv(p)
     df["metropole"] = df["LIBGEO"].map(COMMUNE_VERS_METRO)
@@ -189,13 +211,92 @@ def charger_men_csp():
 
 @st.cache_data
 def charger_mob_scol():
-    p = os.path.join(DATA_DIR, "Mobilite_scolaire_clean.csv")
-    return pd.read_csv(p) if os.path.exists(p) else None
+    p = DATA_DIR / "mobilite" / "Mobilite_scolaire_clean.csv"
+    return pd.read_csv(p) if p.exists() else None
 
 @st.cache_data
 def charger_mob_prof():
-    p = os.path.join(DATA_DIR, "Mobilite_profess_clean.csv")
-    return pd.read_csv(p) if os.path.exists(p) else None
+    p = DATA_DIR / "mobilite" / "Mobilite_profess_clean.csv"
+    return pd.read_csv(p) if p.exists() else None
+
+@st.cache_data
+def charger_caf():
+    p = Path("solidarite&citoyennete/data_clean/solidarite/CAF_5_Metropoles.csv")
+    if not p.exists():
+        return None
+    df = pd.read_csv(p, sep=";", low_memory=False)
+    if "Date_Ref" in df.columns and "Annee" not in df.columns:
+        df["Annee"] = pd.to_datetime(df["Date_Ref"], errors="coerce").dt.year
+    return df
+
+@st.cache_data
+def charger_csp_comparatif():
+    def read_table(path: Path) -> pd.DataFrame:
+        if path.suffix.lower() in [".xlsx", ".xls"]:
+            return pd.read_excel(path)
+        return pd.read_csv(path, sep=None, engine="python", low_memory=False)
+
+    candidate_dirs = [
+        Path("data_clean/demographie/population_2554"),
+        Path("demographie/data_clean/population_2554"),
+        Path("solidarite&citoyennete/data_clean/demographie/population_2554"),
+        Path("."),
+    ]
+    patterns = [
+        "Commune_*2554*sect*activite*.xlsx",
+        "Commune_*2554*sect*activite*.xls",
+        "Commune_*2554*sect*activite*.csv",
+        "Commune_*2554*sect*activite*.txt",
+    ]
+
+    discovered = []
+    for base in candidate_dirs:
+        if not base.exists():
+            continue
+        for pat in patterns:
+            discovered.extend(sorted(base.rglob(pat)))
+        if "population_2554" in str(base).lower():
+            discovered.extend(sorted(base.rglob("*.xlsx")))
+            discovered.extend(sorted(base.rglob("*.xls")))
+            discovered.extend(sorted(base.rglob("*.csv")))
+            discovered.extend(sorted(base.rglob("*.txt")))
+
+    seen = set()
+    files = []
+    for p in discovered:
+        key = str(p.resolve())
+        if key not in seen:
+            seen.add(key)
+            files.append(p)
+
+    all_data = []
+    for path in files:
+        try:
+            df = read_table(path)
+            if df.empty:
+                continue
+            if "RR" in str(df.iloc[0, 0]):
+                df = df.drop(0).reset_index(drop=True)
+            c_dep = [c for c in df.columns if "DÉPARTEMENT" in str(c).upper() or "DEPARTEMENT" in str(c).upper() or "DR24" in str(c).upper()][0]
+            c_lib = [c for c in df.columns if "LIBELLÉ" in str(c).upper() or "LIBELLE" in str(c).upper()][0]
+            year = None
+            for token in path.name.replace("-", "_").split("_"):
+                if token.isdigit() and len(token) == 4:
+                    year = int(token)
+                    break
+            res = pd.DataFrame({
+                "DEP": df[c_dep].astype(str).str.zfill(2),
+                "LIBELLE": df[c_lib].astype(str),
+                "ANNEE": year,
+                "LIB_NORM": df[c_lib].apply(normalize_csp_name),
+            })
+            for raw, clean in CSP_MAP.items():
+                cols = [c for c in df.columns if raw in str(c)]
+                res[clean] = df[cols].apply(pd.to_numeric, errors="coerce").fillna(0).sum(axis=1)
+            all_data.append(res)
+        except Exception:
+            continue
+    return pd.concat(all_data, ignore_index=True) if all_data else pd.DataFrame()
 
 df_gen     = charger_generales()
 df_pop     = charger_pop_age()
@@ -203,6 +304,8 @@ df_men_age = charger_men_age()
 df_men_csp = charger_men_csp()
 df_mob_sc  = charger_mob_scol()
 df_mob_pr  = charger_mob_prof()
+df_caf     = charger_caf()
+df_csp_cmp = charger_csp_comparatif()
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 4. UTILITAIRES
@@ -299,6 +402,17 @@ def style(fig, marge_t=20):
                       margin=dict(t=marge_t, b=20, l=10, r=10))
     return fig
 
+def normalize_csp_name(text):
+    if pd.isna(text):
+        return ""
+    return (
+        unicodedata.normalize("NFKD", str(text))
+        .encode("ascii", "ignore")
+        .decode("utf-8")
+        .lower()
+        .strip()
+    )
+
 # ──────────────────────────────────────────────────────────────────────────────
 # 5. EN-TÊTE
 # ──────────────────────────────────────────────────────────────────────────────
@@ -308,28 +422,70 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+if st.session_state.page == "home":
+    st.title("Projet Métropoles — Accueil")
+    c1, c2 = st.columns([1.2, 0.8])
+    with c1:
+        st.markdown(
+            """
+### Objectif
+Comparer les dynamiques territoriales des 5 métropoles à partir des données de **démographie** et de **solidarité & citoyenneté**.
+
+### Contenu
+- Démographie : population, âge, mobilités, ménages
+- Solidarité & citoyenneté : CAF, éducation, santé, participation citoyenne
+            """.strip()
+        )
+        if st.button("Aller à l'application", type="primary"):
+            st.session_state.page = "app"
+            st.rerun()
+    with c2:
+        img = Path("assets/accueil.png")
+        if img.exists():
+            st.image(str(img), use_container_width=True)
+        else:
+            st.info("Image optionnelle : ajoute `assets/accueil.png`.")
+    st.stop()
+
+with st.sidebar:
+    if st.button("🏠 Accueil"):
+        st.session_state.page = "home"
+        st.rerun()
+    st.markdown("---")
+    vue = st.radio("Navigation", ["Description", "Démographie", "Solidarité et citoyenneté"], index=0, label_visibility="collapsed")
+
 # ──────────────────────────────────────────────────────────────────────────────
 # 6. ONGLETS
 # ──────────────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4 = st.tabs([
-    "🏙️  Population globale",
-    "👥  Structure par âge",
-    "🚌  Mobilités",
-    "🏠  Ménages",
-])
+if vue == "Description":
+    st.markdown('<p class="section-header">Description</p>', unsafe_allow_html=True)
+    st.write("Cette application présente des analyses comparatives sur les volets démographie et solidarité/citoyenneté.")
+    st.write("Utilise le volet gauche pour choisir entre `Démographie` et `Solidarité et citoyenneté`.")
+    st.stop()
+
+if vue == "Démographie":
+    tab1, tab2, tab3, tab4, tab6 = st.tabs([
+        "🏙️  Population globale",
+        "👥  Structure par âge",
+        "🚌  Mobilités",
+        "🏠  Ménages",
+        "📊  CSP_comparatif",
+    ])
 
 # ==============================================================================
 # ONGLET 1 — POPULATION GLOBALE
 # ==============================================================================
-with tab1:
-    st.markdown('<p class="section-header">Population — Vue d\'ensemble</p>', unsafe_allow_html=True)
-    st.markdown(
-        '<p class="source-note">Source : <a href="https://www.insee.fr/fr/statistiques/1405599" target="_blank">'
-        'INSEE — Données générales comparatives (RP 2022)</a> — '
-        'Lignes EPCI disponibles pour Grenoble & Rennes uniquement ; '
-        'les autres métropoles sont calculées par agrégation de leurs communes.</p>',
-        unsafe_allow_html=True,
-    )
+if vue == "Démographie":
+    with tab1:
+        st.markdown('<p class="section-header">Population — Vue d\'ensemble</p>', unsafe_allow_html=True)
+        st.markdown(
+            '<p class="source-note">Source : <a href="https://www.insee.fr/fr/statistiques/1405599" target="_blank">'
+            'INSEE — Données générales comparatives (RP 2022)</a> — '
+            'Lignes EPCI disponibles pour Grenoble & Rennes uniquement ; '
+            'les autres métropoles sont calculées par agrégation de leurs communes.</p>',
+            unsafe_allow_html=True,
+        )
 
     st.markdown("**🔧 Sélectionnez les métropoles à comparer**")
     sel = st.multiselect("Métropoles", TOUTES, default=["Grenoble","Rennes"],
@@ -422,14 +578,15 @@ with tab1:
 # ==============================================================================
 # ONGLET 2 — STRUCTURE PAR ÂGE
 # ==============================================================================
-with tab2:
-    st.markdown('<p class="section-header">Structure par âge et par sexe</p>', unsafe_allow_html=True)
-    st.markdown(
-        '<p class="source-note">Source : <a href="https://www.insee.fr/fr/statistiques/1893204" target="_blank">'
-        'INSEE — Population par tranche d\'âge quinquennal (RP 2011, 2016, 2022)</a> — '
-        'Colonnes ageq_recNN : NN=01..20 (tranches de 5 ans), s1=Hommes, s2=Femmes</p>',
-        unsafe_allow_html=True,
-    )
+if vue == "Démographie":
+    with tab2:
+        st.markdown('<p class="section-header">Structure par âge et par sexe</p>', unsafe_allow_html=True)
+        st.markdown(
+            '<p class="source-note">Source : <a href="https://www.insee.fr/fr/statistiques/1893204" target="_blank">'
+            'INSEE — Population par tranche d\'âge quinquennal (RP 2011, 2016, 2022)</a> — '
+            'Colonnes ageq_recNN : NN=01..20 (tranches de 5 ans), s1=Hommes, s2=Femmes</p>',
+            unsafe_allow_html=True,
+        )
 
     if df_pop is None:
         st.info("📂 Fichier `Population_tranche_age_clean.csv` introuvable dans `Donnees_clean/`.")
@@ -527,9 +684,10 @@ with tab2:
 # ==============================================================================
 # ONGLET 3 — MOBILITÉS
 # ==============================================================================
-with tab3:
-    st.markdown('<p class="section-header">Dynamiques de mobilité</p>', unsafe_allow_html=True)
-    st_sc, st_pr = st.tabs(["🎓 Mobilités scolaires","💼 Mobilités professionnelles"])
+if vue == "Démographie":
+    with tab3:
+        st.markdown('<p class="section-header">Dynamiques de mobilité</p>', unsafe_allow_html=True)
+        st_sc, st_pr = st.tabs(["🎓 Mobilités scolaires","💼 Mobilités professionnelles"])
 
     with st_sc:
         st.markdown('<p class="source-note">Source : <a href="https://www.insee.fr/fr/statistiques/8582969" target="_blank">INSEE — Mobilités scolaires 2019 & 2022</a></p>', unsafe_allow_html=True)
@@ -630,11 +788,12 @@ with tab3:
 # ==============================================================================
 # ONGLET 4 — MÉNAGES
 # ==============================================================================
-with tab4:
-    st.markdown('<p class="section-header">Structure des ménages</p>', unsafe_allow_html=True)
-    st.markdown('<p class="source-note">Source : <a href="https://www.insee.fr/fr/statistiques/8582448" target="_blank">INSEE — Ménages par âge, situation familiale et CSP (RP 2022)</a></p>', unsafe_allow_html=True)
+if vue == "Démographie":
+    with tab4:
+        st.markdown('<p class="section-header">Structure des ménages</p>', unsafe_allow_html=True)
+        st.markdown('<p class="source-note">Source : <a href="https://www.insee.fr/fr/statistiques/8582448" target="_blank">INSEE — Ménages par âge, situation familiale et CSP (RP 2022)</a></p>', unsafe_allow_html=True)
 
-    sous1, sous2 = st.tabs(["👨‍👩‍👧 Type & taille de ménage","🧑‍💼 CSP des ménages"])
+        sous1, sous2 = st.tabs(["👨‍👩‍👧 Type & taille de ménage","🧑‍💼 CSP des ménages"])
 
     with sous1:
         if df_men_age is None:
@@ -805,6 +964,152 @@ with tab4:
                 fig_comp.update_layout(yaxis_title="Part des ménages (%)",
                                        legend=dict(orientation="h", y=1.1, font_size=10))
                 st.plotly_chart(style(fig_comp, 50), use_container_width=True)
+
+# ==============================================================================
+# ONGLET 5 — CSP COMPARATIF
+# ==============================================================================
+if vue == "Démographie":
+    with tab6:
+        st.markdown('<p class="section-header">CSP comparatif</p>', unsafe_allow_html=True)
+        if df_csp_cmp.empty or ("ANNEE" not in df_csp_cmp.columns):
+            st.info("Données CSP comparatif non trouvées dans les fichiers `population_2554`.")
+        else:
+            annees = sorted(df_csp_cmp["ANNEE"].dropna().unique(), reverse=True)
+            if not annees:
+                st.info("Aucune année CSP disponible.")
+            else:
+                with st.sidebar:
+                    st.markdown("---")
+                    st.markdown("### Filtres CSP comparatif")
+                    sel_annee = st.selectbox("📅 Choisir l'année", annees, key="csp_cmp_year")
+                    mode = st.selectbox("🎯 Niveau d'analyse", ["Comparatif Communes (Isère)", "Comparatif Métropoles"], key="csp_cmp_mode")
+
+                df_y = df_csp_cmp[df_csp_cmp["ANNEE"] == sel_annee]
+                if mode == "Comparatif Communes (Isère)":
+                    clist = sorted(COMMUNES["Grenoble"])
+                    with st.sidebar:
+                        ent_a = st.selectbox("Commune A (Référence)", clist, index=clist.index("Grenoble"), key="csp_cmp_com_a")
+                        ent_b = st.selectbox("Commune B (Comparaison)", clist, index=clist.index("Saint-Martin-d'Hères"), key="csp_cmp_com_b")
+                    target_a = df_y[(df_y["DEP"] == "38") & (df_y["LIB_NORM"] == normalize_csp_name(ent_a))]
+                    target_b = df_y[(df_y["DEP"] == "38") & (df_y["LIB_NORM"] == normalize_csp_name(ent_b))]
+                else:
+                    met_list = list(DEP_MAP.keys())
+                    with st.sidebar:
+                        ent_a = st.selectbox("Métropole A", met_list, index=0, key="csp_cmp_met_a")
+                        ent_b = st.selectbox("Métropole B", met_list, index=4, key="csp_cmp_met_b")
+
+                    def get_agg(name):
+                        dep = DEP_MAP[name]
+                        comm_norm = [normalize_csp_name(c) for c in COMMUNES[name]]
+                        return df_y[(df_y["DEP"] == dep) & (df_y["LIB_NORM"].isin(comm_norm))].sum(numeric_only=True).to_frame().T
+
+                    target_a, target_b = get_agg(ent_a), get_agg(ent_b)
+
+                with st.sidebar:
+                    sel_csp = st.multiselect("📂 Catégories CSP à afficher", list(CSP_MAP.values()), default=list(CSP_MAP.values()), key="csp_cmp_multi")
+
+                if sel_csp and (not target_a.empty) and (not target_b.empty):
+                    val_a = target_a[sel_csp].sum(axis=1).values[0]
+                    val_b = target_b[sel_csp].sum(axis=1).values[0]
+                    st.title(f"📊 {ent_a} vs {ent_b} • {sel_annee}")
+
+                    k1, k2, k3, k4 = st.columns(4)
+                    k1.metric(f"Actifs {ent_a}", f"{int(val_a):,}".replace(",", " "))
+                    k2.metric(f"Actifs {ent_b}", f"{int(val_b):,}".replace(",", " "))
+                    k3.metric("Écart brut", f"{int(val_a - val_b):+,}".replace(",", " "))
+                    k4.metric("Indice de masse", f"{(val_a / val_b) if val_b != 0 else 0:.2f}x")
+
+                    col_left, col_right = st.columns(2)
+                    with col_left:
+                        fig_bar = go.Figure()
+                        fig_bar.add_trace(go.Bar(x=sel_csp, y=target_a[sel_csp].iloc[0], name=ent_a, marker_color="#3498db"))
+                        fig_bar.add_trace(go.Bar(x=sel_csp, y=target_b[sel_csp].iloc[0], name=ent_b, marker_color="#e67e22"))
+                        fig_bar.update_layout(barmode="group", template="plotly_white", height=400)
+                        st.plotly_chart(fig_bar, use_container_width=True)
+                    with col_right:
+                        pct_a = (target_a[sel_csp].iloc[0] / val_a * 100) if val_a != 0 else 0
+                        pct_b = (target_b[sel_csp].iloc[0] / val_b * 100) if val_b != 0 else 0
+                        fig_radar = go.Figure()
+                        fig_radar.add_trace(go.Scatterpolar(r=pct_a, theta=sel_csp, fill="toself", name=ent_a, line_color="#3498db"))
+                        fig_radar.add_trace(go.Scatterpolar(r=pct_b, theta=sel_csp, fill="toself", name=ent_b, line_color="#e67e22"))
+                        fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, max(max(pct_a), max(pct_b), 1) + 5])), template="plotly_white", height=400)
+                        st.plotly_chart(fig_radar, use_container_width=True)
+
+                    st.subheader("🎯 Analyse de Spécialisation")
+                    spec_index = (pct_a / pct_b * 100).fillna(100)
+                    fig_spec = px.bar(x=sel_csp, y=spec_index, labels={"x": "Catégorie", "y": "Indice de spécificité (%)"}, color=spec_index, color_continuous_scale="RdYlGn")
+                    fig_spec.add_hline(y=100, line_dash="dash", line_color="black")
+                    st.plotly_chart(fig_spec, use_container_width=True)
+
+                    with st.expander("📄 Voir le tableau de données complet"):
+                        table_df = pd.DataFrame({
+                            "Catégorie CSP": sel_csp,
+                            f"{ent_a} (Effectif)": target_a[sel_csp].iloc[0].values,
+                            f"{ent_b} (Effectif)": target_b[sel_csp].iloc[0].values,
+                            "Différence": target_a[sel_csp].iloc[0].values - target_b[sel_csp].iloc[0].values,
+                        })
+                        st.table(table_df.style.format(precision=0))
+                else:
+                    st.warning("Sélectionne des catégories CSP et une comparaison valide.")
+
+# ==============================================================================
+# ONGLET 5 — SOLIDARITE & CITOYENNETE
+# ==============================================================================
+if vue == "Solidarité et citoyenneté":
+    st.markdown('<p class="section-header">solidarite&citoyennete</p>', unsafe_allow_html=True)
+    s1, s2, s3, s4, s5 = st.tabs(["solidarite", "education", "sante", "participation_citoyenne", "data_base"])
+
+    with s1:
+        st.subheader("Analyse CAF - 5 Métropoles")
+        if df_caf is None or df_caf.empty:
+            st.info("📂 Fichier `CAF_5_Metropoles.csv` introuvable dans `solidarite&citoyennete/data_clean/solidarite/`.")
+        else:
+            required_cols = {"Annee", "Agglomeration"}
+            if not required_cols.issubset(set(df_caf.columns)):
+                st.error("Le fichier CAF doit contenir au minimum les colonnes `Annee` et `Agglomeration`.")
+            else:
+                metric_candidates = [
+                    "Nombre foyers NDUR", "Nombre personnes NDUR", "Montant total NDUR",
+                    "Nombre foyers NDURPAJE", "Nombre personnes NDURPAJE", "Montant total NDURPAJE",
+                    "Nombre foyers NDURINS", "Nombre personnes NDURINS", "Montant total NDURINS",
+                ]
+                metrics = [c for c in metric_candidates if c in df_caf.columns]
+                if not metrics:
+                    st.warning("Aucune mesure CAF standard trouvée.")
+                else:
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        metric = st.selectbox("Indicateur CAF", metrics, index=0)
+                    with c2:
+                        years = sorted(df_caf["Annee"].dropna().unique())
+                        year = st.selectbox("Année", years, index=len(years) - 1)
+
+                    df_caf[metric] = pd.to_numeric(df_caf[metric], errors="coerce").fillna(0)
+
+                    k1, k2, k3 = st.columns(3)
+                    k1.metric(f"Total {metric} ({year})", f"{df_caf[df_caf['Annee'] == year][metric].sum():,.0f}".replace(",", " "))
+                    k2.metric("Agglomérations", int(df_caf["Agglomeration"].nunique()))
+                    k3.metric("Communes (année)", int(df_caf[df_caf["Annee"] == year]["Nom_Commune"].nunique()) if "Nom_Commune" in df_caf.columns else 0)
+
+                    a, b = st.columns(2)
+                    with a:
+                        by_agg = df_caf[df_caf["Annee"] == year].groupby("Agglomeration", as_index=False)[metric].sum().sort_values(metric, ascending=False)
+                        fig1 = px.bar(by_agg, x="Agglomeration", y=metric, color="Agglomeration", title=f"{metric} en {year}")
+                        fig1.update_layout(showlegend=False)
+                        st.plotly_chart(style(fig1), use_container_width=True)
+                    with b:
+                        evo = df_caf.groupby(["Annee", "Agglomeration"], as_index=False)[metric].sum().sort_values("Annee")
+                        fig2 = px.line(evo, x="Annee", y=metric, color="Agglomeration", markers=True, title=f"Évolution de {metric}")
+                        st.plotly_chart(style(fig2), use_container_width=True)
+
+    with s2:
+        st.info("Page `education` prête à brancher sur les fichiers de `solidarite&citoyennete/data_clean/education`.")
+    with s3:
+        st.info("Page `sante` prête à brancher sur les fichiers de `solidarite&citoyennete/data_clean/sante`.")
+    with s4:
+        st.info("Page `participation_citoyenne` prête à brancher sur les fichiers de `solidarite&citoyennete/data_clean/participation_citoyenne`.")
+    with s5:
+        st.info("Page `data_base` prête à brancher sur les fichiers de `solidarite&citoyennete/data_base`.")
 
 # ──────────────────────────────────────────────────────────────────────────────
 st.markdown("---")
