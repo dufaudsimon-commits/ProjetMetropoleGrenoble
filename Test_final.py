@@ -207,41 +207,89 @@ Cette application Streamlit regroupe des visualisations pour comparer plusieurs 
 
     st.stop()
 
-# =================================================================
-# 3. FILTRES DÉROULANTS (SIDEBAR)
-# =================================================================
-target_a = pd.DataFrame()
-target_b = pd.DataFrame()
-sel_csp = list(CSP_MAP.values())
-ent_a = ""
-ent_b = ""
-sel_annee = None
-
 with st.sidebar:
     st.button("🏠 Accueil", on_click=go_to_home)
-    st.markdown("---")
-    st.markdown("## 🔍 Paramètres d'analyse")
-    st.markdown("---")
 
-    has_csp_data = (not df_master.empty) and ("ANNEE" in df_master.columns)
-    show_csp = st.toggle("Afficher l'analyse CSP (Excel)", value=has_csp_data, disabled=not has_csp_data)
-    if has_csp_data:
-        if show_csp:
-            sel_annee = st.selectbox("📅 Choisir l'année", sorted(df_master["ANNEE"].dropna().unique(), reverse=True))
-            mode = st.selectbox("🎯 Niveau d'analyse", ["Comparatif Communes (Isère)", "Comparatif Métropoles"])
+# =================================================================
+# 3. PAGE ANALYSE : ONGLETS + SOUS-PAGES
+# =================================================================
+# Navigation dans la barre latérale (liste, pas de dropdown)
+with st.sidebar:
+    st.markdown("## Navigation")
+    section = st.radio(
+        "Section",
+        ["Description", "demographie", "solidarite&citoyennete"],
+        index=0,
+        label_visibility="collapsed",
+        key="nav_section",
+    )
 
+    if section == "demographie":
+        page = st.radio(
+            "Pages",
+            ["population", "menages", "mobilite", "data_base", "csp_comparatif"],
+            key="nav_demo_page",
+        )
+    elif section == "solidarite&citoyennete":
+        page = st.radio(
+            "Pages",
+            ["solidarite", "education", "sante", "participation_citoyenne", "data_base"],
+            key="nav_sol_page",
+        )
+    else:
+        page = "presentation"
+
+# =========================
+# RENDU PRINCIPAL (CENTRE)
+# =========================
+if section == "Description":
+    st.subheader("Description du projet")
+    st.markdown(
+        """
+Ce tableau de bord est organisé par grands domaines du dépôt.
+
+- **demographie** : analyses liées aux populations/ménages/mobilité
+- **solidarite&citoyennete** : analyses CAF, éducation, santé et participation citoyenne
+        """.strip()
+    )
+
+elif section == "demographie":
+    st.header("demographie")
+    if page != "csp_comparatif":
+        st.subheader(page)
+        st.info(f"Page `{page}` listée. Dis-moi quels graphiques tu veux ici et je les branche sur les CSV de `demographie/data_clean/{page}`.")
+    else:
+        st.subheader("Comparatif CSP")
+
+        target_a = pd.DataFrame()
+        target_b = pd.DataFrame()
+        sel_csp = list(CSP_MAP.values())
+        ent_a = ""
+        ent_b = ""
+        sel_annee = None
+        mode = "Comparatif Communes (Isère)"
+
+        has_csp_data = (not df_master.empty) and ("ANNEE" in df_master.columns)
+        if has_csp_data:
+            with st.sidebar:
+                st.markdown("---")
+                st.markdown("### Filtres (demographie)")
+                sel_annee = st.selectbox("📅 Choisir l'année", sorted(df_master["ANNEE"].dropna().unique(), reverse=True), key="csp_year")
+                mode = st.selectbox("🎯 Niveau d'analyse", ["Comparatif Communes (Isère)", "Comparatif Métropoles"], key="csp_mode")
             df_y = df_master[df_master["ANNEE"] == sel_annee]
 
             if mode == "Comparatif Communes (Isère)":
                 clist = sorted(METROPOLES_DEF["Grenoble"]["communes"])
-                ent_a = st.selectbox("Commune A (Référence)", clist, index=clist.index("Grenoble"))
-                ent_b = st.selectbox("Commune B (Comparaison)", clist, index=clist.index("Saint-Martin-d'Hères"))
+                with st.sidebar:
+                    ent_a = st.selectbox("Commune A (Référence)", clist, index=clist.index("Grenoble"), key="csp_ent_a_com")
+                    ent_b = st.selectbox("Commune B (Comparaison)", clist, index=clist.index("Saint-Martin-d'Hères"), key="csp_ent_b_com")
                 target_a = df_y[(df_y["DEP"] == "38") & (df_y["LIB_NORM"] == normalize(ent_a))]
                 target_b = df_y[(df_y["DEP"] == "38") & (df_y["LIB_NORM"] == normalize(ent_b))]
             else:
                 met_list = list(METROPOLES_DEF.keys())
-                ent_a = st.selectbox("Métropole A", met_list, index=0)
-                ent_b = st.selectbox("Métropole B", met_list, index=4)
+                with st.sidebar:
+                    ent_a = st.selectbox("Métropole A", met_list, index=0, key="csp_ent_a_met")
+                    ent_b = st.selectbox("Métropole B", met_list, index=4, key="csp_ent_b_met")
 
                 def get_agg(name):
                     m = METROPOLES_DEF[name]
@@ -249,201 +297,106 @@ with st.sidebar:
 
                 target_a, target_b = get_agg(ent_a), get_agg(ent_b)
 
-            st.markdown("---")
+            with st.sidebar:
+                sel_csp = st.multiselect("📂 Catégories CSP à afficher", options=list(CSP_MAP.values()), default=list(CSP_MAP.values()), key="csp_multi")
+            if sel_csp and (not target_a.empty) and (not target_b.empty):
+                val_a = target_a[sel_csp].sum(axis=1).values[0]
+                val_b = target_b[sel_csp].sum(axis=1).values[0]
+                st.title(f"📊 {ent_a} vs {ent_b} • {sel_annee}")
 
-            # LA LISTE DÉROULANTE MULTI-SÉLECTION
-            csp_options = list(CSP_MAP.values())
-            sel_csp = st.multiselect(
-                "📂 Catégories CSP à afficher",
-                options=csp_options,
-                default=csp_options,
-                placeholder="Sélectionnez les CSP..."
-            )
+                k1, k2, k3, k4 = st.columns(4)
+                k1.markdown(f"<div class='kpi-card'><small>ACTIFS {ent_a.upper()}</small><br><b>{int(val_a):,}</b></div>", unsafe_allow_html=True)
+                k2.markdown(f"<div class='kpi-card'><small>ACTIFS {ent_b.upper()}</small><br><b>{int(val_b):,}</b></div>", unsafe_allow_html=True)
+                k3.markdown(f"<div class='kpi-card' style='border-left-color:#e67e22'><small>ÉCART BRUT</small><br><b>{int(val_a - val_b):+,}</b></div>", unsafe_allow_html=True)
+                k4.markdown(f"<div class='kpi-card' style='border-left-color:#2ecc71'><small>INDICE DE MASSE</small><br><b>{(val_a / val_b) if val_b != 0 else 0:.2f}x</b></div>", unsafe_allow_html=True)
 
-            # Sécurité : Arrêter le script proprement si aucune CSP n'est cochée
-            if not sel_csp:
-                st.warning("⚠️ Veuillez sélectionner au moins une catégorie dans la liste pour afficher les graphiques.")
-                st.stop()
-        else:
-            st.caption("Analyse CSP désactivée.")
-    else:
-        st.caption("Fichiers Excel CSP absents dans ce dépôt : section CAF uniquement.")
+                col_left, col_right = st.columns(2)
+                with col_left:
+                    fig_bar = go.Figure()
+                    fig_bar.add_trace(go.Bar(x=sel_csp, y=target_a[sel_csp].iloc[0], name=ent_a, marker_color='#3498db'))
+                    fig_bar.add_trace(go.Bar(x=sel_csp, y=target_b[sel_csp].iloc[0], name=ent_b, marker_color='#e67e22'))
+                    fig_bar.update_layout(barmode='group', template='plotly_white', height=400)
+                    st.plotly_chart(fig_bar, use_container_width=True)
+                with col_right:
+                    pct_a = (target_a[sel_csp].iloc[0] / val_a * 100) if val_a != 0 else 0
+                    pct_b = (target_b[sel_csp].iloc[0] / val_b * 100) if val_b != 0 else 0
+                    fig_radar = go.Figure()
+                    fig_radar.add_trace(go.Scatterpolar(r=pct_a, theta=sel_csp, fill='toself', name=ent_a, line_color='#3498db'))
+                    fig_radar.add_trace(go.Scatterpolar(r=pct_b, theta=sel_csp, fill='toself', name=ent_b, line_color='#e67e22'))
+                    fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, max(max(pct_a), max(pct_b), 1) + 5])), template='plotly_white', height=400)
+                    st.plotly_chart(fig_radar, use_container_width=True)
 
-# =================================================================
-# 4. DASHBOARD ET VISUALISATIONS COMPARATIVES
-# =================================================================
-if show_csp and ("ANNEE" in df_master.columns) and (not target_a.empty) and (not target_b.empty):
-    val_a = target_a[sel_csp].sum(axis=1).values[0]
-    val_b = target_b[sel_csp].sum(axis=1).values[0]
-
-    st.title(f"📊 {ent_a} vs {ent_b} • {sel_annee}")
-    
-    # --- INDICATEURS (KPIs) ---
-    st.markdown("### Indicateurs Clés")
-    k1, k2, k3, k4 = st.columns(4)
-    with k1:
-        st.markdown(f"<div class='kpi-card'><small>ACTIFS {ent_a.upper()}</small><br><b>{int(val_a):,}</b></div>", unsafe_allow_html=True)
-    with k2:
-        st.markdown(f"<div class='kpi-card'><small>ACTIFS {ent_b.upper()}</small><br><b>{int(val_b):,}</b></div>", unsafe_allow_html=True)
-    with k3:
-        diff = val_a - val_b
-        st.markdown(f"<div class='kpi-card' style='border-left-color:#e67e22'><small>ÉCART BRUT</small><br><b>{int(diff):+,}</b></div>", unsafe_allow_html=True)
-    with k4:
-        ratio = (val_a / val_b) if val_b != 0 else 0
-        st.markdown(f"<div class='kpi-card' style='border-left-color:#2ecc71'><small>INDICE DE MASSE</small><br><b>{ratio:.2f}x</b></div>", unsafe_allow_html=True)
-
-    st.divider()
-
-    # --- GRAPHIQUES ---
-    col_left, col_right = st.columns(2)
-    
-    with col_left:
-        st.subheader("Distribution par CSP (Volume)")
-        fig_bar = go.Figure()
-        fig_bar.add_trace(go.Bar(x=sel_csp, y=target_a[sel_csp].iloc[0], name=ent_a, marker_color='#3498db'))
-        fig_bar.add_trace(go.Bar(x=sel_csp, y=target_b[sel_csp].iloc[0], name=ent_b, marker_color='#e67e22'))
-        fig_bar.update_layout(barmode='group', template='plotly_white', height=400, margin=dict(t=20))
-        st.plotly_chart(fig_bar, use_container_width=True)
-
-    with col_right:
-        st.subheader("Profil Social Relatif (%)")
-        pct_a = (target_a[sel_csp].iloc[0] / val_a * 100) if val_a != 0 else 0
-        pct_b = (target_b[sel_csp].iloc[0] / val_b * 100) if val_b != 0 else 0
-        
-        fig_radar = go.Figure()
-        fig_radar.add_trace(go.Scatterpolar(r=pct_a, theta=sel_csp, fill='toself', name=ent_a, line_color='#3498db'))
-        fig_radar.add_trace(go.Scatterpolar(r=pct_b, theta=sel_csp, fill='toself', name=ent_b, line_color='#e67e22'))
-        fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, max(max(pct_a), max(pct_b), 1)+5])), template='plotly_white', height=400)
-        st.plotly_chart(fig_radar, use_container_width=True)
-
-    # --- ANALYSE DE SPÉCIALISATION ---
-    st.subheader("🎯 Analyse de Spécialisation")
-    st.info("Ce graphique montre si une ville est plus 'spécialisée' qu'une autre. Un score au-dessus de 100% signifie que la catégorie est plus présente chez A que chez B.")
-    
-    spec_index = (pct_a / pct_b * 100).fillna(100)
-    fig_spec = px.bar(x=sel_csp, y=spec_index, labels={'x':'Catégorie', 'y':'Indice de spécificité (%)'},
-                      color=spec_index, color_continuous_scale='RdYlGn')
-    fig_spec.add_hline(y=100, line_dash="dash", line_color="black")
-    st.plotly_chart(fig_spec, use_container_width=True)
-
-    # --- TABLEAU DÉTAILLÉ ---
-    with st.expander("📄 Voir le tableau de données complet"):
-        st.write("Détails des effectifs agrégés (Emplois + Chômage) :")
-        table_df = pd.DataFrame({
-            "Catégorie CSP": sel_csp,
-            f"{ent_a} (Effectif)": target_a[sel_csp].iloc[0].values,
-            f"{ent_b} (Effectif)": target_b[sel_csp].iloc[0].values,
-            "Différence": target_a[sel_csp].iloc[0].values - target_b[sel_csp].iloc[0].values
-        })
-        st.table(table_df.style.format(precision=0))
-
-else:
-    if show_csp and ("ANNEE" in df_master.columns):
-        st.error("⚠️ Données non trouvées pour cette sélection. Veuillez vérifier les fichiers Excel.")
-
-# =================================================================
-# 5. RUBRIQUE ANALYSE CAF (FICHIER DÉJÀ NETTOYÉ)
-# =================================================================
-st.divider()
-st.header("Analyse CAF - 5 Métropoles")
-
-df_caf, caf_source = load_caf_data()
-
-if df_caf.empty:
-    st.warning(f"Le fichier CAF est introuvable ou vide : {caf_source}")
-else:
-    required_cols = {"Annee", "Agglomeration"}
-    if not required_cols.issubset(set(df_caf.columns)):
-        st.error("Le fichier CAF doit contenir au minimum les colonnes 'Annee' et 'Agglomeration'.")
-    else:
-        numeric_candidates = [
-            "Nombre foyers NDUR",
-            "Nombre personnes NDUR",
-            "Montant total NDUR",
-            "Nombre foyers NDURPAJE",
-            "Nombre personnes NDURPAJE",
-            "Montant total NDURPAJE",
-            "Nombre foyers NDURINS",
-            "Nombre personnes NDURINS",
-            "Montant total NDURINS",
-        ]
-        metric_options = [c for c in numeric_candidates if c in df_caf.columns]
-        if not metric_options:
-            st.error("Aucune colonne de mesure CAF attendue n'a été trouvée dans le fichier.")
-        else:
-            c1, c2 = st.columns(2)
-            with c1:
-                selected_metric = st.selectbox("Indicateur CAF", metric_options, index=0)
-            with c2:
-                years = sorted(df_caf["Annee"].dropna().unique())
-                selected_year = st.selectbox("Année CAF (focus)", years, index=len(years) - 1)
-
-            # Conversion robuste en numérique pour éviter les erreurs d'affichage
-            df_caf[selected_metric] = pd.to_numeric(df_caf[selected_metric], errors="coerce").fillna(0)
-
-            kpi1, kpi2, kpi3 = st.columns(3)
-            total_metric = df_caf[df_caf["Annee"] == selected_year][selected_metric].sum()
-            nb_communes = df_caf[df_caf["Annee"] == selected_year]["Nom_Commune"].nunique() if "Nom_Commune" in df_caf.columns else 0
-            nb_agglos = df_caf["Agglomeration"].nunique()
-            kpi1.metric(f"Total {selected_metric} ({selected_year})", f"{total_metric:,.0f}".replace(",", " "))
-            kpi2.metric("Communes couvertes (année sélectionnée)", f"{nb_communes:,}".replace(",", " "))
-            kpi3.metric("Agglomérations présentes", f"{nb_agglos}")
-
-            left, right = st.columns(2)
-            with left:
-                st.subheader("Volume par agglomération (année sélectionnée)")
-                df_year = (
-                    df_caf[df_caf["Annee"] == selected_year]
-                    .groupby("Agglomeration", as_index=False)[selected_metric]
-                    .sum()
-                    .sort_values(selected_metric, ascending=False)
+                st.subheader("🎯 Analyse de Spécialisation")
+                st.info("Un indice supérieur à 100% signifie que la catégorie est proportionnellement plus présente chez A que chez B.")
+                spec_index = (pct_a / pct_b * 100).fillna(100)
+                fig_spec = px.bar(
+                    x=sel_csp,
+                    y=spec_index,
+                    labels={"x": "Catégorie", "y": "Indice de spécificité (%)"},
+                    color=spec_index,
+                    color_continuous_scale="RdYlGn",
                 )
-                fig_bar = px.bar(
-                    df_year,
-                    x="Agglomeration",
-                    y=selected_metric,
-                    color="Agglomeration",
-                    title=f"{selected_metric} en {selected_year}",
-                )
-                fig_bar.update_layout(showlegend=False)
-                st.plotly_chart(fig_bar, use_container_width=True)
+                fig_spec.add_hline(y=100, line_dash="dash", line_color="black")
+                st.plotly_chart(fig_spec, use_container_width=True)
 
-            with right:
-                st.subheader("Evolution temporelle par agglomération")
-                df_evo = (
-                    df_caf.groupby(["Annee", "Agglomeration"], as_index=False)[selected_metric]
-                    .sum()
-                    .sort_values("Annee")
-                )
-                fig_line = px.line(
-                    df_evo,
-                    x="Annee",
-                    y=selected_metric,
-                    color="Agglomeration",
-                    markers=True,
-                    title=f"Evolution de {selected_metric}",
-                )
-                st.plotly_chart(fig_line, use_container_width=True)
-
-            st.subheader("Repartition du quotient familial (année sélectionnée)")
-            if "Quotient familial" in df_caf.columns and "Nombre foyers NDUR" in df_caf.columns:
-                df_caf["Nombre foyers NDUR"] = pd.to_numeric(df_caf["Nombre foyers NDUR"], errors="coerce").fillna(0)
-                df_qf = (
-                    df_caf[df_caf["Annee"] == selected_year]
-                    .groupby(["Agglomeration", "Quotient familial"], as_index=False)["Nombre foyers NDUR"]
-                    .sum()
-                )
-                fig_qf = px.bar(
-                    df_qf,
-                    x="Agglomeration",
-                    y="Nombre foyers NDUR",
-                    color="Quotient familial",
-                    barmode="stack",
-                    title=f"Structure des foyers NDUR par tranche de QF ({selected_year})",
-                )
-                st.plotly_chart(fig_qf, use_container_width=True)
+                with st.expander("📄 Voir le tableau de données complet"):
+                    table_df = pd.DataFrame({
+                        "Catégorie CSP": sel_csp,
+                        f"{ent_a} (Effectif)": target_a[sel_csp].iloc[0].values,
+                        f"{ent_b} (Effectif)": target_b[sel_csp].iloc[0].values,
+                        "Différence": target_a[sel_csp].iloc[0].values - target_b[sel_csp].iloc[0].values,
+                    })
+                    st.table(table_df.style.format(precision=0))
             else:
-                st.info("Colonnes 'Quotient familial' et/ou 'Nombre foyers NDUR' absentes : graphique non disponible.")
+                st.warning("Sélectionne des catégories CSP valides pour afficher les graphiques.")
+        else:
+            st.warning("Données CSP non trouvées dans le dépôt.")
 
-            with st.expander("Voir un extrait des donnees CAF"):
-                st.dataframe(df_caf.head(30), use_container_width=True)
+else:
+    st.header("solidarite&citoyennete")
+    if page != "solidarite":
+        st.subheader(page)
+        st.info(f"Page `{page}` listée. Dis-moi quels graphiques tu veux ici et je les branche sur les fichiers de `solidarite&citoyennete/data_clean/{page}`.")
+    else:
+        st.subheader("solidarite — CAF")
+        st.header("Analyse CAF - 5 Métropoles")
+        df_caf, caf_source = load_caf_data()
+        if df_caf.empty:
+            st.warning(f"Le fichier CAF est introuvable ou vide : {caf_source}")
+        else:
+            required_cols = {"Annee", "Agglomeration"}
+            if not required_cols.issubset(set(df_caf.columns)):
+                st.error("Le fichier CAF doit contenir au minimum les colonnes 'Annee' et 'Agglomeration'.")
+            else:
+                numeric_candidates = [
+                    "Nombre foyers NDUR", "Nombre personnes NDUR", "Montant total NDUR",
+                    "Nombre foyers NDURPAJE", "Nombre personnes NDURPAJE", "Montant total NDURPAJE",
+                    "Nombre foyers NDURINS", "Nombre personnes NDURINS", "Montant total NDURINS",
+                ]
+                metric_options = [c for c in numeric_candidates if c in df_caf.columns]
+                if not metric_options:
+                    st.error("Aucune colonne de mesure CAF attendue n'a été trouvée dans le fichier.")
+                else:
+                    with st.sidebar:
+                        st.markdown("---")
+                        st.markdown("### Filtres (solidarite)")
+                        selected_metric = st.selectbox("Indicateur CAF", metric_options, index=0, key="caf_metric")
+                        years = sorted(df_caf["Annee"].dropna().unique())
+                        selected_year = st.selectbox("Année CAF (focus)", years, index=len(years) - 1, key="caf_year")
+
+                    df_caf[selected_metric] = pd.to_numeric(df_caf[selected_metric], errors="coerce").fillna(0)
+                    kpi1, kpi2, kpi3 = st.columns(3)
+                    total_metric = df_caf[df_caf["Annee"] == selected_year][selected_metric].sum()
+                    nb_communes = df_caf[df_caf["Annee"] == selected_year]["Nom_Commune"].nunique() if "Nom_Commune" in df_caf.columns else 0
+                    nb_agglos = df_caf["Agglomeration"].nunique()
+                    kpi1.metric(f"Total {selected_metric} ({selected_year})", f"{total_metric:,.0f}".replace(",", " "))
+                    kpi2.metric("Communes couvertes (année sélectionnée)", f"{nb_communes:,}".replace(",", " "))
+                    kpi3.metric("Agglomérations présentes", f"{nb_agglos}")
+
+                    left, right = st.columns(2)
+                    with left:
+                        df_year = df_caf[df_caf["Annee"] == selected_year].groupby("Agglomeration", as_index=False)[selected_metric].sum().sort_values(selected_metric, ascending=False)
+                        st.plotly_chart(px.bar(df_year, x="Agglomeration", y=selected_metric, color="Agglomeration", title=f"{selected_metric} en {selected_year}").update_layout(showlegend=False), use_container_width=True)
+                    with right:
+                        df_evo = df_caf.groupby(["Annee", "Agglomeration"], as_index=False)[selected_metric].sum().sort_values("Annee")
+                        st.plotly_chart(px.line(df_evo, x="Annee", y=selected_metric, color="Agglomeration", markers=True, title=f"Evolution de {selected_metric}"), use_container_width=True)
