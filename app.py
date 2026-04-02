@@ -130,8 +130,18 @@ COMMUNE_VERS_METRO = {c: m for m, lst in COMMUNES.items() for c in lst}
 # Seuls Grenoble et Rennes ont une ligne EPCI agrégée dans ce fichier INSEE.
 # Rouen, Saint-Étienne, Montpellier n'y ont que des lignes par commune.
 NOM_EPCI = {
-    "Grenoble": "EPCI : Grenoble-Alpes-Métropole (200040715)",
-    "Rennes":   "EPCI : Rennes Métropole (243500139)",
+    "Grenoble":      "EPCI : Grenoble-Alpes-Métropole (200040715)",
+    "Rennes":        "EPCI : Rennes Métropole (243500139)",
+    "Rouen":         "EPCI : Rouen Normandie (200023414)",
+    "Saint-Étienne": "EPCI : Saint-Etienne Métropole (244200770)",
+    "Montpellier":   "EPCI : Montpellier Méditerranée Métropole (243400017)",
+}
+DR24_MAP = {
+    "Grenoble": 38,
+    "Rennes": 35,
+    "Rouen": 76,
+    "Saint-Étienne": 42,
+    "Montpellier": 34,
 }
 
 COULEURS = {
@@ -474,106 +484,389 @@ if vue == "Démographie":
     ])
 
 # ==============================================================================
-# ONGLET 1 — POPULATION GLOBALE
+# ONGLET 1 — POPULATION GLOBALE  (version enrichie)
 # ==============================================================================
 if vue == "Démographie":
     with tab1:
-        st.markdown('<p class="section-header">Population — Vue d\'ensemble</p>', unsafe_allow_html=True)
+
+        # ── SOURCE NOTE ────────────────────────────────────────────────────
         st.markdown(
-            '<p class="source-note">Source : <a href="https://www.insee.fr/fr/statistiques/1405599" target="_blank">'
-            'INSEE — Données générales comparatives (RP 2022)</a> — '
-            'Lignes EPCI disponibles pour Grenoble & Rennes uniquement ; '
-            'les autres métropoles sont calculées par agrégation de leurs communes.</p>',
+            '<p class="source-note">Source : '
+            '<a href="https://www.insee.fr/fr/statistiques/1405599" target="_blank">'
+            'INSEE — Données générales comparatives & Population par tranche d\'âge (RP 2011–2022)</a> '
+            '— Données EPCI disponibles pour les 5 métropoles.</p>',
             unsafe_allow_html=True,
         )
 
-    st.markdown("**🔧 Sélectionnez les métropoles à comparer**")
-    sel = st.multiselect("Métropoles", TOUTES, default=["Grenoble","Rennes"],
-                         key="sel_t1", label_visibility="collapsed")
-    if not sel:
-        st.warning("Sélectionnez au moins une métropole.")
-        st.stop()
-    st.markdown("---")
+        # ── FILTRE SIDEBAR ─────────────────────────────────────────────────
+        with st.sidebar:
+            st.markdown("### 🏙️ Population globale")
+            sel = st.multiselect(
+                "Métropoles à comparer", TOUTES, default=TOUTES, key="sel_t1"
+            )
+        if not sel:
+            st.warning("Sélectionnez au moins une métropole.")
+            st.stop()
 
-    # KPIs
-    kpi_cols = st.columns(len(sel))
-    for i, m in enumerate(sel):
-        pop = get_val_gen(m, "population_2022")
-        tx  = get_val_gen(m, "tx_var_population_2016_2022")
-        with kpi_cols[i]:
-            delta = f"{tx:+.2f} %/an (2016–22)" if not np.isnan(tx) else None
-            st.metric(f"🌿 {m}", fmt(pop), delta=delta)
+        # helpers locaux
+        def epci_val(metro, col):
+            """Lit directement la ligne EPCI dans df_gen."""
+            if df_gen is None:
+                return np.nan
+            nom = NOM_EPCI.get(metro)
+            if not nom:
+                return np.nan
+            rows = df_gen[df_gen["territoire"] == nom]
+            if rows.empty:
+                return np.nan
+            v = rows.iloc[0].get(col, np.nan)
+            return float(v) if pd.notna(v) else np.nan
 
-    st.markdown("---")
-    col_a, col_b = st.columns(2)
+        def pop_from_age(metro, annee):
+            """Population totale depuis le fichier tranches d'âge."""
+            if df_pop is None:
+                return np.nan
+            dr = DR24_MAP.get(metro)
+            sub = df_pop[(df_pop["DR24"] == dr) & (df_pop["annee"] == annee)]
+            age_cols = [c for c in sub.columns if "ageq_rec" in c]
+            if sub.empty or not age_cols:
+                return np.nan
+            return float(sub[age_cols].sum().sum())
 
-    with col_a:
-        st.markdown("##### Population totale 2022")
-        data = [{"Métropole": m, "Population": get_val_gen(m,"population_2022")} for m in sel]
-        df_p = pd.DataFrame(data).dropna()
-        if not df_p.empty:
-            fig = px.bar(df_p, x="Métropole", y="Population",
-                         color="Métropole", color_discrete_map=COULEURS, text_auto=".3s")
-            fig.update_traces(marker_line_width=0, textfont_size=11)
-            fig.update_layout(showlegend=False, yaxis_title="Habitants")
-            st.plotly_chart(style(fig), use_container_width=True)
+        # ── BLOC 0 : TITRE + KPIs ─────────────────────────────────────────
+        st.markdown(
+            "<h2 style='color:#1C3A27;font-size:1.4rem;margin:0 0 4px'>🏙️ Population globale</h2>"
+            "<p style='color:#5A8A6A;font-size:0.82rem;margin-bottom:18px'>"
+            "Vue d'ensemble comparative des 5 métropoles — Recensements INSEE RP 2011 · 2016 · 2022</p>",
+            unsafe_allow_html=True,
+        )
 
-    with col_b:
-        st.markdown("##### Décomposition de la variation démographique (%/an, 2016–2022)")
-        rows_var = []
+        kpi_cols = st.columns(len(sel))
+        for i, m in enumerate(sel):
+            pop22  = epci_val(m, "population_2022")
+            tx_var = epci_val(m, "tx_var_population_2016_2022")
+            nais   = epci_val(m, "naissances_2024")
+            deces  = epci_val(m, "deces_2024")
+            with kpi_cols[i]:
+                delta_str = f"{tx_var:+.2f} %/an" if not np.isnan(tx_var) else None
+                st.metric(
+                    label=f"🌿 {m}",
+                    value=fmt(pop22),
+                    delta=delta_str,
+                    help=f"Naissances 2024 : {fmt(nais)} · Décès 2024 : {fmt(deces)}",
+                )
+
+        st.markdown("---")
+
+        # ── BLOC 1 : POPULATION & DENSITÉ ─────────────────────────────────
+        st.markdown("#### 📊 Population et densité territoriale")
+        r1c1, r1c2 = st.columns(2)
+
+        with r1c1:
+            st.markdown("##### Population totale 2022 (habitants)")
+            data_pop = [
+                {"Métropole": m, "Population": epci_val(m, "population_2022")}
+                for m in sel
+            ]
+            df_pop22 = pd.DataFrame(data_pop).dropna().sort_values("Population", ascending=False)
+            if not df_pop22.empty:
+                fig_pop = go.Figure()
+                for _, row_p in df_pop22.iterrows():
+                    fig_pop.add_trace(go.Bar(
+                        x=[row_p["Métropole"]],
+                        y=[row_p["Population"]],
+                        name=row_p["Métropole"],
+                        marker_color=COULEURS.get(row_p["Métropole"], "#888"),
+                        text=[f"{int(row_p['Population']):,}".replace(",", "\u202f")],
+                        textposition="outside",
+                        showlegend=False,
+                    ))
+                fig_pop.update_layout(
+                    showlegend=False, yaxis_title="Habitants",
+                    yaxis=dict(tickformat=",d"),
+                    uniformtext_minsize=10, uniformtext_mode="hide",
+                    height=370,
+                )
+                st.plotly_chart(style(fig_pop), use_container_width=True)
+
+        with r1c2:
+            st.markdown("##### Densité (hab/km²) vs Superficie (km²)")
+            data_dens = []
+            for m in sel:
+                d = epci_val(m, "densite_2022")
+                s = epci_val(m, "superficie_km2_2022")
+                p = epci_val(m, "population_2022")
+                if not any(np.isnan(v) for v in [d, s, p]):
+                    data_dens.append({"Métropole": m, "Densité (hab/km²)": d,
+                                      "Superficie (km²)": s, "Population": p})
+            df_dens = pd.DataFrame(data_dens)
+            if not df_dens.empty:
+                fig_dens = px.scatter(
+                    df_dens, x="Superficie (km²)", y="Densité (hab/km²)",
+                    size="Population", color="Métropole",
+                    color_discrete_map=COULEURS, text="Métropole",
+                    size_max=55, height=370,
+                )
+                fig_dens.update_traces(textposition="top center", textfont_size=11)
+                fig_dens.update_layout(showlegend=False)
+                st.plotly_chart(style(fig_dens), use_container_width=True)
+
+        st.markdown("---")
+
+        # ── BLOC 2 : ÉVOLUTION TEMPORELLE ─────────────────────────────────
+        st.markdown("#### 📈 Évolution de la population 2011 → 2022")
+        r2c1, r2c2 = st.columns([3, 2])
+
+        with r2c1:
+            st.markdown("##### Trajectoire démographique (données RP tranche d'âge)")
+            if df_pop is not None:
+                rows_evol = []
+                for m in sel:
+                    for an in [2011, 2016, 2022]:
+                        p = pop_from_age(m, an)
+                        if not np.isnan(p):
+                            rows_evol.append({"Métropole": m, "Année": an, "Population": p})
+                df_evol = pd.DataFrame(rows_evol)
+                if not df_evol.empty:
+                    # Base 100 en 2011 pour comparer les trajectoires
+                    base = df_evol[df_evol["Année"] == 2011].set_index("Métropole")["Population"]
+                    df_evol["Indice (base 100 = 2011)"] = df_evol.apply(
+                        lambda r: r["Population"] / base.get(r["Métropole"], np.nan) * 100, axis=1
+                    )
+                    fig_evol = go.Figure()
+                    for m in sel:
+                        sub_e = df_evol[df_evol["Métropole"] == m].sort_values("Année")
+                        fig_evol.add_trace(go.Scatter(
+                            x=sub_e["Année"], y=sub_e["Indice (base 100 = 2011)"],
+                            name=m, mode="lines+markers",
+                            line=dict(color=COULEURS.get(m, "#888"), width=2.5),
+                            marker=dict(size=9),
+                            hovertemplate="%{fullData.name}<br>%{x} : %{y:.1f}<br>"
+                                          f"Pop : %{{customdata:,.0f}}<extra></extra>",
+                            customdata=sub_e["Population"],
+                        ))
+                    fig_evol.add_hline(y=100, line_dash="dot", line_color="#AAAAAA",
+                                       annotation_text="Base 2011", annotation_position="left")
+                    fig_evol.update_layout(
+                        yaxis_title="Indice (base 100 = 2011)",
+                        xaxis=dict(tickvals=[2011, 2016, 2022]),
+                        legend=dict(orientation="h", y=1.12),
+                        height=370,
+                    )
+                    st.plotly_chart(style(fig_evol), use_container_width=True)
+            else:
+                st.info("Fichier Population_tranche_age_clean.csv non chargé.")
+
+        with r2c2:
+            st.markdown("##### Croissance 2011→2022 (gain net, habitants)")
+            rows_gain = []
+            for m in sel:
+                p11 = pop_from_age(m, 2011)
+                p22 = pop_from_age(m, 2022)
+                if not (np.isnan(p11) or np.isnan(p22)):
+                    rows_gain.append({
+                        "Métropole": m,
+                        "Gain net": p22 - p11,
+                        "Croissance (%)": (p22 - p11) / p11 * 100,
+                    })
+            df_gain = pd.DataFrame(rows_gain).sort_values("Gain net", ascending=True)
+            if not df_gain.empty:
+                colors_gain = [
+                    "#2D6A4F" if v >= 0 else "#C45B2A" for v in df_gain["Gain net"]
+                ]
+                fig_gain = go.Figure(go.Bar(
+                    x=df_gain["Gain net"],
+                    y=df_gain["Métropole"],
+                    orientation="h",
+                    marker_color=colors_gain,
+                    text=[
+                        f"{int(g):+,} ({c:+.1f}%)".replace(",", "\u202f")
+                        for g, c in zip(df_gain["Gain net"], df_gain["Croissance (%)"])
+                    ],
+                    textposition="outside",
+                ))
+                fig_gain.add_vline(x=0, line_dash="dot", line_color="#999")
+                fig_gain.update_layout(
+                    xaxis_title="Habitants gagnés (2011→2022)",
+                    showlegend=False, height=370,
+                )
+                st.plotly_chart(style(fig_gain), use_container_width=True)
+
+        st.markdown("---")
+
+        # ── BLOC 3 : DYNAMIQUES NATURELLE & MIGRATOIRE ────────────────────
+        st.markdown("#### ⚖️ Composantes de la variation démographique")
+        r3c1, r3c2 = st.columns(2)
+
+        with r3c1:
+            st.markdown("##### Soldes naturel et migratoire (%/an, 2016–2022)")
+            rows_comp = []
+            for m in sel:
+                sn  = epci_val(m, "tx_solde_naturel")
+                sm  = epci_val(m, "tx_solde_migratoire")
+                tot = epci_val(m, "tx_var_population_2016_2022")
+                if not all(np.isnan(v) for v in [sn, sm, tot]):
+                    rows_comp.append({
+                        "Métropole": m,
+                        "Solde naturel": sn,
+                        "Solde migratoire": sm,
+                        "Variation totale": tot,
+                    })
+            if rows_comp:
+                df_comp = pd.DataFrame(rows_comp).melt(
+                    id_vars="Métropole", var_name="Composante", value_name="Taux (%/an)"
+                ).dropna()
+                COLOR_COMP = {
+                    "Solde naturel":     "#74C69D",
+                    "Solde migratoire":  "#1A6FA3",
+                    "Variation totale":  "#2D6A4F",
+                }
+                fig_comp = px.bar(
+                    df_comp, x="Métropole", y="Taux (%/an)", color="Composante",
+                    barmode="group", color_discrete_map=COLOR_COMP,
+                    height=360,
+                )
+                fig_comp.add_hline(y=0, line_dash="dot", line_color="#AAAAAA")
+                fig_comp.update_layout(legend=dict(orientation="h", y=1.12))
+                st.plotly_chart(style(fig_comp), use_container_width=True)
+
+        with r3c2:
+            st.markdown("##### Naissances & Décès 2024 (radar comparatif)")
+            rows_vit = []
+            for m in sel:
+                nais = epci_val(m, "naissances_2024")
+                decs = epci_val(m, "deces_2024")
+                pop  = epci_val(m, "population_2022")
+                if not any(np.isnan(v) for v in [nais, decs, pop]):
+                    rows_vit.append({
+                        "Métropole": m,
+                        "Naissances/1 000 hab": nais / pop * 1000,
+                        "Décès/1 000 hab":       decs / pop * 1000,
+                        "Accroissement naturel": (nais - decs) / pop * 1000,
+                    })
+            df_vit = pd.DataFrame(rows_vit)
+            if not df_vit.empty:
+                fig_vit = go.Figure()
+                categories = ["Naissances/1 000 hab", "Décès/1 000 hab", "Accroissement naturel"]
+                for _, row_v in df_vit.iterrows():
+                    fig_vit.add_trace(go.Scatterpolar(
+                        r=[row_v[c] for c in categories] + [row_v[categories[0]]],
+                        theta=categories + [categories[0]],
+                        fill="toself", name=row_v["Métropole"],
+                        line_color=COULEURS.get(row_v["Métropole"], "#888"),
+                        opacity=0.75,
+                    ))
+                fig_vit.update_layout(
+                    polar=dict(radialaxis=dict(visible=True)),
+                    legend=dict(orientation="h", y=-0.15),
+                    height=360,
+                )
+                st.plotly_chart(style(fig_vit), use_container_width=True)
+
+        st.markdown("---")
+
+        # ── BLOC 4 : REVENUS & PAUVRETÉ & LOGEMENT ────────────────────────
+        st.markdown("#### 💶 Revenus, pauvreté & logement")
+        r4c1, r4c2, r4c3 = st.columns(3)
+
+        with r4c1:
+            st.markdown("##### Revenu médian 2021 (€/an)")
+            data_rev = [
+                {"Métropole": m, "Revenu médian (€)": epci_val(m, "revenu_median_2021")}
+                for m in sel
+            ]
+            df_rev = pd.DataFrame(data_rev).dropna().sort_values("Revenu médian (€)")
+            if not df_rev.empty:
+                fig_rev = px.bar(
+                    df_rev, x="Revenu médian (€)", y="Métropole", orientation="h",
+                    color="Métropole", color_discrete_map=COULEURS,
+                    text_auto=".0f", height=300,
+                )
+                fig_rev.update_layout(showlegend=False, xaxis_title="€/an")
+                fig_rev.update_traces(marker_line_width=0)
+                st.plotly_chart(style(fig_rev), use_container_width=True)
+
+        with r4c2:
+            st.markdown("##### Taux de pauvreté 2021 (%)")
+            data_pauv = [
+                {"Métropole": m, "Taux de pauvreté (%)": epci_val(m, "tx_pauvrete_2021")}
+                for m in sel
+            ]
+            df_pauv = pd.DataFrame(data_pauv).dropna().sort_values("Taux de pauvreté (%)", ascending=False)
+            if not df_pauv.empty:
+                colors_pauv = [
+                    "#C45B2A" if v > 15 else "#D4A017" if v > 12 else "#2D6A4F"
+                    for v in df_pauv["Taux de pauvreté (%)"]
+                ]
+                fig_pauv = go.Figure(go.Bar(
+                    y=df_pauv["Métropole"], x=df_pauv["Taux de pauvreté (%)"],
+                    orientation="h", marker_color=colors_pauv,
+                    text=[f"{v:.1f}%" for v in df_pauv["Taux de pauvreté (%)"]],
+                    textposition="outside",
+                ))
+                fig_pauv.update_layout(
+                    xaxis_title="%", showlegend=False, height=300,
+                )
+                st.plotly_chart(style(fig_pauv), use_container_width=True)
+
+        with r4c3:
+            st.markdown("##### Logements : vacance & propriétaires (%)")
+            rows_log = []
+            for m in sel:
+                vac  = epci_val(m, "part_logements_vacants")
+                prop = epci_val(m, "part_proprietaires")
+                rp   = epci_val(m, "part_res_principales")
+                if not all(np.isnan(v) for v in [vac, prop]):
+                    rows_log.append({
+                        "Métropole": m,
+                        "Logements vacants (%)": vac,
+                        "Propriétaires (%)": prop,
+                        "Rés. principales (%)": rp,
+                    })
+            df_log = pd.DataFrame(rows_log)
+            if not df_log.empty:
+                df_log_m = df_log.melt(
+                    id_vars="Métropole", var_name="Indicateur", value_name="Part (%)"
+                ).dropna()
+                fig_log = px.bar(
+                    df_log_m, x="Métropole", y="Part (%)", color="Indicateur",
+                    barmode="group", height=300,
+                    color_discrete_sequence=["#C45B2A", "#2D6A4F", "#1A6FA3"],
+                )
+                fig_log.update_layout(legend=dict(orientation="h", y=1.15, font_size=10))
+                st.plotly_chart(style(fig_log), use_container_width=True)
+
+        st.markdown("---")
+
+        # ── BLOC 5 : TABLEAU RÉCAPITULATIF COMPLET ────────────────────────
+        st.markdown("#### 📋 Tableau récapitulatif — indicateurs clés")
+        lignes_tab = []
         for m in sel:
-            row = get_epci_row(m)  # disponible Grenoble + Rennes seulement
-            if row is not None:
-                rows_var.append({
-                    "Métropole":       m,
-                    "Variation totale":  row.get("tx_var_population_2016_2022", np.nan),
-                    "Solde naturel":     row.get("tx_solde_naturel", np.nan),
-                    "Solde migratoire":  row.get("tx_solde_migratoire", np.nan),
-                })
-        if rows_var:
-            df_var = pd.DataFrame(rows_var).melt(
-                id_vars="Métropole", var_name="Composante", value_name="Taux (%/an)").dropna()
-            fig2 = px.bar(df_var, x="Taux (%/an)", y="Métropole", color="Composante",
-                          orientation="h", barmode="group",
-                          color_discrete_sequence=["#2D6A4F","#74C69D","#B7E4C7"])
-            fig2.add_vline(x=0, line_dash="dot", line_color="#AAAAAA")
-            fig2.update_layout(legend=dict(orientation="h", y=1.12))
-            st.plotly_chart(style(fig2), use_container_width=True)
-        else:
-            st.info("Les taux de variation détaillés (solde naturel / migratoire) sont disponibles uniquement pour Grenoble et Rennes dans le fichier source INSEE.")
-
-    st.markdown("---")
-    col_c, col_d = st.columns(2)
-
-    with col_c:
-        st.markdown("##### Densité de population (hab/km²) en 2022")
-        data_d = [{"Métropole": m, "Densité": get_val_gen(m,"densite_2022")} for m in sel]
-        df_d = pd.DataFrame(data_d).dropna().sort_values("Densité")
-        if not df_d.empty:
-            fig3 = px.bar(df_d, x="Densité", y="Métropole", orientation="h",
-                          color="Métropole", color_discrete_map=COULEURS, text_auto=".0f")
-            fig3.update_layout(showlegend=False, xaxis_title="hab/km²", yaxis_title="")
-            fig3.update_traces(marker_line_width=0)
-            st.plotly_chart(style(fig3), use_container_width=True)
-
-    with col_d:
-        st.markdown("##### Tableau récapitulatif")
-        lignes = []
-        for m in sel:
-            tx_v = get_val_gen(m,"tx_var_population_2016_2022")
-            tc   = get_val_gen(m,"tx_chomage_15_64")
-            rev  = get_val_gen(m,"revenu_median_2021")
-            lignes.append({
-                "Métropole":          m,
-                "Population 2022":    fmt(get_val_gen(m,"population_2022")),
-                "Densité (hab/km²)":  fmt(get_val_gen(m,"densite_2022")),
-                "Var. pop./an":       f"{tx_v:+.2f}%" if not np.isnan(tx_v) else "N/D",
-                "Taux chômage":       f"{tc:.1f}%" if not np.isnan(tc) else "N/D",
-                "Revenu médian":      fmt(rev, " €"),
-                "Nb. ménages":        fmt(get_val_gen(m,"nb_menages_2022")),
+            tx_v  = epci_val(m, "tx_var_population_2016_2022")
+            tc    = epci_val(m, "tx_chomage_15_64")
+            rev   = epci_val(m, "revenu_median_2021")
+            pauv  = epci_val(m, "tx_pauvrete_2021")
+            dens  = epci_val(m, "densite_2022")
+            p11   = pop_from_age(m, 2011)
+            p22_t = pop_from_age(m, 2022)
+            croiss = f"+{(p22_t-p11)/p11*100:.1f}%" if not (np.isnan(p11) or np.isnan(p22_t)) else "N/D"
+            lignes_tab.append({
+                "Métropole":            m,
+                "Population 2022":      fmt(epci_val(m,"population_2022")),
+                "Densité (hab/km²)":    fmt(dens),
+                "Croissance 2011–22":   croiss,
+                "Var. pop./an":         f"{tx_v:+.2f}%" if not np.isnan(tx_v) else "N/D",
+                "Solde naturel/an":     f"{epci_val(m,'tx_solde_naturel'):+.2f}%" if not np.isnan(epci_val(m,'tx_solde_naturel')) else "N/D",
+                "Solde migrat./an":     f"{epci_val(m,'tx_solde_migratoire'):+.2f}%" if not np.isnan(epci_val(m,'tx_solde_migratoire')) else "N/D",
+                "Taux chômage":         f"{tc:.1f}%" if not np.isnan(tc) else "N/D",
+                "Revenu médian":        fmt(rev, " €"),
+                "Taux pauvreté":        f"{pauv:.1f}%" if not np.isnan(pauv) else "N/D",
+                "Nb. ménages":          fmt(epci_val(m,"nb_menages_2022")),
+                "Emploi total":         fmt(epci_val(m,"emploi_total_2022")),
             })
-        st.dataframe(pd.DataFrame(lignes).set_index("Métropole"), use_container_width=True)
-        st.caption("N/D : indicateur non disponible au niveau EPCI pour cette métropole dans le fichier source INSEE.")
+        df_tab = pd.DataFrame(lignes_tab).set_index("Métropole")
+        st.dataframe(df_tab, use_container_width=True)
+        st.caption("Sources : INSEE — Données générales comparatives (RP 2022) & Population par tranche d'âge (RP 2011–2022).")
 
 # ==============================================================================
 # ONGLET 2 — STRUCTURE PAR ÂGE
