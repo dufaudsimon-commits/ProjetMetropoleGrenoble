@@ -881,98 +881,98 @@ if vue == "Démographie":
             unsafe_allow_html=True,
         )
 
-    if df_pop is None:
-        st.info("📂 Fichier `Population_tranche_age_clean.csv` introuvable dans `Donnees_clean/`.")
-    else:
-        annees = sorted(df_pop["annee"].dropna().unique().astype(int).tolist())
-        ch = cols_h(df_pop)
-        cf = cols_f(df_pop)
-
-        # FILTRES
-        st.markdown("**🔧 Filtres**")
-        f1, f2, f3 = st.columns(3)
-        with f1:
-            metro_age = st.selectbox("Métropole", TOUTES, key="metro_age")
-        with f2:
-            annee_age = st.selectbox("Année", annees, index=len(annees)-1, key="an_age")
-        with f3:
-            mode_cc = st.checkbox("Comparer deux communes", key="cc_age")
-        if mode_cc:
-            cmns = sorted(COMMUNES.get(metro_age, []))
-            fcc1, fcc2 = st.columns(2)
-            with fcc1:
-                comm_a = st.selectbox("Commune A", cmns, key="ca")
-            with fcc2:
-                comm_b = st.selectbox("Commune B", cmns, index=min(1,len(cmns)-1), key="cb")
-        st.markdown("---")
-
-        df_m = df_pop[(df_pop["metropole"] == metro_age) & (df_pop["annee"] == annee_age)]
-
-        if not mode_cc:
-            st.markdown(f"##### Pyramide des âges — {metro_age} ({annee_age})")
-            if ch and cf and not df_m.empty:
-                labels = [label_col(c) for c in ch]
-                fig_p = go.Figure()
-                fig_p.add_trace(go.Bar(
-                    y=labels, x=[-df_m[c].sum() for c in ch], name="Hommes",
-                    orientation="h", marker_color="#2D6A4F"))
-                fig_p.add_trace(go.Bar(
-                    y=labels, x=[df_m[c].sum() for c in cf], name="Femmes",
-                    orientation="h", marker_color="#95D5B2"))
-                fig_p.update_layout(barmode="relative", bargap=0.06,
-                                    legend=dict(orientation="h", y=1.08),
-                                    yaxis_title="Tranche d'âge (ans)",
-                                    xaxis_title="Population")
-                st.plotly_chart(style(fig_p, 40), use_container_width=True)
-            else:
-                st.info("Données insuffisantes pour la pyramide.")
+        if df_pop is None:
+            st.info("📂 Fichier `Population_tranche_age_clean.csv` introuvable dans `Donnees_clean/`.")
         else:
-            st.markdown(f"##### {comm_a} vs {comm_b} ({annee_age})")
-            df_ca = df_pop[(df_pop["LIBELLE"]==comm_a) & (df_pop["annee"]==annee_age)]
-            df_cb = df_pop[(df_pop["LIBELLE"]==comm_b) & (df_pop["annee"]==annee_age)]
-            if not df_ca.empty and not df_cb.empty and ch and cf:
-                rows_c = [{"Tranche": label_col(h),
-                           comm_a: df_ca[h].sum() + df_ca[f].sum(),
-                           comm_b: df_cb[h].sum() + df_cb[f].sum()}
-                          for h, f in zip(ch, cf)]
-                df_cc = pd.melt(pd.DataFrame(rows_c), id_vars="Tranche",
-                                var_name="Commune", value_name="Population")
-                fig_cc = px.bar(df_cc, x="Tranche", y="Population", color="Commune",
-                                barmode="group", color_discrete_sequence=["#2D6A4F","#95D5B2"])
-                fig_cc.update_layout(xaxis_tickangle=-40, legend=dict(orientation="h", y=1.08))
-                st.plotly_chart(style(fig_cc), use_container_width=True)
+            annees = sorted(df_pop["annee"].dropna().unique().astype(int).tolist())
+            ch = cols_h(df_pop)
+            cf = cols_f(df_pop)
+
+            # FILTRES
+            st.markdown("**🔧 Filtres**")
+            f1, f2, f3 = st.columns(3)
+            with f1:
+                metro_age = st.selectbox("Métropole", TOUTES, key="metro_age")
+            with f2:
+                annee_age = st.selectbox("Année", annees, index=len(annees)-1, key="an_age")
+            with f3:
+                mode_cc = st.checkbox("Comparer deux communes", key="cc_age")
+            if mode_cc:
+                cmns = sorted(COMMUNES.get(metro_age, []))
+                fcc1, fcc2 = st.columns(2)
+                with fcc1:
+                    comm_a = st.selectbox("Commune A", cmns, key="ca")
+                with fcc2:
+                    comm_b = st.selectbox("Commune B", cmns, index=min(1,len(cmns)-1), key="cb")
+            st.markdown("---")
+
+            df_m = df_pop[(df_pop["metropole"] == metro_age) & (df_pop["annee"] == annee_age)]
+
+            if not mode_cc:
+                st.markdown(f"##### Pyramide des âges — {metro_age} ({annee_age})")
+                if ch and cf and not df_m.empty:
+                    labels = [label_col(c) for c in ch]
+                    fig_p = go.Figure()
+                    fig_p.add_trace(go.Bar(
+                        y=labels, x=[-df_m[c].sum() for c in ch], name="Hommes",
+                        orientation="h", marker_color="#2D6A4F"))
+                    fig_p.add_trace(go.Bar(
+                        y=labels, x=[df_m[c].sum() for c in cf], name="Femmes",
+                        orientation="h", marker_color="#95D5B2"))
+                    fig_p.update_layout(barmode="relative", bargap=0.06,
+                                        legend=dict(orientation="h", y=1.08),
+                                        yaxis_title="Tranche d'âge (ans)",
+                                        xaxis_title="Population")
+                    st.plotly_chart(style(fig_p, 40), use_container_width=True)
+                else:
+                    st.info("Données insuffisantes pour la pyramide.")
             else:
-                st.info("Données insuffisantes pour ces communes.")
+                st.markdown(f"##### {comm_a} vs {comm_b} ({annee_age})")
+                df_ca = df_pop[(df_pop["LIBELLE"]==comm_a) & (df_pop["annee"]==annee_age)]
+                df_cb = df_pop[(df_pop["LIBELLE"]==comm_b) & (df_pop["annee"]==annee_age)]
+                if not df_ca.empty and not df_cb.empty and ch and cf:
+                    rows_c = [{"Tranche": label_col(h),
+                               comm_a: df_ca[h].sum() + df_ca[f].sum(),
+                               comm_b: df_cb[h].sum() + df_cb[f].sum()}
+                              for h, f in zip(ch, cf)]
+                    df_cc = pd.melt(pd.DataFrame(rows_c), id_vars="Tranche",
+                                    var_name="Commune", value_name="Population")
+                    fig_cc = px.bar(df_cc, x="Tranche", y="Population", color="Commune",
+                                    barmode="group", color_discrete_sequence=["#2D6A4F","#95D5B2"])
+                    fig_cc.update_layout(xaxis_tickangle=-40, legend=dict(orientation="h", y=1.08))
+                    st.plotly_chart(style(fig_cc), use_container_width=True)
+                else:
+                    st.info("Données insuffisantes pour ces communes.")
 
-        st.markdown("---")
-        st.markdown("##### Indices démographiques par métropole")
-        idx_c = st.columns(len(TOUTES))
-        for i, m in enumerate(TOUTES):
-            dm = df_pop[(df_pop["metropole"]==m) & (df_pop["annee"]==annee_age)]
-            pj = somme_tranches(dm, TRANCHES_JEUNES)
-            pa = somme_tranches(dm, TRANCHES_ACTIFS)
-            ps = somme_tranches(dm, TRANCHES_SENIORS)
-            iv = (ps/pj*100) if pj>0 else np.nan
-            rd = ((pj+ps)/pa*100) if pa>0 else np.nan
-            with idx_c[i]:
-                st.metric(f"Vieillissement\n{m}", f"{iv:.0f}" if not np.isnan(iv) else "N/D",
-                          help="65+ / <20 ans × 100")
-                st.metric(f"Dépendance\n{m}", f"{rd:.0f}%" if not np.isnan(rd) else "N/D",
-                          help="(Jeunes + Seniors) / Actifs")
+            st.markdown("---")
+            st.markdown("##### Indices démographiques par métropole")
+            idx_c = st.columns(len(TOUTES))
+            for i, m in enumerate(TOUTES):
+                dm = df_pop[(df_pop["metropole"]==m) & (df_pop["annee"]==annee_age)]
+                pj = somme_tranches(dm, TRANCHES_JEUNES)
+                pa = somme_tranches(dm, TRANCHES_ACTIFS)
+                ps = somme_tranches(dm, TRANCHES_SENIORS)
+                iv = (ps/pj*100) if pj>0 else np.nan
+                rd = ((pj+ps)/pa*100) if pa>0 else np.nan
+                with idx_c[i]:
+                    st.metric(f"Vieillissement\n{m}", f"{iv:.0f}" if not np.isnan(iv) else "N/D",
+                              help="65+ / <20 ans × 100")
+                    st.metric(f"Dépendance\n{m}", f"{rd:.0f}%" if not np.isnan(rd) else "N/D",
+                              help="(Jeunes + Seniors) / Actifs")
 
-        st.markdown("---")
-        st.markdown("##### Évolution de la population totale (2011 → 2022)")
-        sel_evol = st.multiselect("Métropoles", TOUTES,
-                                  default=["Grenoble","Rennes"], key="evol")
-        if sel_evol and ch and cf:
-            df_e = df_pop[df_pop["metropole"].isin(sel_evol)].copy()
-            df_e["pop_totale"] = df_e[[c for c in ch+cf if c in df_e.columns]].sum(axis=1)
-            df_g = df_e.groupby(["metropole","annee"])["pop_totale"].sum().reset_index()
-            fig_ev = px.line(df_g, x="annee", y="pop_totale", color="metropole",
-                             color_discrete_map=COULEURS, markers=True)
-            fig_ev.update_layout(yaxis_title="Population totale", xaxis_title="Année",
-                                 legend_title="Métropole")
-            st.plotly_chart(style(fig_ev), use_container_width=True)
+            st.markdown("---")
+            st.markdown("##### Évolution de la population totale (2011 → 2022)")
+            sel_evol = st.multiselect("Métropoles", TOUTES,
+                                      default=["Grenoble","Rennes"], key="evol")
+            if sel_evol and ch and cf:
+                df_e = df_pop[df_pop["metropole"].isin(sel_evol)].copy()
+                df_e["pop_totale"] = df_e[[c for c in ch+cf if c in df_e.columns]].sum(axis=1)
+                df_g = df_e.groupby(["metropole","annee"])["pop_totale"].sum().reset_index()
+                fig_ev = px.line(df_g, x="annee", y="pop_totale", color="metropole",
+                                 color_discrete_map=COULEURS, markers=True)
+                fig_ev.update_layout(yaxis_title="Population totale", xaxis_title="Année",
+                                     legend_title="Métropole")
+                st.plotly_chart(style(fig_ev), use_container_width=True)
 
 # ==============================================================================
 # ONGLET 3 — MOBILITÉS
