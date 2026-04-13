@@ -595,10 +595,10 @@ if st.session_state.page == "home":
                 des territoires métropolitains.
             </div>
             <div class="tag-row">
-                <span class="tag-orange">CAF</span>
+                <span class="tag-orange">Solidarité</span>
                 <span class="tag-orange">Éducation</span>
                 <span class="tag-orange">Santé</span>
-                <span class="tag-orange">Citoyenneté</span>
+                <span class="tag-orange">Participation citoyenne</span>
             </div>
         </div>
     </div>
