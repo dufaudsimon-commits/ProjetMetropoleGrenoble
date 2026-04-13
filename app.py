@@ -418,7 +418,7 @@ def filter_bar(label="🔧 Filtres"):
     st.markdown(f'<div class="filter-bar-title">{label}</div>', unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 5. EN-TÊTE + NAVIGATION (sidebar minimale : navigation seule)
+# 5. EN-TÊTE
 # ──────────────────────────────────────────────────────────────────────────────
 st.markdown(
     "<h1 style='color:#1C3A27;font-size:2rem;margin-bottom:2px'>📊 Tableau de bord démographique</h1>"
@@ -426,30 +426,200 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ──────────────────────────────────────────────────────────────────────────────
+# 6. PAGE D'ACCUEIL (nouvelle version)
+# ──────────────────────────────────────────────────────────────────────────────
 if st.session_state.page == "home":
-    st.title("Projet Métropoles — Accueil")
-    c1, c2 = st.columns([1.2, 0.8])
-    with c1:
-        st.markdown("""
-### Objectif
-Comparer les dynamiques territoriales des 5 métropoles à partir des données de **démographie** et de **solidarité & citoyenneté**.
+    st.markdown("""
+    <style>
+    .hero-accueil {
+        background: linear-gradient(135deg, #1C3A27 0%, #2D6A4F 60%, #40916C 100%);
+        border-radius: 16px; padding: 0; overflow: hidden;
+        margin-bottom: 28px; position: relative;
+    }
+    .hero-inner {
+        display: flex; align-items: stretch; min-height: 220px;
+    }
+    .hero-img-col {
+        flex: 1; min-width: 0; position: relative; overflow: hidden;
+    }
+    .hero-img-col img {
+        width: 100%; height: 100%; object-fit: cover;
+        object-position: center; filter: saturate(0.75) brightness(0.85);
+        display: block;
+    }
+    .hero-img-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(to right, #1C3A27 0%, rgba(28,58,39,0) 100%);
+    }
+    .hero-text-col {
+        flex: 0 0 420px; padding: 36px 36px 36px 40px;
+        display: flex; flex-direction: column; justify-content: center;
+        position: relative; z-index: 2;
+    }
+    .hero-badge {
+        display: inline-block; background: rgba(149,213,178,0.2);
+        color: #95D5B2; font-size: 11px; font-weight: 700;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        padding: 4px 14px; border-radius: 20px;
+        border: 1px solid rgba(149,213,178,0.35); margin-bottom: 14px; width: fit-content;
+    }
+    .hero-title {
+        font-size: 28px; font-weight: 700; color: #fff; line-height: 1.25; margin-bottom: 10px;
+    }
+    .hero-subtitle { font-size: 13px; color: #95D5B2; font-weight: 400; line-height: 1.6; }
 
-### Contenu
-- Démographie : population, âge, mobilités, ménages
-- Solidarité & citoyenneté : CAF, éducation, santé, participation citoyenne
-        """.strip())
-        if st.button("Aller à l'application", type="primary"):
-            st.session_state.page = "app"
-            st.rerun()
-    with c2:
-        img = Path("assets/accueil.png")
-        if img.exists():
-            st.image(str(img), use_container_width=True)
-        else:
-            st.info("Image optionnelle : ajoute `assets/accueil.png`.")
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .stat-box {
+        background: #F0F7F3; border: 1px solid #C8E6D4; border-radius: 10px;
+        padding: 14px 10px; text-align: center;
+    }
+    .stat-num { font-size: 24px; font-weight: 700; color: #1C3A27; }
+    .stat-lbl { font-size: 11px; color: #4A7C59; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
+
+    .cards-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .info-card {
+        background: white; border: 1px solid #C8E6D4; border-radius: 12px;
+        padding: 20px 22px; border-left: 5px solid #2D6A4F;
+    }
+    .info-card.orange { border-left-color: #C45B2A; }
+    .info-card-title {
+        font-size: 12px; font-weight: 700; color: #2D6A4F; text-transform: uppercase;
+        letter-spacing: 0.08em; margin-bottom: 10px;
+    }
+    .info-card.orange .info-card-title { color: #C45B2A; }
+    .info-card-body { font-size: 13px; color: #2c2c2c; line-height: 1.7; text-align: justify; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .tag-green {
+        font-size: 11px; font-weight: 600; padding: 3px 11px; border-radius: 20px;
+        background: #EEF4F0; color: #2D6A4F; border: 1px solid #C8E6D4;
+    }
+    .tag-orange {
+        font-size: 11px; font-weight: 600; padding: 3px 11px; border-radius: 20px;
+        background: #FEF3ED; color: #C45B2A; border: 1px solid #F5C4B3;
+    }
+    .cta-wrapper { margin-top: 8px; }
+    div[data-testid="stButton"] > button[kind="primary"] {
+        background: #2D6A4F !important; color: white !important;
+        border: none !important; border-radius: 12px !important;
+        padding: 14px 28px !important; font-size: 15px !important;
+        font-weight: 700 !important; width: 100% !important;
+        letter-spacing: 0.03em !important; transition: background 0.2s !important;
+    }
+    div[data-testid="stButton"] > button[kind="primary"]:hover {
+        background: #1C3A27 !important;
+    }
+    .footer-note { font-size: 11px; color: #88A898; text-align: center; margin-top: 12px; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ── Hero banner ────────────────────────────────────────────────────────
+    img_path = Path("grenoble-1600x900.jpg")
+    if img_path.exists():
+        import base64
+        with open(img_path, "rb") as f:
+            img_b64 = base64.b64encode(f.read()).decode()
+        img_tag = f'<img src="data:image/jpeg;base64,{img_b64}" alt="Grenoble"/>'
+        img_col_html = f'<div class="hero-img-col">{img_tag}<div class="hero-img-overlay"></div></div>'
+    else:
+        img_col_html = ""
+
+    st.markdown(f"""
+    <div class="hero-accueil">
+        <div class="hero-inner">
+            <div class="hero-text-col">
+                <div class="hero-badge">Projet académique · INSEE</div>
+                <div class="hero-title">Tableau de bord<br>des métropoles françaises</div>
+                <div class="hero-subtitle">
+                    Grenoble · Rennes · Rouen<br>Saint-Étienne · Montpellier
+                </div>
+            </div>
+            {img_col_html}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Stats ──────────────────────────────────────────────────────────────
+    st.markdown("""
+    <div class="stats-row">
+        <div class="stat-box"><div class="stat-num">5</div><div class="stat-lbl">Métropoles</div></div>
+        <div class="stat-box"><div class="stat-num">49</div><div class="stat-lbl">Communes (Grenoble)</div></div>
+        <div class="stat-box"><div class="stat-num">2</div><div class="stat-lbl">Thématiques</div></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Cartes objectif + sources ──────────────────────────────────────────
+    st.markdown("""
+    <div class="cards-row">
+        <div class="info-card">
+            <div class="info-card-title">Objectif</div>
+            <div class="info-card-body">
+                Comparer les dynamiques territoriales de 5 métropoles françaises
+                à partir des données officielles de l'INSEE, couvrant les recensements
+                de 2011 à 2022 sur les volets démographiques et sociaux.
+            </div>
+        </div>
+        <div class="info-card" style="border-left-color:#1A6FA3;">
+            <div class="info-card-title" style="color:#1A6FA3;">Sources</div>
+            <div class="info-card-body">
+                Données INSEE — Recensements de la Population 2011, 2016 et 2022.
+                Données CAF et indicateurs de solidarité pour la période 2019–2022.
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Cartes thématiques ─────────────────────────────────────────────────
+    st.markdown("""
+    <div class="cards-row">
+        <div class="info-card">
+            <div class="info-card-title">📊 Démographie</div>
+            <div class="info-card-body">
+                Analyse de la population, de la structure par âge, des ménages
+                et des mobilités résidentielles, professionnelles et scolaires
+                à l'échelle des communes et des EPCI.
+            </div>
+            <div class="tag-row">
+                <span class="tag-green">Population</span>
+                <span class="tag-green">Pyramide des âges</span>
+                <span class="tag-green">Mobilités</span>
+                <span class="tag-green">Ménages</span>
+                <span class="tag-green">CSP</span>
+            </div>
+        </div>
+        <div class="info-card orange">
+            <div class="info-card-title">🤝 Solidarité & citoyenneté</div>
+            <div class="info-card-body">
+                Étude des allocations CAF, des indicateurs éducatifs et de santé,
+                ainsi que de la participation citoyenne sur l'ensemble
+                des territoires métropolitains.
+            </div>
+            <div class="tag-row">
+                <span class="tag-orange">CAF</span>
+                <span class="tag-orange">Éducation</span>
+                <span class="tag-orange">Santé</span>
+                <span class="tag-orange">Citoyenneté</span>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Bouton CTA ─────────────────────────────────────────────────────────
+    st.markdown('<div class="cta-wrapper">', unsafe_allow_html=True)
+    if st.button("→  Accéder à l'application", type="primary"):
+        st.session_state.page = "app"
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="footer-note">Données INSEE · Recensements de la Population 2011, 2016, 2022</p>',
+        unsafe_allow_html=True,
+    )
     st.stop()
 
-# Sidebar : navigation uniquement
+# ──────────────────────────────────────────────────────────────────────────────
+# 7. SIDEBAR + NAVIGATION (sidebar minimale : navigation seule)
+# ──────────────────────────────────────────────────────────────────────────────
 with st.sidebar:
     if st.button("🏠 Accueil"):
         st.session_state.page = "home"
@@ -459,7 +629,7 @@ with st.sidebar:
                    index=0, label_visibility="collapsed")
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 6. PAGES
+# 8. PAGES
 # ──────────────────────────────────────────────────────────────────────────────
 if vue == "Description":
     st.markdown('<p class="section-header">Description</p>', unsafe_allow_html=True)
