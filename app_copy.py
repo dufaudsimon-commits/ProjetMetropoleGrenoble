@@ -438,44 +438,131 @@ if vue == "Description":
     st.markdown('<p class="section-header">Description</p>', unsafe_allow_html=True)
 
     st.markdown("""
-    Cette application présente des analyses comparatives sur 5 métropoles françaises soit:
-    Grenoble, Rennes, Rouen, Saint-Étienne et Montpellier.
-
+    Cette application présente des analyses comparatives sur **5 métropoles françaises** à partir des recensements INSEE 2011, 2016 et 2022.
     Chaque page dispose de ses propres filtres en haut de page, adaptés aux données présentées.
     Selon les onglets, il est possible de filtrer par métropole, par année ou par thématique.
     """)
 
     st.markdown("---")
 
-    st.markdown("### 🏙️ Volet 1 — Démographie")
-    st.markdown("""
-    Accessible via le menu de gauche → Bouton **Démographie**. Ce volet contient 5 onglets :
+    st.markdown("### 🏙️ Périmètre géographique")
+    communes_data = {
+        "Métropole": list(COMMUNES.keys()),
+        "Nombre de communes": [len(v) for v in COMMUNES.values()],
+        "Département": ["Isère (38)", "Ille-et-Vilaine (35)", "Seine-Maritime (76)", "Loire (42)", "Hérault (34)"],
+    }
+    st.dataframe(pd.DataFrame(communes_data).set_index("Métropole"), use_container_width=True)
 
-    - **🏙️ Population globale** — Évolution et comparaison des populations totales entre métropoles.
-    - **👥 Structure par âge** — Pyramides des âges, part des jeunes, actifs et seniors.
-    - **🚌 Mobilités** — Flux résidentiels, professionnels et scolaires.
-    - **🏠 Ménages** — Taille et composition des ménages selon l'âge et la CSP.
-    - **📊 CSP comparatif** — Structure socioprofessionnelle et indice de spécialisation.
-    """)
+    st.markdown("---")
+
+    st.markdown("### 🏙️ Volet 1 — Démographie")
+
+    demo_onglets = [
+        {
+            "titre": "🏙️ Population globale",
+            "description": "Évolution et comparaison des populations totales entre métropoles.",
+            "source": "INSEE — Données générales comparatives (RP 2011–2022)",
+            "lien": "https://www.insee.fr/fr/statistiques/1405599?geo=EPCI-200040715+EPCI-243500139",
+        },
+        {
+            "titre": "👥 Structure par âge",
+            "description": "Pyramides des âges, part des jeunes, actifs et seniors.",
+            "source": "INSEE — Population par tranche d'âge (RP 2011–2022)",
+            "lien": "https://www.insee.fr/fr/statistiques/1405599?geo=EPCI-200040715+EPCI-243500139",
+        },
+        {
+            "titre": "🚌 Mobilités résidentielles",
+            "description": "Flux de migrations résidentielles entre communes et métropoles.",
+            "source": "INSEE — Migrations résidentielles 2019–2022",
+            "lien": "https://www.insee.fr/fr/statistiques/1893204#documentation",
+        },
+        {
+            "titre": "🚌 Mobilités professionnelles",
+            "description": "Déplacements domicile-travail à l'échelle des métropoles.",
+            "source": "INSEE — Mobilité professionnelle 2019–2022",
+            "lien": "https://www.insee.fr/fr/statistiques/1893185",
+        },
+        {
+            "titre": "🚌 Mobilités scolaires",
+            "description": "Flux de déplacements vers les établissements scolaires.",
+            "source": "INSEE — Mobilité scolaire 2019–2022",
+            "lien": "https://www.insee.fr/fr/statistiques/8582969",
+        },
+        {
+            "titre": "🏠 Ménages",
+            "description": "Taille et composition des ménages selon l'âge et la CSP.",
+            "source": "INSEE — Ménages par âge et situation (RP 2011–2022)",
+            "lien": "https://www.insee.fr/fr/statistiques/8582949",
+        },
+        {
+            "titre": "📊 CSP comparatif",
+            "description": "Structure socioprofessionnelle et indice de spécialisation entre métropoles.",
+            "source": "INSEE — Population 25-54 ans par CSP et diplôme (RP 2011–2022)",
+            "lien": "https://www.insee.fr/fr/statistiques/8582988",
+        },
+    ]
+
+    for onglet in demo_onglets:
+        with st.expander(onglet["titre"]):
+            st.markdown(onglet["description"])
+            st.markdown(f"📂 **Source :** {onglet['source']} · [🔗 Accéder]({onglet['lien']})")
 
     st.markdown("---")
 
     st.markdown("### 🤝 Volet 2 — Solidarité & citoyenneté")
-    st.markdown("""
-    Accessible via le menu de gauche → Bouton **Solidarité et citoyenneté**. Ce volet contient 5 onglets :
 
-    - **🤝 Solidarité** — Analyse des données CAF (foyers bénéficiaires, montants versés, évolution).
-    - **🎓 Éducation** — *(à venir)*
-    - **🏥 Santé** — *(à venir)*
-    - **🗳️ Participation citoyenne** — *(à venir)*
-    - **🗄️ Base de données** — *(à venir)*
-    """)
+    solid_onglets = [
+        {
+            "titre": "🤝 Solidarité",
+            "description": "Analyse des données CAF : foyers bénéficiaires, montants versés, évolution temporelle.",
+            "sources": [
+                ("INSEE — Filosofi : âge, type de ménage, niveau de vie", "https://catalogue-donnees.insee.fr/fr/catalogue/recherche/DS_FILOSOFI_AGE_TP_NIVVIE"),
+                ("CAF — Allocataires par commune (NDUR)", "https://data.caf.fr/explore/dataset/ndur_s_qf_400_com_f/table/"),
+                ("CAF — Bénéficiaires par commune (complément)", "https://data.caf.fr/explore/dataset/s_ben_com_f/table/"),
+                ("INSEE — Données générales comparatives EPCI", "https://www.insee.fr/fr/statistiques/1405599?geo=EPCI-200040715+EPCI-243500139"),
+            ],
+        },
+        {
+            "titre": "🎓 Éducation",
+            "description": "Analyse des niveaux de diplôme et de la scolarisation par métropole. *(à venir)*",
+            "sources": [
+                ("INSEE — Statistiques locales (diplômes, scolarisation)", "https://www.insee.fr/fr/statistiques/8307327?sommaire=2500477"),
+            ],
+        },
+        {
+            "titre": "🏥 Santé",
+            "description": "Cartographie et analyse des équipements de santé. *(à venir)*",
+            "sources": [
+                ("OpenData — Équipements de santé OSM France", "https://smartregionidf.opendatasoft.com/explore/dataset/osm-france-healthcare/table/"),
+            ],
+        },
+        {
+            "titre": "🗳️ Participation citoyenne",
+            "description": "Taux de participation et résultats des élections municipales 2020. *(à venir)*",
+            "sources": [
+                ("Data.gouv — Élections municipales 2020 (1er tour)", "https://www.data.gouv.fr/datasets/elections-municipales-2020-resultats-1er-tour/"),
+            ],
+        },
+        {
+            "titre": "🗄️ Base de données",
+            "description": "Accès aux données brutes consolidées. *(à venir)*",
+            "sources": [
+                ("INSEE — Statistiques complémentaires", "https://www.insee.fr/fr/statistiques/8582448?sommaire=8582455"),
+            ],
+        },
+    ]
+
+    for onglet in solid_onglets:
+        with st.expander(onglet["titre"]):
+            st.markdown(onglet["description"])
+            for source, lien in onglet["sources"]:
+                st.markdown(f"📂 **Source :** {source} · [🔗 Accéder]({lien})")
 
     st.markdown("---")
 
     st.markdown("""
     <p class="source-note">Sources : INSEE — Recensements de la Population 2011, 2016, 2022 ·
-    Mobilités résidentielles, professionnelles et scolaires 2019–2022 · CAF — 5 métropoles</p>
+    Mobilités résidentielles, professionnelles et scolaires 2019–2022 · CAF — 5 métropoles · Data.gouv · OpenData IDF</p>
     """, unsafe_allow_html=True)
 
     st.stop()
