@@ -436,8 +436,48 @@ with st.sidebar:
 # ──────────────────────────────────────────────────────────────────────────────
 if vue == "Description":
     st.markdown('<p class="section-header">Description</p>', unsafe_allow_html=True)
-    st.write("Cette application présente des analyses comparatives sur les volets démographie et solidarité/citoyenneté.")
-    st.write("Utilise le volet gauche pour choisir entre `Démographie` et `Solidarité et citoyenneté`.")
+
+    st.markdown("""
+    Cette application présente des analyses comparatives sur 5 métropoles françaises soit:
+    Grenoble, Rennes, Rouen, Saint-Étienne et Montpellier.
+
+    Chaque page dispose de ses propres filtres en haut de page, adaptés aux données présentées.
+    Selon les onglets, il est possible de filtrer par métropole, par année ou par thématique.
+    """)
+
+    st.markdown("---")
+
+    st.markdown("### 🏙️ Volet 1 — Démographie")
+    st.markdown("""
+    Accessible via le menu de gauche → Bouton **Démographie**. Ce volet contient 5 onglets :
+
+    - **🏙️ Population globale** — Évolution et comparaison des populations totales entre métropoles.
+    - **👥 Structure par âge** — Pyramides des âges, part des jeunes, actifs et seniors.
+    - **🚌 Mobilités** — Flux résidentiels, professionnels et scolaires.
+    - **🏠 Ménages** — Taille et composition des ménages selon l'âge et la CSP.
+    - **📊 CSP comparatif** — Structure socioprofessionnelle et indice de spécialisation.
+    """)
+
+    st.markdown("---")
+
+    st.markdown("### 🤝 Volet 2 — Solidarité & citoyenneté")
+    st.markdown("""
+    Accessible via le menu de gauche → Bouton **Solidarité et citoyenneté**. Ce volet contient 5 onglets :
+
+    - **🤝 Solidarité** — Analyse des données CAF (foyers bénéficiaires, montants versés, évolution).
+    - **🎓 Éducation** — *(à venir)*
+    - **🏥 Santé** — *(à venir)*
+    - **🗳️ Participation citoyenne** — *(à venir)*
+    - **🗄️ Base de données** — *(à venir)*
+    """)
+
+    st.markdown("---")
+
+    st.markdown("""
+    <p class="source-note">Sources : INSEE — Recensements de la Population 2011, 2016, 2022 ·
+    Mobilités résidentielles, professionnelles et scolaires 2019–2022 · CAF — 5 métropoles</p>
+    """, unsafe_allow_html=True)
+
     st.stop()
 
 if vue == "Démographie":
