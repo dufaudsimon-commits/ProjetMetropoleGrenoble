@@ -87,44 +87,103 @@ div[data-testid="metric-container"] [data-testid="stMetricValue"] {
     text-align: center; margin-bottom: 10px;
 }
 
-/* ── Boutons de navigation sidebar (même style que le bouton Accueil) ── */
+/* ═══════════════════════════════════════════════════════════════
+   SIDEBAR — REDESIGN COMPLET
+═══════════════════════════════════════════════════════════════ */
+
+/* Fond principal */
+section[data-testid="stSidebar"] {
+    background: #1C3A27 !important;
+}
+section[data-testid="stSidebar"] > div {
+    background: #1C3A27 !important;
+    padding: 0 !important;
+}
+section[data-testid="stSidebar"] .block-container {
+    padding: 0 14px 100px 14px !important;
+}
+
+/* Bouton Accueil */
+section[data-testid="stSidebar"] div[data-testid="stButton"] button {
+    background: rgba(149,213,178,0.1) !important;
+    border: 1px solid rgba(149,213,178,0.22) !important;
+    border-radius: 8px !important;
+    color: #B7E4C7 !important;
+    font-family: 'Sora', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    width: 100% !important;
+    padding: 9px 14px !important;
+    text-align: left !important;
+    transition: background 0.15s !important;
+    letter-spacing: 0.02em !important;
+    margin-bottom: 4px !important;
+}
+section[data-testid="stSidebar"] div[data-testid="stButton"] button:hover {
+    background: rgba(149,213,178,0.2) !important;
+    border-color: rgba(149,213,178,0.38) !important;
+    color: #D1F0E0 !important;
+}
+
+/* Séparateur */
+section[data-testid="stSidebar"] hr {
+    border-color: rgba(149,213,178,0.12) !important;
+    margin: 8px 0 !important;
+}
+
+/* Label radio masqué */
 section[data-testid="stSidebar"] div[data-testid="stRadio"] > label {
-    display: none;
+    display: none !important;
 }
+
+/* Groupe radio */
 section[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] {
-    display: flex; flex-direction: column; gap: 6px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
 }
+
+/* Chaque item radio */
 section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"] {
-    background: #F0F7F3;
-    border: 1px solid #C8E6D4;
-    border-radius: 8px;
-    padding: 10px 16px;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
-    font-weight: 600;
-    font-size: 0.88rem;
-    color: #2D6A4F;
-    width: 100%;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 9px 12px !important;
+    cursor: pointer !important;
+    font-family: 'Sora', sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: rgba(255,255,255,0.58) !important;
+    width: 100% !important;
+    transition: background 0.15s, color 0.15s !important;
 }
 section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
-    background: #DDF0E8;
-    border-color: #2D6A4F;
-    box-shadow: 0 2px 8px rgba(45,106,79,0.15);
+    background: rgba(255,255,255,0.06) !important;
+    color: rgba(255,255,255,0.88) !important;
 }
 section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"][aria-checked="true"] {
-    background: #2D6A4F !important;
-    border-color: #2D6A4F !important;
-    color: white !important;
-    box-shadow: 0 2px 8px rgba(45,106,79,0.25);
+    background: rgba(149,213,178,0.13) !important;
+    color: #B7E4C7 !important;
+    border: none !important;
+    box-shadow: none !important;
 }
-section[data-testid="stSidebar"] div[data-testid="stRadio"] span[data-testid="stMarkdownContainer"] p {
-    margin: 0; font-weight: 600;
-}
-/* Masquer le rond radio natif */
+
+/* Rond radio natif masqué */
 section[data-testid="stSidebar"] div[data-testid="stRadio"] div[data-testid="stWidgetLabel"],
 section[data-testid="stSidebar"] div[data-testid="stRadio"] input[type="radio"] {
     display: none !important;
 }
+
+/* Texte dans les labels radio */
+section[data-testid="stSidebar"] div[data-testid="stRadio"] span[data-testid="stMarkdownContainer"] p {
+    margin: 0 !important;
+    font-weight: 500 !important;
+}
+
+/* Scrollbar sidebar */
+section[data-testid="stSidebar"]::-webkit-scrollbar { width: 4px; }
+section[data-testid="stSidebar"]::-webkit-scrollbar-track { background: transparent; }
+section[data-testid="stSidebar"]::-webkit-scrollbar-thumb { background: rgba(149,213,178,0.2); border-radius: 4px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -341,7 +400,6 @@ def charger_filo():
             break
     if df is None:
         return None
-    # Nettoyage : virgules décimales → points, conversion numérique
     num_cols = [c for c in df.columns if c.startswith("DEC_")]
     for c in num_cols:
         df[c] = pd.to_numeric(df[c].astype(str).str.replace(",", "."), errors="coerce")
@@ -478,7 +536,6 @@ def style(fig, marge_t=20):
     return fig
 
 def filter_bar(label="🔧 Filtres"):
-    """Ouvre un conteneur visuellement encadré pour les filtres en haut de page."""
     st.markdown(f'<div class="filter-bar-title">{label}</div>', unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -491,7 +548,7 @@ st.markdown(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 6. PAGE D'ACCUEIL (nouvelle version)
+# 6. PAGE D'ACCUEIL
 # ──────────────────────────────────────────────────────────────────────────────
 if st.session_state.page == "home":
     st.markdown("""
@@ -578,7 +635,6 @@ if st.session_state.page == "home":
     </style>
     """, unsafe_allow_html=True)
 
-    # ── Hero banner ────────────────────────────────────────────────────────
     img_path = Path("grenoble-1600x900.jpg")
     if img_path.exists():
         import base64
@@ -604,7 +660,6 @@ if st.session_state.page == "home":
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Stats ──────────────────────────────────────────────────────────────
     st.markdown("""
     <div class="stats-row">
         <div class="stat-box"><div class="stat-num">5</div><div class="stat-lbl">Métropoles</div></div>
@@ -613,28 +668,25 @@ if st.session_state.page == "home":
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Cartes objectif + sources ──────────────────────────────────────────
     st.markdown("""
     <div class="cards-row">
         <div class="info-card">
             <div class="info-card-title">Objectif</div>
             <div class="info-card-body">
-                Analyser les données de démographie et de solidarité & citoyenneté afin de produire une analyse complète pour chaque commune de la métropole de Grenoble. 
-                Cette étude vise à permettre la comparaison des communes entre elles, ainsi qu’à situer la métropole de Grenoble par rapport à celles de Rouen, Saint-Étienne, Rennes et Montpellier. 
+                Analyser les données de démographie et de solidarité & citoyenneté afin de produire une analyse complète pour chaque commune de la métropole de Grenoble.
+                Cette étude vise à permettre la comparaison des communes entre elles, ainsi qu'à situer la métropole de Grenoble par rapport à celles de Rouen, Saint-Étienne, Rennes et Montpellier.
                 Elle est également destinée à accompagner les nouveaux élus dans la compréhension des dynamiques territoriales.
             </div>
         </div>
         <div class="info-card" style="border-left-color:#1A6FA3;">
             <div class="info-card-title" style="color:#1A6FA3;">Sources</div>
             <div class="info-card-body">
-                Données INSEE — Recensements de la Population 2011, 2016 et 2022.
-                Données CAF et indicateurs de solidarité pour la période 2019–2022.
+                Données INSEE / CAF / Data.gouv / Smart Region.
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Cartes thématiques ─────────────────────────────────────────────────
     st.markdown("""
     <div class="cards-row">
         <div class="info-card">
@@ -668,29 +720,86 @@ if st.session_state.page == "home":
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Bouton CTA ─────────────────────────────────────────────────────────
     st.markdown('<div class="cta-wrapper">', unsafe_allow_html=True)
     if st.button("→  Accéder à l'application", type="primary"):
         st.session_state.page = "app"
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown(
-        '<p class="footer-note">Données INSEE · Recensements de la Population 2011, 2016, 2022</p>',
+        '<p class="footer-note">Réalisé par Maxime Desjobert-Mutelet | Simon Dufaud | Hussin Unaldi | Jed Ben-Hadj-Salem</p>',
         unsafe_allow_html=True,
     )
     st.stop()
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 7. SIDEBAR + NAVIGATION (sidebar minimale : navigation seule)
+# 7. SIDEBAR REDESIGNÉE
 # ──────────────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    if st.button("🏠 Accueil"):
+    # 1. CSS Custom pour la couleur du texte
+    st.markdown("""
+        <style>
+        /* Force la couleur blanche sur les textes de la radio navigation */
+        div[data-testid="stRadio"] label p {
+            color: #FFFFFF !important;
+            font-weight: 500;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # 2. Ton logo du haut (Métropole Grenoble)
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:10px;padding:20px 8px 16px 8px;border-bottom:1px solid rgba(149,213,178,0.15);margin-bottom:10px;">
+        <div style="width:34px;height:34px;background:#2D6A4F;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="#95D5B2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 22V12h6v10" stroke="#95D5B2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+            <div style="font-size:13px;font-weight:600;color:#95D5B2;line-height:1.3;font-family:'Sora',sans-serif;">Métropole Grenoble</div>
+            <div style="font-size:10px;color:rgba(149,213,178,0.45);font-weight:400;font-family:'Sora',sans-serif;">Tableau de bord</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 3. Bouton Accueil
+    if st.button("🏠  Accueil"):
         st.session_state.page = "home"
         st.rerun()
-    st.markdown("---")
-    vue = st.radio("Navigation", ["Description", "Démographie", "Solidarité et citoyenneté"],
-                   index=0, label_visibility="collapsed")
 
+    # 4. Navigation
+    st.markdown('<div style="font-size:9px;font-weight:700;color:rgba(149,213,178,0.38);text-transform:uppercase;letter-spacing:0.13em;padding:10px 4px 4px;font-family:\'Sora\',sans-serif;">Navigation</div>', unsafe_allow_html=True)
+    
+    vue = st.radio(
+        "Navigation",
+        ["Description", "Démographie", "Solidarité et citoyenneté"],
+        index=0,
+        label_visibility="collapsed",
+    )
+
+    st.markdown("---")
+
+    # 5. Emblème bas de page (S'ASSURER QUE TOUT EST DANS st.markdown)
+    st.markdown("""
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:4px 8px 16px;text-align:center;">
+        <div style="width:56px;height:56px;background:rgba(45,106,79,0.45);border:1px solid rgba(149,213,178,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+            <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
+                <path d="M24 5L5 17v26h38V17L24 5z" stroke="#95D5B2" stroke-width="1.4" fill="rgba(45,106,79,0.35)" stroke-linejoin="round"/>
+                <path d="M24 5l5 9-5 5-5-5 5-9z" fill="rgba(149,213,178,0.2)" stroke="#95D5B2" stroke-width="1"/>
+                <circle cx="24" cy="25" r="5.5" stroke="#95D5B2" stroke-width="1.3" fill="rgba(149,213,178,0.1)"/>
+                <path d="M24 19.5v11M18.5 25h11" stroke="#95D5B2" stroke-width="1.1" stroke-linecap="round"/>
+                <path d="M12 43v-7M18 43v-5M24 43v-7M30 43v-5M36 43v-7" stroke="#95D5B2" stroke-width="1.1" stroke-linecap="round"/>
+                <path d="M5 43h38" stroke="#95D5B2" stroke-width="1.1" stroke-linecap="round"/>
+            </svg>
+        </div>
+        <div style="font-size:11px;font-weight:600;color:rgba(149,213,178,0.62);font-family:'Sora',sans-serif;line-height:1.4;">
+            Grenoble-Alpes<br>Métropole
+        </div>
+        <div style="font-size:10px;color:rgba(149,213,178,0.35);font-family:'Sora',sans-serif;line-height:1.5;">
+            Outil d'aide à la décision
+        </div>
+        <div style="margin-top:6px;font-size:9px;color:rgba(149,213,178,0.22);font-family:'Sora',sans-serif;line-height:1.6;">
+            M. Desjobert-Mutelet<br>S. Dufaud · H. Unaldi<br>J. Ben-Hadj-Salem
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 # ──────────────────────────────────────────────────────────────────────────────
 # 8. PAGES
 # ──────────────────────────────────────────────────────────────────────────────
@@ -698,9 +807,9 @@ if vue == "Description":
     st.markdown('<p class="section-header">Description</p>', unsafe_allow_html=True)
 
     st.markdown("""
-    Cette application présente des analyses comparatives sur **5 métropoles françaises** à partir des recensements INSEE 2011, 2016 et 2022.
+    Cette application présente des analyses comparatives sur les **49 communes de la métropole de Grenoble** et les **5 métropoles françaises (Grenoble, Rennes, Rouen, Saint-Etienne, Montpellier)**.
     Chaque page dispose de ses propres filtres en haut de page, adaptés aux données présentées.
-    Selon les onglets, il est possible de filtrer par métropole, par année ou par thématique.
+    Selon les onglets, il est possible de filtrer par commune, par métropole, par année ou par thématique.
     """)
 
     st.markdown("---")
@@ -819,12 +928,7 @@ if vue == "Description":
                 st.markdown(f"📂 **Source :** {source} · [🔗 Accéder]({lien})")
 
     st.markdown("---")
-
-    st.markdown("""
-    <p class="source-note">Sources : INSEE — Recensements de la Population 2011, 2016, 2022 ·
-    Mobilités résidentielles, professionnelles et scolaires 2019–2022 · CAF — 5 métropoles · Data.gouv · OpenData IDF</p>
-    """, unsafe_allow_html=True)
-
+    st.markdown('<p class="source-note">Sources : INSEE, CAF, Data.gouv, Smart Region</p>', unsafe_allow_html=True)
     st.stop()
 
 if vue == "Démographie":
@@ -848,7 +952,6 @@ if vue == "Démographie":
             unsafe_allow_html=True,
         )
 
-        # ── Bandeau filtres ──────────────────────────────────────────────────
         with st.container():
             st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
             filter_bar("🔧 Filtres — Population globale")
@@ -870,7 +973,6 @@ if vue == "Démographie":
                 )
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── Vue Détail Communal ──────────────────────────────────────────────
         if mode_pop == "Détail Communal":
             if not sel_communes_pop:
                 st.warning("Sélectionnez au moins une commune.")
@@ -918,7 +1020,6 @@ if vue == "Démographie":
             else:
                 st.info("Fichier Population_tranche_age_clean.csv non chargé.")
 
-        # ── Vue Comparaison Métropoles ───────────────────────────────────────
         else:
             if not sel:
                 st.warning("Sélectionnez au moins une métropole.")
@@ -1183,7 +1284,6 @@ if vue == "Démographie":
             ch = cols_h(df_pop)
             cf = cols_f(df_pop)
 
-            # ── Bandeau filtres ──────────────────────────────────────────────
             with st.container():
                 st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
                 filter_bar("🔧 Filtres — Structure par âge")
@@ -1248,7 +1348,6 @@ if vue == "Démographie":
                         st.info("Données insuffisantes pour ces communes.")
 
             else:
-                # ── Vue métropole ────────────────────────────────────────────
                 df_m = df_pop[(df_pop["metropole"] == metro_age) & (df_pop["annee"] == annee_age)]
                 st.markdown(f"##### Pyramide des âges — {metro_age} ({annee_age})")
                 if ch and cf and not df_m.empty:
@@ -1265,7 +1364,6 @@ if vue == "Démographie":
                 else:
                     st.info("Données insuffisantes pour la pyramide.")
 
-            # ── Indices démographiques (toujours affichés) ───────────────────
             st.markdown("---")
             st.markdown("##### Indices démographiques par métropole")
             idx_c = st.columns(len(TOUTES))
@@ -1316,7 +1414,6 @@ if vue == "Démographie":
                 "`Mobilite_scolaire_clean.csv`."
             )
         else:
-            # ── Bandeau filtres ──────────────────────────────────────────────
             with st.container():
                 st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
                 filter_bar("🔧 Filtres — Mobilités")
@@ -1329,7 +1426,6 @@ if vue == "Démographie":
                          "💼 Mobilité Professionnelle",
                          "🎓 Mobilité Scolaire"],
                         key="mob_theme",
-                        label_visibility="visible",
                     )
                 with mob_col2:
                     mode_mob = st.radio(
@@ -1339,7 +1435,6 @@ if vue == "Démographie":
                         horizontal=True,
                     )
 
-                # Sélection du DataFrame selon la thématique
                 if "Migrations" in theme_mob:
                     current_mob_df = df_res
                     col_orig, col_dest = "commune_origine", "commune_destination"
@@ -1361,7 +1456,6 @@ if vue == "Démographie":
                     with mob_col3:
                         sel_annee_mob = st.selectbox("Année", annees_mob, key="mob_annee")
 
-                # Sélection entités (communes ou métropoles) — dans le même bandeau
                 if current_mob_df is not None:
                     if mode_mob == "Détail Communal":
                         geo_col1, geo_col2 = st.columns(2)
@@ -1505,7 +1599,6 @@ if vue == "Démographie":
             if df_men_age is None:
                 st.info("📂 Fichier `Menage_age_situation_clean.csv` introuvable.")
             else:
-                # ── Bandeau filtres ──────────────────────────────────────────
                 with st.container():
                     st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
                     filter_bar("🔧 Filtres — Type & taille de ménage")
@@ -1589,7 +1682,6 @@ if vue == "Démographie":
                         st.plotly_chart(style(fig_a, 50), use_container_width=True)
 
                 else:
-                    # ── Vue Détail Communal ──────────────────────────────────
                     communes_men = sel_communes_men if sel_communes_men else []
                     if not communes_men:
                         st.info("Sélectionnez au moins une commune.")
@@ -1633,7 +1725,6 @@ if vue == "Démographie":
             if df_men_csp is None:
                 st.info("📂 Fichier `Menages_csp_nbpers_clean.csv` introuvable.")
             else:
-                # ── Bandeau filtres ──────────────────────────────────────────
                 with st.container():
                     st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
                     filter_bar("🔧 Filtres — CSP des ménages")
@@ -1700,7 +1791,7 @@ if vue == "Démographie":
                     fig_comp_csp.update_layout(yaxis_title="Part des ménages (%)",
                                                legend=dict(orientation="h", y=1.1, font_size=10))
                     st.plotly_chart(style(fig_comp_csp, 50), use_container_width=True)
-                    
+
 # ==============================================================================
 # ONGLET 5 — CSP COMPARATIF
 # ==============================================================================
@@ -1716,7 +1807,6 @@ if vue == "Démographie":
         if df_csp_new.empty or "ANNEE" not in df_csp_new.columns:
             st.info("📂 Données CSP/Diplôme non trouvées. Vérifiez les chemins FILES_CSP / FILES_DIP.")
         else:
-            # ── Bandeau filtres ──────────────────────────────────────────────
             with st.container():
                 st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
                 filter_bar("🔧 Filtres — CSP comparatif")
@@ -1947,7 +2037,6 @@ if vue == "Solidarité et citoyenneté":
 
                     caf_vue, caf_comp = st.tabs(["📊 Vue d'ensemble", "🔍 Comparateur de communes"])
 
-                    # ── Vue d'ensemble ──────────────────────────────────────────────────────────
                     with caf_vue:
                         with st.container():
                             st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
@@ -2030,7 +2119,6 @@ if vue == "Solidarité et citoyenneté":
                                     st.plotly_chart(style(fig_top, 40), use_container_width=True)
                             st.markdown("---")
 
-                            # Radar
                             st.markdown("##### 🕸️ Profil comparatif des aides — radar")
                             aides_f = {"Foyers PAJE":"Nombre foyers NDURPAJE","Foyers aj. enf.":"Nombre foyers NDUREJ",
                                 "Foyers alloc. log.":"Nombre foyers NDURAL","Foyers insertion":"Nombre foyers NDURINS",
@@ -2060,7 +2148,6 @@ if vue == "Solidarité et citoyenneté":
                                     "**NDUR** : dossiers unifiés réels. **NDURPAJE** : prestation jeune enfant. "
                                     "**NDURAL** : allocation logement. **NDURINS** : insertion sociale (RSA...).")
 
-                    # ── Comparateur de communes CAF ──────────────────────────────────────────────
                     with caf_comp:
                         st.markdown('<p class="section-header">🔍 Comparateur de communes — CAF</p>', unsafe_allow_html=True)
                         with st.container():
@@ -2141,7 +2228,7 @@ if vue == "Solidarité et citoyenneté":
                                 st.plotly_chart(style(fig_qfcc, 40), use_container_width=True)
 
     # ──────────────────────────────────────────────────────────────────────────
-    # ONGLET ÉDUCATION — Effectifs étudiants
+    # ONGLET ÉDUCATION
     # ──────────────────────────────────────────────────────────────────────────
     with s2:
         st.markdown('<p class="section-header">🎓 Éducation — Effectifs dans l\'enseignement supérieur</p>', unsafe_allow_html=True)
@@ -2165,7 +2252,6 @@ if vue == "Solidarité et citoyenneté":
 
             eff_vue, eff_comp = st.tabs(["📊 Vue d'ensemble", "🔍 Comparateur de communes"])
 
-            # ── Vue d'ensemble Éducation ─────────────────────────────────────────────
             with eff_vue:
                 with st.container():
                     st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
@@ -2282,7 +2368,6 @@ if vue == "Solidarité et citoyenneté":
                         st.write("**Source** : MESRI. Communes des 5 dép. (38, 35, 76, 42, 34). "
                             "**TOTAL** agrège toutes filières. Effectif = inscrits en formation initiale.")
 
-            # ── Comparateur de communes Éducation ──────────────────────────────────────
             with eff_comp:
                 st.markdown('<p class="section-header">🔍 Comparateur de communes — Éducation</p>', unsafe_allow_html=True)
                 with st.container():
@@ -2375,7 +2460,6 @@ if vue == "Solidarité et citoyenneté":
         if df_filo is None or df_filo.empty:
             st.info("📂 Fichier `BASE_TD_FILO_IRIS_2021_DEC.xlsx` introuvable — placez-le dans `solidarite&citoyennete/data_clean/revenus/`.")
         else:
-            # ── Libellés des indicateurs ──────────────────────────────────
             FILO_LABELS = {
                 "DEC_MED21":    "Revenu médian (€/UC)",
                 "DEC_TP6021":   "Taux de bas revenus — seuil 60 % (%)",
@@ -2396,15 +2480,10 @@ if vue == "Solidarité et citoyenneté":
                 "DEC_PAUT21":   "Part autres revenus (%)",
             }
             filo_cols = [c for c in FILO_LABELS if c in df_filo.columns]
-
             metros_filo = sorted(df_filo["metropole"].dropna().unique())
 
-            # ── Sous-onglets : Vue d'ensemble | Comparateur communes ──────
             filo_vue, filo_comp = st.tabs(["📊 Vue d'ensemble", "🔍 Comparateur de communes"])
 
-            # ════════════════════════════════════════════════════════════════
-            # VUE D'ENSEMBLE
-            # ════════════════════════════════════════════════════════════════
             with filo_vue:
                 with st.container():
                     st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
@@ -2442,8 +2521,6 @@ if vue == "Solidarité et citoyenneté":
                         df_agg["LIBCOM"] = df_agg["LIBIRIS"] + " (" + df_agg["LIBCOM"] + ")"
 
                     st.markdown("---")
-
-                    # ── KPI par métropole ──────────────────────────────────
                     st.markdown(f"#### 📌 Aperçu — {lbl}")
                     kpi_cols = st.columns(len(sel_metros_filo))
                     for i, metro in enumerate(sel_metros_filo):
@@ -2459,8 +2536,6 @@ if vue == "Solidarité et citoyenneté":
                             """, unsafe_allow_html=True)
 
                     st.markdown("---")
-
-                    # ── Ligne 1 : Box-plot + Bar comparatif ───────────────
                     c1, c2 = st.columns(2)
                     with c1:
                         st.markdown(f"##### 📦 Distribution par métropole")
@@ -2479,7 +2554,6 @@ if vue == "Solidarité et citoyenneté":
                     with c2:
                         st.markdown(f"##### 🏆 Top / Flop communes")
                         df_bar = df_agg.dropna(subset=[filo_ind]).sort_values(filo_ind, ascending=False)
-                        n_show = min(20, len(df_bar))
                         top_n  = pd.concat([df_bar.head(10), df_bar.tail(10)]).drop_duplicates()
                         fig_hbar = px.bar(
                             top_n.sort_values(filo_ind),
@@ -2494,8 +2568,6 @@ if vue == "Solidarité et citoyenneté":
                         st.plotly_chart(style(fig_hbar, 40), use_container_width=True)
 
                     st.markdown("---")
-
-                    # ── Ligne 2 : Scatter médiane vs taux pauvreté + Gini ──
                     c3, c4 = st.columns(2)
                     with c3:
                         st.markdown("##### 💹 Revenu médian vs Taux de bas revenus")
@@ -2511,8 +2583,6 @@ if vue == "Solidarité et citoyenneté":
                             )
                             fig_sc.update_traces(marker_size=7, marker_opacity=0.75)
                             st.plotly_chart(style(fig_sc, 40), use_container_width=True)
-                        else:
-                            st.info("Colonnes DEC_MED21 / DEC_TP6021 absentes.")
 
                     with c4:
                         st.markdown("##### ⚖️ Inégalités — Indice de Gini par commune")
@@ -2530,11 +2600,9 @@ if vue == "Solidarité et citoyenneté":
                             st.plotly_chart(style(fig_gi, 40), use_container_width=True)
 
                     st.markdown("---")
-
-                    # ── Ligne 3 : Structure des revenus (camembert) + D9/D1 ─
                     c5, c6 = st.columns(2)
                     with c5:
-                        st.markdown("##### 🥧 Structure des revenus (moyenne métropoles sélectionnées)")
+                        st.markdown("##### 🥧 Structure des revenus")
                         struct_cols = {
                             "Salaires & traitements": "DEC_PTSA21",
                             "Indemnités chômage":     "DEC_PCHO21",
@@ -2554,22 +2622,20 @@ if vue == "Solidarité et citoyenneté":
                             st.plotly_chart(style(fig_pie, 40), use_container_width=True)
 
                     with c6:
-                        st.markdown("##### 📊 Rapport D9/D1 — inégalités entre IRIS")
+                        st.markdown("##### 📊 Rapport D9/D1")
                         if "DEC_RD21" in df_agg.columns:
                             df_rd = df_agg.dropna(subset=["DEC_RD21"])
                             fig_rd = px.box(
                                 df_rd, x="metropole", y="DEC_RD21",
                                 color="metropole", color_discrete_map=COULEURS,
                                 labels={"metropole": "", "DEC_RD21": "D9/D1"},
-                                title="Rapport interdécile D9/D1 (plus c'est haut, plus c'est inégal)",
+                                title="Rapport interdécile D9/D1",
                                 height=380,
                             )
                             fig_rd.update_layout(showlegend=False)
                             st.plotly_chart(style(fig_rd, 40), use_container_width=True)
 
                     st.markdown("---")
-
-                    # ── Statistiques descriptives ──────────────────────────
                     with st.expander("📊 Statistiques descriptives complètes"):
                         desc_cols = ["DEC_MED21", "DEC_TP6021", "DEC_GI21", "DEC_RD21",
                                      "DEC_S80S2021", "DEC_Q121", "DEC_Q321"]
@@ -2583,15 +2649,12 @@ if vue == "Solidarité et citoyenneté":
                     with st.expander("📖 Note méthodologique"):
                         st.write(
                             "**Source** : INSEE-DGFIP-Cnaf-Cnav-CCMSA, Fichier localisé social et fiscal (FiLoSoFi) — Année 2021.\n\n"
-                            "**Indicateurs** exprimés par **unité de consommation (UC)** — 1 UC pour le 1er adulte, 0,5 pour les autres personnes ≥ 14 ans, 0,3 pour les moins de 14 ans.\n\n"
+                            "**Indicateurs** exprimés par **unité de consommation (UC)**.\n\n"
                             "**Taux de bas revenus** : part des ménages dont le revenu/UC est inférieur à 60 % du revenu médian métropolitain.\n\n"
                             "**Indice de Gini** : entre 0 (égalité parfaite) et 1 (inégalité maximale).\n\n"
-                            "**Périmètre** : IRIS appartenant aux communes des 5 métropoles, identifiés par code département."
+                            "**Périmètre** : IRIS appartenant aux communes des 5 métropoles."
                         )
 
-            # ════════════════════════════════════════════════════════════════
-            # COMPARATEUR DE COMMUNES
-            # ════════════════════════════════════════════════════════════════
             with filo_comp:
                 st.markdown('<p class="section-header">🔍 Comparateur de communes — Revenus & pauvreté</p>', unsafe_allow_html=True)
 
@@ -2615,8 +2678,6 @@ if vue == "Solidarité et citoyenneté":
                 df_cb = df_filo[(df_filo["metropole"] == metro_comp_filo) & (df_filo["LIBCOM"] == com_b_filo)]
 
                 st.markdown("---")
-
-                # KPI côte à côte
                 kpi_ind_list = ["DEC_MED21", "DEC_TP6021", "DEC_GI21", "DEC_RD21", "DEC_PIMP21"]
                 kpi_ind_dispo = [c for c in kpi_ind_list if c in df_filo.columns]
                 ka_cols = st.columns(len(kpi_ind_dispo))
@@ -2635,21 +2696,16 @@ if vue == "Solidarité et citoyenneté":
                 c1, c2 = st.columns(2)
 
                 with c1:
-                    # Radar multi-indicateurs
                     st.markdown("##### 🕸️ Profil comparatif (radar)")
                     radar_ind = ["DEC_MED21", "DEC_TP6021", "DEC_GI21", "DEC_RD21",
                                  "DEC_PIMP21", "DEC_PACT21", "DEC_PPEN21"]
                     radar_avail = [c for c in radar_ind if c in df_filo.columns]
                     if len(radar_avail) >= 3:
-                        def norm_series(series):
-                            mn, mx = series.min(), series.max()
-                            return ((series - mn) / (mx - mn) * 100) if mx > mn else series * 0 + 50
                         df_all_metro = df_filo[df_filo["metropole"] == metro_comp_filo]
                         fig_rad = go.Figure()
                         for comm, color_r in [(com_a_filo, "#2D6A4F"), (com_b_filo, "#D4A017")]:
                             df_c = df_filo[(df_filo["metropole"] == metro_comp_filo) & (df_filo["LIBCOM"] == comm)]
                             vals_raw = [df_c[c].median() for c in radar_avail]
-                            # Normaliser sur la distribution métropole
                             vals_norm = []
                             for c, v in zip(radar_avail, vals_raw):
                                 col_data = df_all_metro[c].dropna()
@@ -2672,7 +2728,6 @@ if vue == "Solidarité et citoyenneté":
                         st.plotly_chart(fig_rad, use_container_width=True)
 
                 with c2:
-                    # Distribution des IRIS des deux communes
                     st.markdown("##### 📦 Distribution des IRIS par indicateur")
                     sel_ind_comp = st.selectbox(
                         "Indicateur",
