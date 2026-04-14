@@ -2858,7 +2858,7 @@ if vue == "Solidarité et citoyenneté":
                         val = sub.median() if not sub.empty else np.nan
                         with kpi_cols[i]:
                             st.markdown(f"""
-                            <div class='kpi-card-mob'>
+                            <div class='kpi-card-mob' style='border-top: none; border-left: 5px solid #1e5631; padding-left: 15px; text-align: left;'>
                                 <div class='kpi-label'>{metro}</div>
                                 <div class='kpi-value'>{fmt(val, dec=1)}</div>
                                 <div style='font-size:11px;color:#888'>{lbl}</div>
