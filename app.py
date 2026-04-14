@@ -2491,7 +2491,426 @@ if vue == "Solidarité et citoyenneté":
 
     with s3:
         st.markdown('<p class="section-header">🏥 Santé</p>', unsafe_allow_html=True)
-        st.info("📂 Page en cours de construction — branchez un fichier CSV dans `solidarite&citoyennete/data_clean/sante/`.")
+        st.markdown(
+            '<p class="source-note">Source : OpenStreetMap — Établissements de santé géolocalisés · Métropoles françaises</p>',
+            unsafe_allow_html=True,
+        )
+
+        # ── Chargement GeoJSON ────────────────────────────────────────────────
+        import json
+
+        GEOJSON_PATH = Path("solidarite&citoyennete/data_clean/sante/Etablissements_santé_filtre.geojson")
+
+        @st.cache_data
+        def charger_sante():
+            with open(GEOJSON_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            rows = []
+            for feat in data["features"]:
+                p = feat["properties"]
+                coords = feat["geometry"]["coordinates"]
+                rows.append({
+                    "type_etab": p.get("type_etablissement", ""),
+                    "nom": p.get("nom_etablissement") or "—",
+                    "commune":   p.get("commune", ""),
+                    "metropole": p.get("Métropole", ""),
+                    "lon":       coords[0],
+                    "lat":       coords[1],
+                })
+            return pd.DataFrame(rows)
+            
+        df_sante = charger_sante()
+
+        TYPE_LABELS = {
+            "pharmacy":    "Pharmacie",
+            "doctors":     "Médecins / Soins",
+            "dentist":     "Dentiste",
+            "hospital":    "Hôpital",
+            "nursing_home":"EHPAD / Maison de retraite",
+            "clinic":      "Clinique / Centre de santé",
+        }
+        TYPE_COLORS = {
+            "pharmacy":    "#2D6A4F",
+            "doctors":     "#52B788",
+            "dentist":     "#D4A017",
+            "hospital":    "#C0392B",
+            "nursing_home":"#8E44AD",
+            "clinic":      "#1A78C2",
+        }
+
+        metros_sante  = sorted(df_sante["metropole"].dropna().unique())
+        types_sante   = sorted(df_sante["type_etab"].dropna().unique())
+
+        # ── Onglets ───────────────────────────────────────────────────────
+        sante_t1, sante_t2, sante_t3 = st.tabs([
+            "🗺️ Carte & Répartition",
+            "📊 Statistiques",
+            "🏘️ Analyse par commune",
+        ])
+
+        # ═════════════════════════════════════════════════════════════════
+        # ONGLET 1 — CARTE & RÉPARTITION
+        # ═════════════════════════════════════════════════════════════════
+        with sante_t1:
+
+            with st.container():
+                st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
+                filter_bar("🔧 Filtres — Établissements de santé")
+                pv1, pv2, pv3 = st.columns(3)
+                with pv1:
+                    mode_sante = st.radio(
+                        "Niveau géographique",
+                        ["Comparaison Métropoles", "Détail Communal"],
+                        key="sante_mode", horizontal=True,
+                    )
+                with pv2:
+                    sel_metro_sante = st.selectbox(
+                        "Métropole",
+                        metros_sante,
+                        index=metros_sante.index("Grenoble") if "Grenoble" in metros_sante else 0,
+                        key="sante_metro_t1",
+                    )
+                with pv3:
+                    sel_types_sante = st.multiselect(
+                        "Type d'établissement",
+                        options=types_sante,
+                        default=types_sante,
+                        format_func=lambda t: TYPE_LABELS.get(t, t),
+                        key="sante_types_t1",
+                    )
+                if mode_sante == "Détail Communal":
+                    communes_sante_dispo = sorted(
+                        df_sante[df_sante["metropole"] == sel_metro_sante]["commune"].dropna().unique()
+                    )
+                    sel_communes_sante = st.multiselect(
+                        "Communes",
+                        communes_sante_dispo,
+                        default=communes_sante_dispo[:5],
+                        key="sante_communes_t1",
+                    )
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            # Filtrage
+            if mode_sante == "Comparaison Métropoles":
+                df_sf = df_sante[df_sante["type_etab"].isin(sel_types_sante)].copy()
+            else:
+                df_sf = df_sante[
+                    (df_sante["metropole"] == sel_metro_sante) &
+                    (df_sante["commune"].isin(sel_communes_sante)) &
+                    (df_sante["type_etab"].isin(sel_types_sante))
+                ].copy()
+
+            # KPIs
+            sk1, sk2, sk3, sk4, sk5 = st.columns(5)
+            sk1.metric("Total établissements", len(df_sf))
+            sk2.metric("Pharmacies",           len(df_sf[df_sf["type_etab"] == "pharmacy"]))
+            sk3.metric("Médecins / Soins",     len(df_sf[df_sf["type_etab"] == "doctors"]))
+            sk4.metric("Hôpitaux",             len(df_sf[df_sf["type_etab"] == "hospital"]))
+            sk5.metric("Communes couvertes",   df_sf["commune"].nunique())
+
+            st.markdown("---")
+            col_map, col_chart = st.columns([1.1, 0.9])
+
+            with col_map:
+                st.markdown("##### 🗺️ Carte des établissements")
+                if df_sf.empty:
+                    st.info("Aucun établissement pour ces filtres.")
+                else:
+                    fig_map = px.scatter_mapbox(
+                        df_sf,
+                        lat="lat", lon="lon",
+                        color="type_etab",
+                        color_discrete_map=TYPE_COLORS,
+                        hover_name="nom",
+                        hover_data={"commune": True, "type_etab": False, "lat": False, "lon": False},
+                        labels={"type_etab": "Type", "commune": "Commune"},
+                        zoom=10 if mode_sante == "Comparaison Métropoles" else 11,
+                        height=480,
+                        mapbox_style="carto-positron",
+                    )
+                    fig_map.update_traces(marker=dict(size=7, opacity=0.85))
+                    for trace in fig_map.data:
+                        trace.name = TYPE_LABELS.get(trace.name, trace.name)
+                    fig_map.update_layout(
+                        legend=dict(
+                            title="Type", orientation="v", x=0.01, y=0.99,
+                            bgcolor="rgba(255,255,255,0.85)",
+                            bordercolor="#C8E6D4", borderwidth=1,
+                            font=dict(size=11),
+                        ),
+                        margin=dict(l=0, r=0, t=0, b=0),
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        font_family="Sora",
+                    )
+                    st.plotly_chart(fig_map, use_container_width=True)
+
+            with col_chart:
+                st.markdown("##### 📊 Nombre d'établissements par type")
+                counts_sf = (
+                    df_sf.groupby("type_etab").size()
+                            .reset_index(name="count")
+                            .sort_values("count", ascending=True)
+                )
+                counts_sf["label"] = counts_sf["type_etab"].map(lambda t: TYPE_LABELS.get(t, t))
+                fig_bar = px.bar(
+                    counts_sf, x="count", y="label", orientation="h",
+                    color="type_etab", color_discrete_map=TYPE_COLORS,
+                    text="count",
+                    labels={"count": "Nombre", "label": ""},
+                    height=480,
+                )
+                fig_bar.update_traces(textposition="outside", showlegend=False)
+                fig_bar.update_layout(
+                    xaxis_title="Nombre d'établissements",
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    font_family="Sora",
+                    margin=dict(l=10, r=30, t=10, b=40),
+                    xaxis=dict(gridcolor="#E8F5EE"),
+                )
+                st.plotly_chart(style(fig_bar, 40), use_container_width=True)
+
+        # ═════════════════════════════════════════════════════════════════
+        # ONGLET 2 — STATISTIQUES
+        # ═════════════════════════════════════════════════════════════════
+        with sante_t2:
+
+            with st.container():
+                st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
+                filter_bar("🔧 Filtres — Statistiques")
+                sf1, sf2, sf3 = st.columns(3)
+                with sf1:
+                    mode_stats = st.radio(
+                        "Niveau géographique",
+                        ["Comparaison Métropoles", "Détail Communal"],
+                        key="sante_stats_mode", horizontal=True,
+                    )
+                with sf2:
+                    sel_metro_stats = st.selectbox(
+                        "Métropole",
+                        metros_sante,
+                        index=metros_sante.index("Grenoble") if "Grenoble" in metros_sante else 0,
+                        key="sante_stats_metro",
+                    )
+                with sf3:
+                    sel_types_stats = st.multiselect(
+                        "Types",
+                        options=types_sante,
+                        default=types_sante,
+                        format_func=lambda t: TYPE_LABELS.get(t, t),
+                        key="sante_stats_types",
+                    )
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            if mode_stats == "Comparaison Métropoles":
+                df_ss = df_sante[df_sante["type_etab"].isin(sel_types_stats)].copy()
+            else:
+                df_ss = df_sante[
+                    (df_sante["metropole"] == sel_metro_stats) &
+                    (df_sante["type_etab"].isin(sel_types_stats))
+                ].copy()
+
+            st.markdown("---")
+            sc1, sc2 = st.columns(2)
+
+            with sc1:
+                st.markdown("##### 🗂️ Répartition par type (treemap)")
+                if mode_stats == "Comparaison Métropoles":
+                    tm_data = df_ss.groupby(["metropole", "type_etab"]).size().reset_index(name="count")
+                    tm_data["label"] = tm_data["type_etab"].map(lambda t: TYPE_LABELS.get(t, t))
+                    fig_tm = px.treemap(
+                        tm_data, path=["metropole", "label"], values="count",
+                        color="type_etab", color_discrete_map=TYPE_COLORS, height=360,
+                    )
+                else:
+                    tm_data = df_ss.groupby("type_etab").size().reset_index(name="count")
+                    tm_data["label"] = tm_data["type_etab"].map(lambda t: TYPE_LABELS.get(t, t))
+                    tm_data["pct"] = (tm_data["count"] / tm_data["count"].sum() * 100).round(1)
+                    fig_tm = px.treemap(
+                        tm_data, path=["label"], values="count",
+                        color="type_etab", color_discrete_map=TYPE_COLORS,
+                        custom_data=["pct"], height=360,
+                    )
+                    fig_tm.update_traces(
+                        texttemplate="<b>%{label}</b><br>%{value} étab.<br>%{customdata[0]}%",
+                        textfont_size=12,
+                    )
+                fig_tm.update_layout(
+                    paper_bgcolor="rgba(0,0,0,0)", font_family="Sora",
+                    margin=dict(l=0, r=0, t=10, b=0),
+                )
+                st.plotly_chart(fig_tm, use_container_width=True)
+
+            with sc2:
+                st.markdown("##### 🏆 Top 10 communes par nombre d'établissements")
+                group_col = "metropole" if mode_stats == "Comparaison Métropoles" else "commune"
+                top_comm = (
+                    df_ss.groupby(group_col).size()
+                            .reset_index(name="count")
+                            .sort_values("count", ascending=False)
+                            .head(10)
+                )
+                fig_top = px.bar(
+                    top_comm.sort_values("count"),
+                    x="count", y=group_col, orientation="h", text="count",
+                    color_discrete_sequence=["#2D6A4F"],
+                    labels={"count": "Établissements", group_col: ""},
+                    height=360,
+                )
+                fig_top.update_traces(textposition="outside")
+                fig_top.update_layout(
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    font_family="Sora", xaxis=dict(gridcolor="#E8F5EE"),
+                    margin=dict(l=10, r=30, t=10, b=40),
+                )
+                st.plotly_chart(style(fig_top, 40), use_container_width=True)
+
+            st.markdown("---")
+            st.markdown("##### 📊 Répartition par commune × type (Top 15)")
+            scope_stack = df_ss if mode_stats == "Comparaison Métropoles" else df_ss
+            top15 = (
+                scope_stack.groupby("commune" if mode_stats == "Détail Communal" else "metropole")
+                            .size().sort_values(ascending=False).head(15).index.tolist()
+            )
+            grp_col = "commune" if mode_stats == "Détail Communal" else "metropole"
+            df_stack_s = (
+                scope_stack[scope_stack[grp_col].isin(top15)]
+                .groupby([grp_col, "type_etab"]).size().reset_index(name="count")
+            )
+            fig_stack_s = px.bar(
+                df_stack_s, x=grp_col, y="count", color="type_etab",
+                color_discrete_map=TYPE_COLORS, barmode="stack",
+                labels={grp_col: "", "count": "Établissements", "type_etab": "Type"},
+                height=420,
+            )
+            for trace in fig_stack_s.data:
+                trace.name = TYPE_LABELS.get(trace.name, trace.name)
+            fig_stack_s.update_layout(
+                xaxis_tickangle=-35,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="Sora", yaxis=dict(gridcolor="#E8F5EE"),
+                legend=dict(orientation="h", y=-0.3),
+                margin=dict(l=10, r=10, t=10, b=100),
+            )
+            st.plotly_chart(style(fig_stack_s), use_container_width=True)
+
+            st.markdown("---")
+            with st.expander("📄 Tableau de données"):
+                df_tab = (
+                    df_ss.groupby([grp_col, "type_etab"]).size()
+                            .reset_index(name="count")
+                )
+                df_tab["type_etab"] = df_tab["type_etab"].map(lambda t: TYPE_LABELS.get(t, t))
+                df_tab.columns = [grp_col.capitalize(), "Type", "Nb établissements"]
+                st.dataframe(df_tab.set_index(grp_col.capitalize()), use_container_width=True)
+
+            with st.expander("📖 Note méthodologique"):
+                st.write(
+                    "**Source** : OpenStreetMap — données filtrées sur les communes des 5 métropoles.\n\n"
+                    "**Types d'établissements** : pharmacie, médecin/soins paramédicaux, dentiste, "
+                    "hôpital, EHPAD/maison de retraite, clinique/centre de santé.\n\n"
+                    "**Périmètre** : communes appartenant aux métropoles Grenoble, Rennes, "
+                    "Saint-Étienne, Rouen, Montpellier."
+                )
+
+        # ═════════════════════════════════════════════════════════════════
+        # ONGLET 3 — ANALYSE PAR COMMUNE
+        # ═════════════════════════════════════════════════════════════════
+        with sante_t3:
+
+            with st.container():
+                st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
+                filter_bar("🔧 Filtres — Analyse par commune")
+                cf1, cf2, cf3 = st.columns(3)
+                with cf1:
+                    mode_comm = st.radio(
+                        "Niveau géographique",
+                        ["Comparaison Métropoles", "Détail Communal"],
+                        key="sante_comm_mode", horizontal=True,
+                    )
+                with cf2:
+                    sel_metro_comm = st.selectbox(
+                        "Métropole",
+                        metros_sante,
+                        index=metros_sante.index("Grenoble") if "Grenoble" in metros_sante else 0,
+                        key="sante_comm_metro",
+                    )
+                with cf3:
+                    communes_comm_dispo = sorted(
+                        df_sante[df_sante["metropole"] == sel_metro_comm]["commune"].dropna().unique()
+                    )
+                    commune_focus = st.selectbox(
+                        "Commune à analyser",
+                        communes_comm_dispo,
+                        index=communes_comm_dispo.index("Grenoble") if "Grenoble" in communes_comm_dispo else 0,
+                        key="sante_comm_focus",
+                    )
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            df_metro_comm = df_sante[df_sante["metropole"] == sel_metro_comm].copy()
+            df_focus = df_metro_comm[df_metro_comm["commune"] == commune_focus].copy()
+
+            # KPIs
+            ck1, ck2, ck3, ck4 = st.columns(4)
+            ck1.metric("Total établissements",  len(df_focus))
+            ck2.metric("Pharmacies",            len(df_focus[df_focus["type_etab"] == "pharmacy"]))
+            ck3.metric("Médecins / Soins",      len(df_focus[df_focus["type_etab"] == "doctors"]))
+            ck4.metric("Hôpitaux / Cliniques",  len(df_focus[df_focus["type_etab"].isin(["hospital", "clinic"])]))
+
+            st.markdown("---")
+            cc1, cc2 = st.columns(2)
+
+            with cc1:
+                st.markdown("##### 🍩 Répartition par type")
+                if df_focus.empty:
+                    st.info("Aucune donnée pour cette commune.")
+                else:
+                    donut_data = (
+                        df_focus.groupby("type_etab").size().reset_index(name="count")
+                    )
+                    donut_data["label"] = donut_data["type_etab"].map(lambda t: TYPE_LABELS.get(t, t))
+                    fig_donut = px.pie(
+                        donut_data, names="label", values="count",
+                        color="type_etab", color_discrete_map=TYPE_COLORS,
+                        hole=0.45, height=340,
+                    )
+                    fig_donut.update_traces(textinfo="percent+label", textfont_size=12)
+                    fig_donut.update_layout(
+                        showlegend=False, paper_bgcolor="rgba(0,0,0,0)",
+                        font_family="Sora", margin=dict(l=10, r=10, t=10, b=10),
+                    )
+                    st.plotly_chart(fig_donut, use_container_width=True)
+
+            with cc2:
+                st.markdown("##### 📊 Part dans la métropole par type")
+                metro_cnt  = df_metro_comm.groupby("type_etab").size().reset_index(name="total_metro")
+                commune_cnt = df_focus.groupby("type_etab").size().reset_index(name="total_commune")
+                comp = metro_cnt.merge(commune_cnt, on="type_etab", how="left").fillna(0)
+                comp["pct"] = (comp["total_commune"] / comp["total_metro"] * 100).round(1)
+                comp["label"] = comp["type_etab"].map(lambda t: TYPE_LABELS.get(t, t))
+                comp = comp.sort_values("pct", ascending=True)
+                fig_comp = px.bar(
+                    comp, x="pct", y="label", orientation="h",
+                    text=comp["pct"].apply(lambda v: f"{v:.1f}%"),
+                    color="type_etab", color_discrete_map=TYPE_COLORS,
+                    labels={"pct": "Part (%)", "label": ""},
+                    height=340,
+                )
+                fig_comp.update_traces(showlegend=False, textposition="outside")
+                fig_comp.update_layout(
+                    xaxis_title="% des établissements de la métropole",
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    font_family="Sora", xaxis=dict(gridcolor="#E8F5EE"),
+                    margin=dict(l=10, r=40, t=10, b=40),
+                )
+                st.plotly_chart(style(fig_comp, 40), use_container_width=True)
+
+            st.markdown("---")
+            with st.expander(f"📋 Liste complète — {commune_focus} ({len(df_focus)} établissements)"):
+                df_display = df_focus[["type_etab", "nom"]].copy()
+                df_display["type_etab"] = df_display["type_etab"].map(lambda t: TYPE_LABELS.get(t, t))
+                df_display.columns = ["Type", "Nom"]
+                df_display = df_display.sort_values(["Type", "Nom"]).reset_index(drop=True)
+                st.dataframe(df_display, use_container_width=True, height=300)
 
     with s4:
         st.markdown('<p class="section-header">Participation citoyenne - Élections municipales</p>', unsafe_allow_html=True)
