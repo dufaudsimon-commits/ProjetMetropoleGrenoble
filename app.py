@@ -598,6 +598,7 @@ if st.session_state.page == "home":
     .stat-num { font-size: 24px; font-weight: 700; color: #1C3A27; }
     .stat-lbl { font-size: 11px; color: #4A7C59; font-weight: 700;
         text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
+<<<<<<< Updated upstream
 
     .cards-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
     .info-card {
@@ -755,14 +756,154 @@ with st.sidebar:
         <div>
             <div style="font-size:13px;font-weight:600;color:#95D5B2;line-height:1.3;font-family:'Sora',sans-serif;">Métropole Grenoble</div>
             <div style="font-size:10px;color:rgba(149,213,178,0.45);font-weight:400;font-family:'Sora',sans-serif;">Tableau de bord</div>
+=======
+
+    .cards-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .info-card {
+        background: white; border: 1px solid #C8E6D4; border-radius: 12px;
+        padding: 20px 22px; border-left: 5px solid #2D6A4F;
+    }
+    .info-card.orange { border-left-color: #C45B2A; }
+    .info-card-title {
+        font-size: 12px; font-weight: 700; color: #2D6A4F; text-transform: uppercase;
+        letter-spacing: 0.08em; margin-bottom: 10px;
+    }
+    .info-card.orange .info-card-title { color: #C45B2A; }
+    .info-card-body { font-size: 13px; color: #2c2c2c; line-height: 1.7; text-align: justify; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .tag-green {
+        font-size: 11px; font-weight: 600; padding: 3px 11px; border-radius: 20px;
+        background: #EEF4F0; color: #2D6A4F; border: 1px solid #C8E6D4;
+    }
+    .tag-orange {
+        font-size: 11px; font-weight: 600; padding: 3px 11px; border-radius: 20px;
+        background: #FEF3ED; color: #C45B2A; border: 1px solid #F5C4B3;
+    }
+    .cta-wrapper { margin-top: 8px; }
+    div[data-testid="stButton"] > button[kind="primary"] {
+        background: #2D6A4F !important; color: white !important;
+        border: none !important; border-radius: 12px !important;
+        padding: 14px 28px !important; font-size: 15px !important;
+        font-weight: 700 !important; width: 100% !important;
+        letter-spacing: 0.03em !important; transition: background 0.2s !important;
+    }
+    div[data-testid="stButton"] > button[kind="primary"]:hover {
+        background: #1C3A27 !important;
+    }
+    .footer-note { font-size: 11px; color: #88A898; text-align: center; margin-top: 12px; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ── Hero banner ────────────────────────────────────────────────────────
+    img_path = Path("grenoble-1600x900.jpg")
+    if img_path.exists():
+        import base64
+        with open(img_path, "rb") as f:
+            img_b64 = base64.b64encode(f.read()).decode()
+        img_tag = f'<img src="data:image/jpeg;base64,{img_b64}" alt="Grenoble"/>'
+        img_col_html = f'<div class="hero-img-col">{img_tag}<div class="hero-img-overlay"></div></div>'
+    else:
+        img_col_html = ""
+
+    st.markdown(f"""
+    <div class="hero-accueil">
+        <div class="hero-inner">
+            <div class="hero-text-col">
+                <div class="hero-badge">Projet académique · INSEE</div>
+                <div class="hero-title">Tableau de bord<br>des métropoles françaises</div>
+                <div class="hero-subtitle">
+                    Grenoble · Rennes · Rouen<br>Saint-Étienne · Montpellier
+                </div>
+            </div>
+            {img_col_html}
+>>>>>>> Stashed changes
         </div>
     </div>
     """, unsafe_allow_html=True)
 
+<<<<<<< Updated upstream
     # 3. Bouton Accueil
     if st.button("🏠  Accueil"):
         st.session_state.page = "home"
         st.rerun()
+=======
+    # ── Stats ──────────────────────────────────────────────────────────────
+    st.markdown("""
+    <div class="stats-row">
+        <div class="stat-box"><div class="stat-num">5</div><div class="stat-lbl">Métropoles</div></div>
+        <div class="stat-box"><div class="stat-num">49</div><div class="stat-lbl">Communes (Grenoble)</div></div>
+        <div class="stat-box"><div class="stat-num">2</div><div class="stat-lbl">Thématiques</div></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Cartes objectif + sources ──────────────────────────────────────────
+    st.markdown("""
+    <div class="cards-row">
+        <div class="info-card">
+            <div class="info-card-title">Objectif</div>
+            <div class="info-card-body">
+                Comparer les dynamiques territoriales de 5 métropoles françaises
+                à partir des données officielles de l'INSEE, couvrant les recensements
+                de 2011 à 2022 sur les volets démographiques et sociaux.
+            </div>
+        </div>
+        <div class="info-card" style="border-left-color:#1A6FA3;">
+            <div class="info-card-title" style="color:#1A6FA3;">Sources</div>
+            <div class="info-card-body">
+                Données INSEE — Recensements de la Population 2011, 2016 et 2022.
+                Données CAF et indicateurs de solidarité pour la période 2019–2022.
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Cartes thématiques ─────────────────────────────────────────────────
+    st.markdown("""
+    <div class="cards-row">
+        <div class="info-card">
+            <div class="info-card-title">📊 Démographie</div>
+            <div class="info-card-body">
+                Analyse de la population, de la structure par âge, des ménages
+                et des mobilités résidentielles, professionnelles et scolaires
+                à l'échelle des communes et des EPCI.
+            </div>
+            <div class="tag-row">
+                <span class="tag-green">Population</span>
+                <span class="tag-green">Pyramide des âges</span>
+                <span class="tag-green">Mobilités</span>
+                <span class="tag-green">Ménages</span>
+                <span class="tag-green">CSP</span>
+            </div>
+        </div>
+        <div class="info-card orange">
+            <div class="info-card-title">🤝 Solidarité & citoyenneté</div>
+            <div class="info-card-body">
+                Étude des allocations CAF, des indicateurs éducatifs et de santé,
+                ainsi que de la participation citoyenne sur l'ensemble
+                des territoires métropolitains.
+            </div>
+            <div class="tag-row">
+                <span class="tag-orange">CAF</span>
+                <span class="tag-orange">Éducation</span>
+                <span class="tag-orange">Santé</span>
+                <span class="tag-orange">Citoyenneté</span>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Bouton CTA ─────────────────────────────────────────────────────────
+    st.markdown('<div class="cta-wrapper">', unsafe_allow_html=True)
+    if st.button("→  Accéder à l'application", type="primary"):
+        st.session_state.page = "app"
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="footer-note">Données INSEE · Recensements de la Population 2011, 2016, 2022</p>',
+        unsafe_allow_html=True,
+    )
+    st.stop()
+>>>>>>> Stashed changes
 
     # 4. Navigation
     st.markdown('<div style="font-size:9px;font-weight:700;color:rgba(149,213,178,0.38);text-transform:uppercase;letter-spacing:0.13em;padding:10px 4px 4px;font-family:\'Sora\',sans-serif;">Navigation</div>', unsafe_allow_html=True)
@@ -803,6 +944,17 @@ with st.sidebar:
 # ──────────────────────────────────────────────────────────────────────────────
 # 8. PAGES
 # ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────
+# NAVIGATION (ajout)
+# ──────────────────────────────────────────────────────────────
+if "vue" not in st.session_state:
+    st.session_state.vue = "Description"
+
+vue = st.sidebar.selectbox(
+    "Navigation",
+    ["Description", "Démographie"],
+    key="vue"
+)
 if vue == "Description":
     st.markdown('<p class="section-header">Description</p>', unsafe_allow_html=True)
 
