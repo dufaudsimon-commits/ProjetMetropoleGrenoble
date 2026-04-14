@@ -2089,9 +2089,10 @@ if vue == "Solidarité et citoyenneté":
                             st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
                             filter_bar("🔧 Filtres — Solidarité CAF")
                             caf_f1, caf_f2, caf_f3 = st.columns([2, 1, 2])
+                            
                             with caf_f1:
                                 metric_key = st.selectbox("Indicateur", list(available_metrics.keys()),
-                                    format_func=lambda k: available_metrics[k], index=0, key="caf_metric")
+                                                        format_func=lambda k: available_metrics[k], index=0, key="caf_metric")
                             with caf_f2:
                                 year_caf = st.selectbox("Année", years_caf, index=len(years_caf)-1, key="caf_year")
                             with caf_f3:
@@ -2101,42 +2102,41 @@ if vue == "Solidarité et citoyenneté":
                         if not sel_agglos_caf:
                             st.warning("⚠️ Sélectionnez au moins une agglomération.")
                         else:
+                            # Préparation des données
                             metric       = metric_key
                             label_metric = available_metrics[metric]
                             df_fil = df_caf[df_caf["Agglomeration"].isin(sel_agglos_caf)]
                             df_yr  = df_fil[df_fil["Annee"] == year_caf]
 
                             st.markdown("---")
+                            
+                            # Calculs des valeurs
                             total_val = df_yr[metric].sum()
+                            nb_agglo  = int(df_yr["Agglomeration"].nunique())
                             nb_com    = int(df_yr["Nom_Commune"].nunique()) if "Nom_Commune" in df_yr.columns else 0
                             max_agglo = df_yr.groupby("Agglomeration")[metric].sum().idxmax() if not df_yr.empty else "—"
-                            k1, k2, k3, k4 = st.columns(4)
-                            k1.metric(f"Total {year_caf}", fmt(total_val))
-                            k2.metric("Agglomérations", int(df_yr["Agglomeration"].nunique()))
-                            k3.metric("Communes couvertes", nb_com)
-                            k4.metric("1ère agglomération", max_agglo)
-                            st.markdown("---")
 
-                            c1, c2 = st.columns(2)
-                            with c1:
-                                st.markdown(f"##### 📊 Comparatif {year_caf}")
-                                by_agg = df_yr.groupby("Agglomeration", as_index=False)[metric].sum().sort_values(metric, ascending=False)
-                                fig_bar = px.bar(by_agg, x="Agglomeration", y=metric, color="Agglomeration",
-                                    color_discrete_map=COULEURS, text_auto=".3s",
-                                    labels={"Agglomeration": "", metric: label_metric},
-                                    title=f"{label_metric} — {year_caf}", height=380)
-                                fig_bar.update_traces(textposition="outside")
-                                fig_bar.update_layout(showlegend=False)
-                                st.plotly_chart(style(fig_bar, 40), use_container_width=True)
-                            with c2:
-                                st.markdown("##### 📈 Évolution 2020–2023")
-                                evo = df_fil.groupby(["Annee","Agglomeration"], as_index=False)[metric].sum().sort_values("Annee")
-                                fig_evo = px.line(evo, x="Annee", y=metric, color="Agglomeration",
-                                    color_discrete_map=COULEURS, markers=True,
-                                    labels={"Annee": "Année", metric: label_metric},
-                                    title=f"Évolution — {label_metric}", height=380)
-                                fig_evo.update_traces(line_width=2.5, marker_size=8)
-                                st.plotly_chart(style(fig_evo, 40), use_container_width=True)
+                            # Affichage des 4 colonnes KPI harmonisées
+                            k1, k2, k3, k4 = st.columns(4)
+                            
+                            # Liste de configuration pour automatiser le tracé des cartes
+                            caf_cards = [
+                                (k1, f"Total {year_caf}", fmt(total_val), label_metric),
+                                (k2, "Agglomérations", nb_agglo, "Unités sélectionnées"),
+                                (k3, "Communes", nb_com, "Territoires couverts"),
+                                (k4, "Top Agglo", max_agglo, "Volume le plus élevé")
+                            ]
+
+                            for col, title, value, subtitle in caf_cards:
+                                with col:
+                                    st.markdown(f"""
+                                    <div class='kpi-card-mob' style='border-top: none; border-left: 5px solid #1e5631; padding: 10px 15px; text-align: left; background-color: #f9f9f9; border-radius: 4px;'>
+                                        <div class='kpi-label' style='font-size: 11px; color: #666; font-weight: bold; text-transform: uppercase;'>{title}</div>
+                                        <div class='kpi-value' style='font-size: 22px; font-weight: bold; color: #1e5631; margin: 5px 0;'>{value}</div>
+                                        <div style='font-size:10px; color:#888;'>{subtitle}</div>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+
                             st.markdown("---")
 
                             c3, c4 = st.columns(2)
