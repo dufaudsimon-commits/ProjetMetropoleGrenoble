@@ -844,9 +844,24 @@ if vue == "Démographie":
         st.markdown(
             '<p class="source-note">Source : '
             '<a href="https://www.insee.fr/fr/statistiques/1405599" target="_blank">'
-            'INSEE — Données générales comparatives & Population par tranche d\'âge (RP 2011–2022)</a></p>',
+            'INSEE — Données générales comparatives (RP 2022)</a></p>',
             unsafe_allow_html=True,
         )
+
+        # ── Helper commune (Grenoble uniquement dans df_gen) ─────────────────
+        def commune_val(commune, col):
+            if df_gen is None:
+                return np.nan
+            comm_norm = normalize_name(commune)
+            geo = df_gen["territoire"].astype(str).str.extract(
+                r"^(Commune|EPCI)\s*:\s*(.*?)\s*\(\d+\)\s*$"
+            )
+            mask = (geo[0] == "Commune") & (geo[1].apply(normalize_name) == comm_norm)
+            rows = df_gen[mask]
+            if rows.empty:
+                return np.nan
+            v = rows.iloc[0].get(col, np.nan)
+            return float(v) if pd.notna(v) else np.nan
 
         # ── Bandeau filtres ──────────────────────────────────────────────────
         with st.container():
@@ -856,69 +871,161 @@ if vue == "Démographie":
             with pg_c1:
                 mode_pop = st.radio(
                     "Niveau géographique",
-                    ["Comparaison Métropoles", "Détail Communal"],
+                    ["Comparaison Métropoles", "Détail Communal (Grenoble)"],
                     key="pop_mode", horizontal=True,
                 )
             if mode_pop == "Comparaison Métropoles":
                 sel = st.multiselect("Métropoles à comparer", TOUTES, default=TOUTES, key="sel_t1")
             else:
                 with pg_c2:
-                    metro_pop = st.selectbox("Métropole parente", TOUTES, key="pop_metro")
+                    pass  # pas de filtre métropole parente : c'est toujours Grenoble
                 sel_communes_pop = st.multiselect(
-                    "Communes", sorted(COMMUNES[metro_pop]),
-                    default=sorted(COMMUNES[metro_pop])[:2], key="pop_communes",
+                    "Communes de Grenoble", sorted(COMMUNES["Grenoble"]),
+                    default=sorted(COMMUNES["Grenoble"])[:2], key="pop_communes",
                 )
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── Vue Détail Communal ──────────────────────────────────────────────
-        if mode_pop == "Détail Communal":
+        # ════════════════════════════════════════════════════════════════════
+        # VUE DÉTAIL COMMUNAL (Grenoble)
+        # ════════════════════════════════════════════════════════════════════
+        if mode_pop == "Détail Communal (Grenoble)":
             if not sel_communes_pop:
                 st.warning("Sélectionnez au moins une commune.")
                 st.stop()
+
+            COLORS_COMM = ["#2D6A4F", "#95D5B2", "#1A6FA3", "#C45B2A", "#D4A017",
+                           "#7B3FA0", "#74C69D", "#F4A261", "#264653", "#E9C46A"]
+
             st.markdown(
-                f"<h2 style='color:#1C3A27;font-size:1.4rem;margin:0 0 4px'>🏙️ Population — {metro_pop}</h2>"
+                "<h2 style='color:#1C3A27;font-size:1.4rem;margin:0 0 4px'>🏘️ Population — Communes de Grenoble</h2>"
                 f"<p style='color:#5A8A6A;font-size:0.82rem;margin-bottom:18px'>"
                 f"Communes sélectionnées : {', '.join(sel_communes_pop)}</p>",
                 unsafe_allow_html=True,
             )
-            if df_pop is not None:
-                kpi_cols = st.columns(len(sel_communes_pop))
-                for i, comm in enumerate(sel_communes_pop):
-                    df_c22 = df_pop[(df_pop["LIBELLE"] == comm) & (df_pop["annee"] == 2022)]
-                    df_c11 = df_pop[(df_pop["LIBELLE"] == comm) & (df_pop["annee"] == 2011)]
-                    age_cols = [c for c in df_pop.columns if "ageq_rec" in c]
-                    pop_c22 = df_c22[age_cols].sum().sum() if not df_c22.empty else np.nan
-                    pop_c11 = df_c11[age_cols].sum().sum() if not df_c11.empty else np.nan
-                    delta_str = (f"{(pop_c22 - pop_c11) / pop_c11 * 100:+.1f} % (2011→2022)"
-                                 if not (np.isnan(pop_c22) or np.isnan(pop_c11)) else None)
-                    with kpi_cols[i]:
-                        st.metric(label=f"🏘️ {comm}", value=fmt(pop_c22), delta=delta_str)
 
-                st.markdown("---")
-                rows_evol_c = []
-                for comm in sel_communes_pop:
-                    for an in [2011, 2016, 2022]:
-                        df_c = df_pop[(df_pop["LIBELLE"] == comm) & (df_pop["annee"] == an)]
-                        age_cols = [c for c in df_pop.columns if "ageq_rec" in c]
-                        if not df_c.empty:
-                            rows_evol_c.append({"Commune": comm, "Année": an,
-                                                "Population": df_c[age_cols].sum().sum()})
-                df_evol_c = pd.DataFrame(rows_evol_c)
-                if not df_evol_c.empty:
-                    fig_evol_c = px.line(df_evol_c, x="Année", y="Population", color="Commune",
-                                         markers=True, height=370,
-                                         color_discrete_sequence=["#2D6A4F", "#95D5B2", "#1A6FA3",
-                                                                   "#C45B2A", "#D4A017"])
-                    fig_evol_c.update_layout(
-                        xaxis=dict(tickvals=[2011, 2016, 2022]),
-                        legend=dict(orientation="h", y=1.12),
-                        yaxis_title="Population",
-                    )
-                    st.plotly_chart(style(fig_evol_c), use_container_width=True)
-            else:
-                st.info("Fichier Population_tranche_age_clean.csv non chargé.")
+            # ── KPIs ─────────────────────────────────────────────────────────
+            kpi_cols = st.columns(len(sel_communes_pop))
+            for i, comm in enumerate(sel_communes_pop):
+                pop22 = commune_val(comm, "population_2022")
+                with kpi_cols[i]:
+                    st.metric(label=f"🏘️ {comm}", value=fmt(pop22))
 
-        # ── Vue Comparaison Métropoles ───────────────────────────────────────
+            st.markdown("---")
+
+            # ── Graphique 1 : Population 2022 ────────────────────────────────
+            st.markdown("#### 📊 Population et indicateurs")
+            r1c1, r1c2 = st.columns(2)
+            with r1c1:
+                st.markdown("##### Population totale 2022 (habitants)")
+                data_comm = [{"Commune": c, "Population": commune_val(c, "population_2022"),
+                              "Couleur": COLORS_COMM[i % len(COLORS_COMM)]}
+                             for i, c in enumerate(sel_communes_pop)]
+                df_comm22 = pd.DataFrame(data_comm).dropna(subset=["Population"]).sort_values("Population", ascending=False)
+                if not df_comm22.empty:
+                    fig_pop_c = go.Figure()
+                    for _, row_c in df_comm22.iterrows():
+                        fig_pop_c.add_trace(go.Bar(
+                            x=[row_c["Commune"]], y=[row_c["Population"]],
+                            name=row_c["Commune"], marker_color=row_c["Couleur"],
+                            text=[f"{int(row_c['Population']):,}".replace(",", "\u202f")],
+                            textposition="outside", showlegend=False,
+                        ))
+                    fig_pop_c.update_layout(showlegend=False, yaxis_title="Habitants",
+                                            yaxis=dict(tickformat=",d"), height=370)
+                    st.plotly_chart(style(fig_pop_c), use_container_width=True)
+
+            with r1c2:
+                st.markdown("##### Densité (hab/km²)")
+                data_dens_c = []
+                for i, c in enumerate(sel_communes_pop):
+                    d = commune_val(c, "densite_2022")
+                    s = commune_val(c, "superficie_km2_2022")
+                    p = commune_val(c, "population_2022")
+                    if not any(np.isnan(v) for v in [d, s, p]):
+                        data_dens_c.append({"Commune": c, "Densité (hab/km²)": d,
+                                            "Superficie (km²)": s, "Population": p,
+                                            "Couleur": COLORS_COMM[i % len(COLORS_COMM)]})
+                df_dens_c = pd.DataFrame(data_dens_c)
+                if not df_dens_c.empty:
+                    fig_dens_c = px.scatter(df_dens_c, x="Superficie (km²)", y="Densité (hab/km²)",
+                                            size="Population", color="Commune", text="Commune",
+                                            color_discrete_sequence=COLORS_COMM, size_max=55, height=370)
+                    fig_dens_c.update_traces(textposition="top center", textfont_size=10)
+                    fig_dens_c.update_layout(showlegend=False)
+                    st.plotly_chart(style(fig_dens_c), use_container_width=True)
+
+            st.markdown("---")
+
+            # ── Graphique 2 : Revenus, pauvreté, chômage ────────────────────
+            st.markdown("#### 💶 Revenus, pauvreté & chômage")
+            r3c1, r3c2, r3c3 = st.columns(3)
+            with r3c1:
+                st.markdown("##### Revenu médian 2021 (€/an)")
+                data_rev_c = [{"Commune": c, "Revenu médian (€)": commune_val(c, "revenu_median_2021")}
+                              for c in sel_communes_pop]
+                df_rev_c = pd.DataFrame(data_rev_c).dropna().sort_values("Revenu médian (€)")
+                if not df_rev_c.empty:
+                    fig_rev_c = px.bar(df_rev_c, x="Revenu médian (€)", y="Commune", orientation="h",
+                                       color_discrete_sequence=["#2D6A4F"], text_auto=".0f", height=370)
+                    fig_rev_c.update_layout(showlegend=False, xaxis_title="€/an")
+                    st.plotly_chart(style(fig_rev_c), use_container_width=True)
+
+            with r3c2:
+                st.markdown("##### Taux de pauvreté 2021 (%)")
+                data_pauv_c = [{"Commune": c, "Taux de pauvreté (%)": commune_val(c, "tx_pauvrete_2021")}
+                               for c in sel_communes_pop]
+                df_pauv_c = pd.DataFrame(data_pauv_c).dropna().sort_values("Taux de pauvreté (%)", ascending=False)
+                if not df_pauv_c.empty:
+                    colors_pauv_c = ["#C45B2A" if v > 15 else "#D4A017" if v > 12 else "#2D6A4F"
+                                     for v in df_pauv_c["Taux de pauvreté (%)"]]
+                    fig_pauv_c = go.Figure(go.Bar(
+                        y=df_pauv_c["Commune"], x=df_pauv_c["Taux de pauvreté (%)"], orientation="h",
+                        marker_color=colors_pauv_c,
+                        text=[f"{v:.1f}%" for v in df_pauv_c["Taux de pauvreté (%)"]],
+                        textposition="inside",
+                    ))
+                    fig_pauv_c.update_layout(xaxis_title="%", showlegend=False, height=370)
+                    st.plotly_chart(style(fig_pauv_c), use_container_width=True)
+
+            with r3c3:
+                st.markdown("##### Taux de chômage (%)")
+                data_chom_c = [{"Commune": c, "Taux de chômage (%)": commune_val(c, "tx_chomage_15_64")}
+                               for c in sel_communes_pop]
+                df_chom_c = pd.DataFrame(data_chom_c).dropna().sort_values("Taux de chômage (%)", ascending=False)
+                if not df_chom_c.empty:
+                    fig_chom_c = px.bar(df_chom_c, x="Commune", y="Taux de chômage (%)",
+                                        color="Taux de chômage (%)",
+                                        color_continuous_scale="RdYlGn_r",
+                                        text=[f"{v:.1f}%" for v in df_chom_c["Taux de chômage (%)"]],
+                                        height=370)
+                    fig_chom_c.update_traces(textposition="outside")
+                    fig_chom_c.update_layout(coloraxis_showscale=False, xaxis_tickangle=-30,
+                                             yaxis_title="Taux de chômage (%)")
+                    st.plotly_chart(style(fig_chom_c), use_container_width=True)
+
+            st.markdown("---")
+            st.markdown("#### 📋 Tableau récapitulatif")
+            lignes_tab_c = []
+            for comm in sel_communes_pop:
+                pop22 = commune_val(comm, "population_2022")
+                dens  = commune_val(comm, "densite_2022")
+                rev   = commune_val(comm, "revenu_median_2021")
+                pauv  = commune_val(comm, "tx_pauvrete_2021")
+                tc    = commune_val(comm, "tx_chomage_15_64")
+                lignes_tab_c.append({
+                    "Commune": comm,
+                    "Population 2022": fmt(pop22),
+                    "Densité (hab/km²)": fmt(dens),
+                    "Revenu médian": fmt(rev, " €"),
+                    "Taux pauvreté": f"{pauv:.1f}%" if not np.isnan(pauv) else "N/D",
+                    "Taux chômage": f"{tc:.1f}%" if not np.isnan(tc) else "N/D",
+                })
+            st.dataframe(pd.DataFrame(lignes_tab_c).set_index("Commune"), use_container_width=True)
+            st.caption("Sources : INSEE — Données générales comparatives (RP 2022).")
+
+        # ════════════════════════════════════════════════════════════════════
+        # VUE COMPARAISON MÉTROPOLES
+        # ════════════════════════════════════════════════════════════════════
         else:
             if not sel:
                 st.warning("Sélectionnez au moins une métropole.")
@@ -927,7 +1034,7 @@ if vue == "Démographie":
             st.markdown(
                 "<h2 style='color:#1C3A27;font-size:1.4rem;margin:0 0 4px'>🏙️ Population globale</h2>"
                 "<p style='color:#5A8A6A;font-size:0.82rem;margin-bottom:18px'>"
-                "Vue d'ensemble comparative des 5 métropoles — Recensements INSEE RP 2011 · 2016 · 2022</p>",
+                "Vue d'ensemble comparative des 5 métropoles — Données INSEE RP 2022</p>",
                 unsafe_allow_html=True,
             )
             kpi_cols = st.columns(len(sel))
@@ -981,66 +1088,9 @@ if vue == "Démographie":
                     st.plotly_chart(style(fig_dens), use_container_width=True)
 
             st.markdown("---")
-            st.markdown("#### 📈 Évolution de la population 2011 → 2022")
-            r2c1, r2c2 = st.columns([3, 2])
-            with r2c1:
-                st.markdown("##### Trajectoire démographique")
-                if df_pop is not None:
-                    rows_evol = []
-                    for m in sel:
-                        for an in [2011, 2016, 2022]:
-                            p = pop_from_age(m, an)
-                            if not np.isnan(p):
-                                rows_evol.append({"Métropole": m, "Année": an, "Population": p})
-                    df_evol = pd.DataFrame(rows_evol)
-                    if not df_evol.empty:
-                        base = df_evol[df_evol["Année"] == 2011].set_index("Métropole")["Population"]
-                        df_evol["Indice"] = df_evol.apply(
-                            lambda r: r["Population"] / base.get(r["Métropole"], np.nan) * 100, axis=1)
-                        fig_evol = go.Figure()
-                        for m in sel:
-                            sub_e = df_evol[df_evol["Métropole"] == m].sort_values("Année")
-                            fig_evol.add_trace(go.Scatter(
-                                x=sub_e["Année"], y=sub_e["Indice"], name=m, mode="lines+markers",
-                                line=dict(color=COULEURS.get(m, "#888"), width=2.5), marker=dict(size=9),
-                                customdata=sub_e["Population"],
-                            ))
-                        fig_evol.add_hline(y=100, line_dash="dot", line_color="#AAAAAA",
-                                           annotation_text="Base 2011", annotation_position="left")
-                        fig_evol.update_layout(yaxis_title="Indice (base 100 = 2011)",
-                                               xaxis=dict(tickvals=[2011, 2016, 2022]),
-                                               legend=dict(orientation="h", y=1.12), height=370)
-                        st.plotly_chart(style(fig_evol), use_container_width=True)
-                else:
-                    st.info("Fichier Population_tranche_age_clean.csv non chargé.")
-            with r2c2:
-                st.markdown("##### Croissance 2011→2022 (gain net)")
-                rows_gain = []
-                for m in sel:
-                    p11 = pop_from_age(m, 2011)
-                    p22 = pop_from_age(m, 2022)
-                    if not (np.isnan(p11) or np.isnan(p22)):
-                        rows_gain.append({"Métropole": m, "Gain net": p22 - p11,
-                                          "Croissance (%)": (p22 - p11) / p11 * 100})
-                df_gain = pd.DataFrame(rows_gain).sort_values("Gain net", ascending=True)
-                if not df_gain.empty:
-                    colors_gain = ["#2D6A4F" if v >= 0 else "#C45B2A" for v in df_gain["Gain net"]]
-                    fig_gain = go.Figure(go.Bar(
-                        x=df_gain["Gain net"], y=df_gain["Métropole"], orientation="h",
-                        marker_color=colors_gain,
-                        text=[f"{int(g):+,} ({c:+.1f}%)".replace(",", "\u202f")
-                              for g, c in zip(df_gain["Gain net"], df_gain["Croissance (%)"])],
-                        textposition="outside",
-                    ))
-                    fig_gain.add_vline(x=0, line_dash="dot", line_color="#999")
-                    fig_gain.update_layout(xaxis_title="Habitants gagnés (2011→2022)",
-                                           showlegend=False, height=370)
-                    st.plotly_chart(style(fig_gain), use_container_width=True)
-
-            st.markdown("---")
             st.markdown("#### ⚖️ Composantes de la variation démographique")
-            r3c1, r3c2 = st.columns(2)
-            with r3c1:
+            r2c1, r2c2 = st.columns(2)
+            with r2c1:
                 st.markdown("##### Soldes naturel et migratoire (%/an, 2016–2022)")
                 rows_comp = []
                 for m in sel:
@@ -1060,7 +1110,7 @@ if vue == "Démographie":
                     fig_comp.add_hline(y=0, line_dash="dot", line_color="#AAAAAA")
                     fig_comp.update_layout(legend=dict(orientation="h", y=1.12))
                     st.plotly_chart(style(fig_comp), use_container_width=True)
-            with r3c2:
+            with r2c2:
                 st.markdown("##### Naissances & Décès 2024 (radar comparatif)")
                 rows_vit = []
                 for m in sel:
@@ -1088,7 +1138,7 @@ if vue == "Démographie":
                     st.plotly_chart(style(fig_vit), use_container_width=True)
 
             st.markdown("---")
-            st.markdown("#### 💶 Revenus, pauvreté & logement")
+            st.markdown("#### 💶 Revenus, pauvreté & chômage")
             r4c1, r4c2, r4c3 = st.columns(3)
             with r4c1:
                 st.markdown("##### Revenu médian 2021 (€/an)")
@@ -1111,29 +1161,24 @@ if vue == "Démographie":
                         y=df_pauv["Métropole"], x=df_pauv["Taux de pauvreté (%)"], orientation="h",
                         marker_color=colors_pauv,
                         text=[f"{v:.1f}%" for v in df_pauv["Taux de pauvreté (%)"]],
-                        textposition="outside",
+                        textposition="inside",
                     ))
                     fig_pauv.update_layout(xaxis_title="%", showlegend=False, height=300)
                     st.plotly_chart(style(fig_pauv), use_container_width=True)
             with r4c3:
-                st.markdown("##### Logements : vacance & propriétaires (%)")
-                rows_log = []
-                for m in sel:
-                    vac  = epci_val(m, "part_logements_vacants")
-                    prop = epci_val(m, "part_proprietaires")
-                    rp   = epci_val(m, "part_res_principales")
-                    if not all(np.isnan(v) for v in [vac, prop]):
-                        rows_log.append({"Métropole": m, "Logements vacants (%)": vac,
-                                         "Propriétaires (%)": prop, "Rés. principales (%)": rp})
-                df_log = pd.DataFrame(rows_log)
-                if not df_log.empty:
-                    df_log_m = df_log.melt(id_vars="Métropole", var_name="Indicateur",
-                                           value_name="Part (%)").dropna()
-                    fig_log = px.bar(df_log_m, x="Métropole", y="Part (%)", color="Indicateur",
-                                     barmode="group", height=300,
-                                     color_discrete_sequence=["#C45B2A", "#2D6A4F", "#1A6FA3"])
-                    fig_log.update_layout(legend=dict(orientation="h", y=1.15, font_size=10))
-                    st.plotly_chart(style(fig_log), use_container_width=True)
+                st.markdown("##### Taux de chômage 15–64 ans (%)")
+                data_chom = [{"Métropole": m, "Taux de chômage (%)": epci_val(m, "tx_chomage_15_64")} for m in sel]
+                df_chom = pd.DataFrame(data_chom).dropna().sort_values("Taux de chômage (%)", ascending=False)
+                if not df_chom.empty:
+                    fig_chom = px.bar(df_chom, x="Métropole", y="Taux de chômage (%)",
+                                      color="Taux de chômage (%)",
+                                      color_continuous_scale="RdYlGn_r",
+                                      text=[f"{v:.1f}%" for v in df_chom["Taux de chômage (%)"]],
+                                      height=300)
+                    fig_chom.update_traces(textposition="outside")
+                    fig_chom.update_layout(coloraxis_showscale=False,
+                                           yaxis_title="Taux de chômage (%)")
+                    st.plotly_chart(style(fig_chom), use_container_width=True)
 
             st.markdown("---")
             st.markdown("#### 📋 Tableau récapitulatif — indicateurs clés")
@@ -1144,14 +1189,10 @@ if vue == "Démographie":
                 rev   = epci_val(m, "revenu_median_2021")
                 pauv  = epci_val(m, "tx_pauvrete_2021")
                 dens  = epci_val(m, "densite_2022")
-                p11   = pop_from_age(m, 2011)
-                p22_t = pop_from_age(m, 2022)
-                croiss = f"+{(p22_t-p11)/p11*100:.1f}%" if not (np.isnan(p11) or np.isnan(p22_t)) else "N/D"
                 lignes_tab.append({
                     "Métropole": m,
                     "Population 2022": fmt(epci_val(m, "population_2022")),
                     "Densité (hab/km²)": fmt(dens),
-                    "Croissance 2011–22": croiss,
                     "Var. pop./an": f"{tx_v:+.2f}%" if not np.isnan(tx_v) else "N/D",
                     "Solde naturel/an": f"{epci_val(m,'tx_solde_naturel'):+.2f}%" if not np.isnan(epci_val(m,'tx_solde_naturel')) else "N/D",
                     "Solde migrat./an": f"{epci_val(m,'tx_solde_migratoire'):+.2f}%" if not np.isnan(epci_val(m,'tx_solde_migratoire')) else "N/D",
@@ -1163,8 +1204,8 @@ if vue == "Démographie":
                 })
             df_tab = pd.DataFrame(lignes_tab).set_index("Métropole")
             st.dataframe(df_tab, use_container_width=True)
-            st.caption("Sources : INSEE — Données générales comparatives (RP 2022) & Population par tranche d'âge (RP 2011–2022).")
-
+            st.caption("Sources : INSEE — Données générales comparatives (RP 2022).")
+            
 # ==============================================================================
 # ONGLET 2 — STRUCTURE PAR ÂGE
 # ==============================================================================
