@@ -206,19 +206,13 @@ NOM_EPCI = {
 }
 DR24_MAP = {"Grenoble": 38, "Rennes": 35, "Rouen": 76, "Saint-Étienne": 42, "Montpellier": 34}
 
-# Palette d'origine préservée pour les pages "Structure par âge", "Mobilités", "Ménages", "CSP comparatif"
+# Palette spécifique appliquée aux 5 métropoles 
 COULEURS = {
-    "Grenoble": "#2D6A4F", "Rennes": "#1A6FA3",
-    "Saint-Étienne": "#C45B2A", "Rouen": "#7B3FA0", "Montpellier": "#D4A017",
-}
-
-# Nouvelle palette verte exclusive pour "Population", "Solidarité", "Éducation", "Santé", "Participation" et "Revenus"
-COULEURS_VERTES = {
-    "Grenoble": "#1B4332", 
-    "Rennes": "#2D6A4F",
-    "Saint-Étienne": "#40916C", 
-    "Rouen": "#74C69D", 
-    "Montpellier": "#B7E4C7",
+    "Montpellier": "#124660",
+    "Saint-Étienne": "#1B9476",
+    "Grenoble": "#8BD59E",
+    "Rennes": "#C7DBC2",
+    "Rouen": "#F4EBD6",
 }
 
 TOUTES = list(COMMUNES.keys())
@@ -1160,7 +1154,7 @@ if vue == "Démographie":
                     for _, row_p in df_pop22.iterrows():
                         fig_pop.add_trace(go.Bar(
                             x=[row_p["Métropole"]], y=[row_p["Population"]],
-                            name=row_p["Métropole"], marker_color=COULEURS_VERTES.get(row_p["Métropole"], "#888"),
+                            name=row_p["Métropole"], marker_color=COULEURS.get(row_p["Métropole"], "#888"),
                             text=[f"{int(row_p['Population']):,}".replace(",", "\u202f")],
                             textposition="outside", showlegend=False,
                         ))
@@ -1181,7 +1175,7 @@ if vue == "Démographie":
                 if not df_dens.empty:
                     fig_dens = px.scatter(df_dens, x="Superficie (km²)", y="Densité (hab/km²)",
                                           size="Population", color="Métropole",
-                                          color_discrete_map=COULEURS_VERTES, text="Métropole",
+                                          color_discrete_map=COULEURS, text="Métropole",
                                           size_max=55, height=370)
                     fig_dens.update_traces(textposition="top center", textfont_size=11)
                     fig_dens.update_layout(showlegend=False)
@@ -1231,7 +1225,7 @@ if vue == "Démographie":
                             r=[row_v[c] for c in categories] + [row_v[categories[0]]],
                             theta=categories + [categories[0]],
                             fill="toself", name=row_v["Métropole"],
-                            line_color=COULEURS_VERTES.get(row_v["Métropole"], "#888"), opacity=0.75,
+                            line_color=COULEURS.get(row_v["Métropole"], "#888"), opacity=0.75,
                         ))
                     fig_vit.update_layout(polar=dict(radialaxis=dict(visible=True)),
                                           legend=dict(orientation="h", y=-0.15), height=360)
@@ -2153,6 +2147,9 @@ if vue == "Solidarité et citoyenneté":
                                         "4000 euros ou plus","Inconnu"]
                                     qf_data = df_yr.groupby(["Agglomeration","Quotient familial"], as_index=False)[metric].sum()
                                     qf_data["QF_ord"] = pd.Categorical(qf_data["Quotient familial"], categories=qf_order, ordered=True)
+                                    # Fix de la couleur pour coller au dictionnaire des villes de l'agglo
+                                    qf_data["Metropole_Key"] = qf_data["Agglomeration"].apply(lambda x: next((m for m in COULEURS.keys() if m in x), x))
+
                                     fig_qf = px.bar(qf_data.sort_values("QF_ord"), x="Agglomeration", y=metric,
                                         color="Quotient familial", barmode="stack",
                                         color_discrete_sequence=px.colors.sequential.Greens_r,
@@ -2163,9 +2160,10 @@ if vue == "Solidarité et citoyenneté":
                                 st.markdown(f"##### 🏆 Top 15 communes — {year_caf}")
                                 if "Nom_Commune" in df_yr.columns:
                                     top15 = df_yr.groupby(["Nom_Commune","Agglomeration"], as_index=False)[metric].sum().nlargest(15, metric)
+                                    top15["Metropole_Key"] = top15["Agglomeration"].apply(lambda x: next((m for m in COULEURS.keys() if m in x), x))
                                     fig_top = px.bar(top15, x=metric, y="Nom_Commune", orientation="h",
-                                        color="Agglomeration", color_discrete_map=COULEURS_VERTES, text_auto=".3s",
-                                        labels={"Nom_Commune": "", metric: label_metric},
+                                        color="Metropole_Key", color_discrete_map=COULEURS, text_auto=".3s",
+                                        labels={"Nom_Commune": "", metric: label_metric, "Metropole_Key": "Métropole"},
                                         title=f"Top 15 communes — {label_metric}", height=420)
                                     fig_top.update_layout(yaxis={"categoryorder": "total ascending"})
                                     st.plotly_chart(style(fig_top, 40), use_container_width=True)
@@ -2179,13 +2177,14 @@ if vue == "Solidarité et citoyenneté":
                             if len(aides_d) >= 3:
                                 rdata = df_yr.groupby("Agglomeration")[list(aides_d.values())].sum().reset_index()
                                 rdata.columns = ["Agglomeration"] + list(aides_d.keys())
+                                rdata["Metropole_Key"] = rdata["Agglomeration"].apply(lambda x: next((m for m in COULEURS.keys() if m in x), x))
                                 fig_radar = go.Figure()
                                 cats_r = list(aides_d.keys())
                                 for _, rr in rdata.iterrows():
                                     vv = [rr[c] for c in cats_r] + [rr[cats_r[0]]]
                                     fig_radar.add_trace(go.Scatterpolar(r=vv, theta=cats_r+[cats_r[0]],
-                                        fill="toself", name=rr["Agglomeration"],
-                                        line_color=COULEURS_VERTES.get(rr["Agglomeration"], "#999")))
+                                        fill="toself", name=rr["Metropole_Key"],
+                                        line_color=COULEURS.get(rr["Metropole_Key"], "#999")))
                                 fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True)), height=420,
                                     title=f"Profil des aides — {year_caf}", font_family="Sora",
                                     paper_bgcolor="rgba(0,0,0,0)")
@@ -2316,7 +2315,7 @@ if vue == "Solidarité et citoyenneté":
                         st.markdown(f"##### 📊 Effectifs par métropole — {annee_eff}")
                         by_metro = df_e_yr.groupby("metropole", as_index=False)["effectif"].sum().sort_values("effectif", ascending=False)
                         fig_em = px.bar(by_metro, x="metropole", y="effectif", color="metropole",
-                            color_discrete_map=COULEURS_VERTES, text_auto=".3s",
+                            color_discrete_map=COULEURS, text_auto=".3s",
                             labels={"metropole":"","effectif":"Étudiants"},
                             title=f"Effectif — {LABEL_REGROUPEMENT.get(sel_regr, sel_regr)} · {annee_eff}", height=380)
                         fig_em.update_traces(textposition="outside")
@@ -2329,7 +2328,7 @@ if vue == "Solidarité et citoyenneté":
                             df_e_all = df_e_all[df_e_all["secteur_de_l_etablissement"]==sel_secteur]
                         evo_e = df_e_all.groupby(["annee","metropole"], as_index=False)["effectif"].sum().sort_values("annee")
                         fig_eve = px.line(evo_e, x="annee", y="effectif", color="metropole",
-                            color_discrete_map=COULEURS_VERTES, markers=True,
+                            color_discrete_map=COULEURS, markers=True,
                             labels={"annee":"Année","effectif":"Étudiants","metropole":"Métropole"},
                             title="Évolution des effectifs étudiants", height=380)
                         fig_eve.update_traces(line_width=2.5, marker_size=7)
@@ -2367,7 +2366,7 @@ if vue == "Solidarité et citoyenneté":
                         st.markdown(f"##### 🏆 Top 15 communes — {annee_eff}")
                         top_com = df_e_yr.groupby(["geo_nom","metropole"], as_index=False)["effectif"].sum().nlargest(15,"effectif")
                         fig_tc = px.bar(top_com, x="effectif", y="geo_nom", orientation="h",
-                            color="metropole", color_discrete_map=COULEURS_VERTES, text_auto=".3s",
+                            color="metropole", color_discrete_map=COULEURS, text_auto=".3s",
                             labels={"geo_nom":"","effectif":"Étudiants"},
                             title=f"Top communes — {annee_eff}", height=430)
                         fig_tc.update_layout(yaxis={"categoryorder":"total ascending"})
@@ -2493,6 +2492,7 @@ if vue == "Solidarité et citoyenneté":
             "nursing_home":"EHPAD / Maison de retraite",
             "clinic":      "Clinique / Centre de santé",
         }
+        # Les couleurs d'établissement ne sont pas des métropoles, donc conservées identiques
         TYPE_COLORS_GREEN = {
             "pharmacy":    "#1B4332",
             "doctors":     "#2D6A4F",
@@ -2982,7 +2982,7 @@ if vue == "Solidarité et citoyenneté":
                     df_agg.sort_values("% Participation", ascending=False),
                     x="metropole", y="% Participation",
                     color="metropole",
-                    color_discrete_map=COULEURS_VERTES,
+                    color_discrete_map=COULEURS,
                     text=df_agg.sort_values("% Participation", ascending=False)["% Participation"].apply(lambda v: f"{v:.1f}%"),
                     labels={"metropole": "", "% Participation": "Participation (%)"},
                     title=f"Participation — {sel_annee_part} · Tour {sel_tour_part}",
@@ -3027,7 +3027,7 @@ if vue == "Solidarité et citoyenneté":
             df_evo_agg["% Participation"] = (df_evo_agg["Votants"] / df_evo_agg["Inscrits"] * 100).round(2)
             fig_evo = px.line(
                 df_evo_agg, x="Année", y="% Participation", color=color_col,
-                color_discrete_map=COULEURS_VERTES, markers=True,
+                color_discrete_map=COULEURS, markers=True,
                 labels={"Année": "Année", "% Participation": "Participation (%)", color_col: ""},
                 title=f"Évolution participation — Tour {sel_tour_part}",
                 height=380,
@@ -3148,7 +3148,7 @@ if vue == "Solidarité et citoyenneté":
                             df_f.dropna(subset=[filo_ind]),
                             x="metropole", y=filo_ind,
                             color="metropole",
-                            color_discrete_map=COULEURS_VERTES,
+                            color_discrete_map=COULEURS,
                             labels={"metropole": "", filo_ind: lbl},
                             title=f"Distribution — {lbl}",
                             height=400,
@@ -3165,7 +3165,7 @@ if vue == "Solidarité et citoyenneté":
                             top_n.sort_values(filo_ind),
                             x=filo_ind, y="LIBCOM",
                             color="metropole",
-                            color_discrete_map=COULEURS_VERTES,
+                            color_discrete_map=COULEURS,
                             orientation="h",
                             labels={"LIBCOM": "", filo_ind: lbl},
                             title=f"Top/Flop communes — {lbl}",
@@ -3183,7 +3183,7 @@ if vue == "Solidarité et citoyenneté":
                             df_sc = df_agg.dropna(subset=["DEC_MED21", "DEC_TP6021"])
                             fig_sc = px.scatter(
                                 df_sc, x="DEC_MED21", y="DEC_TP6021",
-                                color="metropole", color_discrete_map=COULEURS_VERTES,
+                                color="metropole", color_discrete_map=COULEURS,
                                 hover_name="LIBCOM",
                                 labels={"DEC_MED21": "Revenu médian (€/UC)", "DEC_TP6021": "Taux bas revenus (%)"},
                                 title="Médiane vs Précarité",
@@ -3200,7 +3200,7 @@ if vue == "Solidarité et citoyenneté":
                             df_gi = df_agg.dropna(subset=["DEC_GI21"]).sort_values("DEC_GI21", ascending=False).head(20)
                             fig_gi = px.bar(
                                 df_gi, x="DEC_GI21", y="LIBCOM",
-                                color="metropole", color_discrete_map=COULEURS_VERTES,
+                                color="metropole", color_discrete_map=COULEURS,
                                 orientation="h",
                                 labels={"LIBCOM": "", "DEC_GI21": "Indice de Gini"},
                                 title="Top 20 communes — Indice de Gini",
@@ -3240,7 +3240,7 @@ if vue == "Solidarité et citoyenneté":
                             df_rd = df_agg.dropna(subset=["DEC_RD21"])
                             fig_rd = px.box(
                                 df_rd, x="metropole", y="DEC_RD21",
-                                color="metropole", color_discrete_map=COULEURS_VERTES,
+                                color="metropole", color_discrete_map=COULEURS,
                                 labels={"metropole": "", "DEC_RD21": "D9/D1"},
                                 title="Rapport interdécile D9/D1 (plus c'est haut, plus c'est inégal)",
                                 height=380,
