@@ -1706,6 +1706,9 @@ if vue == "Démographie":
 # ==============================================================================
 # ONGLET 3 - MOBILITÉS
 # ==============================================================================
+# ==============================================================================
+# ONGLET 3 - MOBILITÉS
+# ==============================================================================
 if vue == "Démographie":
     with tab3:
         st.markdown('<p class="section-header">Observatoire des mobilités</p>', unsafe_allow_html=True)
@@ -1715,11 +1718,70 @@ if vue == "Démographie":
         if not data_ok:
             st.info("📂 Fichiers de mobilité manquants.")
         else:
+            # ── Suppression effet hover radio ────────────────────────────────
+            st.markdown("""
+                <style>
+                div[data-testid="stRadio"] > label { display: none; }
+                div[data-testid="stRadio"] > div {
+                    flex-direction: row;
+                    align-items: center;
+                    gap: 1.5rem;
+                }
+                div[data-testid="stRadio"] > div > label:hover {
+                    background-color: transparent !important;
+                    box-shadow: none !important;
+                    cursor: pointer;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+
             # ── Bandeau filtres ──────────────────────────────────────────────
             with st.container():
                 filter_bar("Filtres - Mobilités")
-                
-                mob_col1, mob_col2, mob_col3 = st.columns(3)
+
+                # ── LIGNE 1 : Niveau géographique ────────────────────────────
+                col_geo_label, col_geo_options = st.columns([1, 3])
+                with col_geo_label:
+                    st.markdown(
+                        "<div style='padding-top:8px; font-weight:600; font-size:14px;'>Niveau géographique</div>",
+                        unsafe_allow_html=True
+                    )
+                with col_geo_options:
+                    mode_mob = st.radio(
+                        "",
+                        ["Comparaison Métropoles", "Détail Communal"],
+                        key="mob_mode",
+                        horizontal=True,
+                        help="Choisissez si vous voulez voir les communes de Grenoble ou comparer Grenoble aux autres métropoles."
+                    )
+
+                # ── LIGNE 2 : Sélection des entités (métropoles ou communes) ─
+                if mode_mob == "Détail Communal":
+                    met_choice = "Grenoble"
+                    st.markdown(f"**Communes de la métropole : {met_choice}**")
+                    sel_communes_mob = st.multiselect(
+                        "Sélection des communes",
+                        sorted(COMMUNES[met_choice]),
+                        default=sorted(COMMUNES[met_choice])[:2],
+                        key="mob_communes"
+                    )
+                    coms_selection = sel_communes_mob
+                    if len(sel_communes_mob) > 1:
+                        txt_aide_geo = f"Analyse des flux cumulés pour le groupe : {', '.join(sel_communes_mob)}."
+                    else:
+                        txt_aide_geo = "Quelles sont les communes qui interagissent le plus avec votre sélection ?"
+                else:
+                    sel_metros_mob = st.multiselect(
+                        "Métropoles à comparer",
+                        TOUTES,
+                        default=TOUTES[:3],
+                        key="mob_metros"
+                    )
+                    coms_selection = [c for m in sel_metros_mob for c in COMMUNES[m]]
+                    txt_aide_geo = "Comparaison des flux globaux entre les métropoles sélectionnées."
+
+                # ── LIGNE 3 : Thématique + Année ─────────────────────────────
+                mob_col1, mob_col2 = st.columns(2)
                 with mob_col1:
                     theme_mob = st.selectbox(
                         "Thématique d'analyse",
@@ -1731,16 +1793,8 @@ if vue == "Démographie":
                         - **Scolaire** : Où étudient les élèves/étudiants ?
                         """
                     )
-                with mob_col2:
-                    mode_mob = st.radio(
-                        "Niveau géographique",
-                        ["Comparaison Métropoles", "Détail Communal"],
-                        key="mob_mode",
-                        horizontal=True,
-                        help="Choisissez si vous voulez voir les communes de Grenoble ou comparer Grenoble aux autres métropoles."
-                    )
 
-                # Logique des couleurs et labels
+                # Logique des couleurs et labels (dépend de theme_mob)
                 if "Migrations" in theme_mob:
                     current_mob_df, col_orig, col_dest = df_res, "commune_origine", "commune_destination"
                     label_in, label_out, color_in, color_out = "Arrivées", "Départs", "#2D6A4F", "#B7E4C7"
@@ -1753,35 +1807,16 @@ if vue == "Démographie":
 
                 if current_mob_df is not None:
                     annees_mob = sorted(current_mob_df["annee"].dropna().unique().astype(int), reverse=True)
-                    with mob_col3:
+                    with mob_col2:
                         sel_annee_mob = st.selectbox("Année", annees_mob, key="mob_annee")
-
-                # Sélection des entités et préparation de l'aide dynamique
-                if mode_mob == "Détail Communal":
-                    met_choice = "Grenoble"
-                    st.markdown(f"**Communes de la métropole : {met_choice}**")
-                    sel_communes_mob = st.multiselect(
-                        "Sélection des communes", sorted(COMMUNES[met_choice]),
-                        default=sorted(COMMUNES[met_choice])[:2], key="mob_communes"
-                    )
-                    coms_selection = sel_communes_mob
-                    
-                    # Aide dynamique pour le cumul géographique
-                    if len(sel_communes_mob) > 1:
-                        txt_aide_geo = f"Analyse des flux cumulés pour le groupe : {', '.join(sel_communes_mob)}."
-                    else:
-                        txt_aide_geo = "Quelles sont les communes qui interagissent le plus avec votre sélection ?"
-                else:
-                    sel_metros_mob = st.multiselect(
-                        "Métropoles à comparer", TOUTES, default=TOUTES[:3], key="mob_metros"
-                    )
-                    coms_selection = [c for m in sel_metros_mob for c in COMMUNES[m]]
-                    txt_aide_geo = "Comparaison des flux globaux entre les métropoles sélectionnées."
 
                 st.markdown('</div>', unsafe_allow_html=True)
 
             # ── Calculs ──────────────────────────────────────────────────────
-            df_mob_filtered = current_mob_df[(current_mob_df[col_orig] != current_mob_df[col_dest]) & (current_mob_df["annee"] == sel_annee_mob)]
+            df_mob_filtered = current_mob_df[
+                (current_mob_df[col_orig] != current_mob_df[col_dest]) &
+                (current_mob_df["annee"] == sel_annee_mob)
+            ]
             entities_mob = []
             if mode_mob == "Détail Communal":
                 for ent in sel_communes_mob:
@@ -1796,40 +1831,89 @@ if vue == "Démographie":
                     entities_mob.append({"name": m_name, "in": f_in, "out": f_out, "solde": f_in - f_out})
             df_plot_mob = pd.DataFrame(entities_mob)
 
-            # ── Affichage Principal ────────────────────
+            # ── Affichage Principal ───────────────────────────────────────────
             if not df_plot_mob.empty:
-                st.markdown(f"#### 📌 Bilan net - {theme_mob} ({sel_annee_mob})", 
-                            help="Le bilan net (solde) est la différence entre ceux qui arrivent et ceux qui partent. Un chiffre positif indique une attractivité.")
-                
+                st.markdown(
+                    f"#### 📌 Bilan net - {theme_mob} ({sel_annee_mob})",
+                    help="Le bilan net (solde) est la différence entre ceux qui arrivent et ceux qui partent. Un chiffre positif indique une attractivité."
+                )
+
+                # KPI cards — bordure verte à GAUCHE uniquement
                 kpi_cols = st.columns(len(df_plot_mob))
                 for i, row in df_plot_mob.iterrows():
                     color_solde = "#2ecc71" if row["solde"] >= 0 else "#e74c3c"
                     with kpi_cols[i]:
                         st.markdown(f"""
-                        <div class='kpi-card-mob'>
-                            <div class='kpi-label'>{row['name']}</div>
-                            <div class='kpi-value'>{int(row['solde']):+,d}</div>
-                            <div style='color:{color_solde}; font-size:12px; font-weight:bold;'>SOLDE</div>
+                        <div style='
+                            display: flex;
+                            flex-direction: row;
+                            align-items: stretch;
+                            border-radius: 8px;
+                            overflow: hidden;
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                            background: #fff;
+                            min-height: 80px;
+                            border-left: 6px solid #1a7a4a;
+                        '>
+                            <div style='
+                                padding: 10px 16px;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                            '>
+                                <div style='font-size:11px; font-weight:700; letter-spacing:0.08em; color:#666; text-transform:uppercase;'>{row['name']}</div>
+                                <div style='font-size:24px; font-weight:bold; color:#111;'>{int(row['solde']):+,d}</div>
+                                <div style='color:{color_solde}; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;'>SOLDE</div>
+                            </div>
                         </div>
                         """, unsafe_allow_html=True)
 
                 st.markdown("---")
+
                 c1, c2 = st.columns(2)
                 with c1:
-                    st.markdown("##### ⚖️ Volume des échanges", 
-                                help="Compare les entrées (foncé) et les sorties (clair). Si les deux barres sont hautes, la commune est un pôle d'échange majeur.")
+                    st.markdown(
+                        "<h5 style='text-align:center;'>⚖️ Volume des échanges</h5>",
+                        unsafe_allow_html=True,
+                        help="Compare les entrées (foncé) et les sorties (clair). Si les deux barres sont hautes, la commune est un pôle d'échange majeur."
+                    )
                     fig_vol = go.Figure()
-                    fig_vol.add_trace(go.Bar(x=df_plot_mob["name"], y=df_plot_mob["in"], name=label_in, marker_color=color_in))
-                    fig_vol.add_trace(go.Bar(x=df_plot_mob["name"], y=df_plot_mob["out"], name=label_out, marker_color=color_out))
-                    fig_vol.update_layout(barmode="group", height=350, margin=dict(t=20, b=20), legend=dict(orientation="h", y=1.2))
+                    fig_vol.add_trace(go.Bar(
+                        x=df_plot_mob["name"], y=df_plot_mob["in"],
+                        name=label_in, marker_color=color_in
+                    ))
+                    fig_vol.add_trace(go.Bar(
+                        x=df_plot_mob["name"], y=df_plot_mob["out"],
+                        name=label_out, marker_color=color_out
+                    ))
+                    fig_vol.update_layout(
+                        barmode="group",
+                        height=350,
+                        margin=dict(t=20, b=60),
+                        legend=dict(orientation="h", y=1.2),
+                        xaxis=dict(title="Territoire", showgrid=False),
+                        yaxis=dict(title="Nombre de flux", showgrid=True, gridcolor="#eeeeee")
+                    )
                     st.plotly_chart(fig_vol, use_container_width=True)
-                
+
                 with c2:
-                    st.markdown("##### 🎯 Performance nette", 
-                                help="Visualisation directe du gain ou de la perte. Utile pour classer les territoires du plus attractif au moins attractif.")
-                    fig_net = px.bar(df_plot_mob, x="name", y="solde", color="solde", color_continuous_scale="RdYlGn")
+                    st.markdown(
+                        "<h5 style='text-align:center;'>🎯 Performance nette</h5>",
+                        unsafe_allow_html=True,
+                        help="Visualisation directe du gain ou de la perte. Utile pour classer les territoires du plus attractif au moins attractif."
+                    )
+                    fig_net = px.bar(
+                        df_plot_mob, x="name", y="solde",
+                        color="solde", color_continuous_scale="RdYlGn"
+                    )
                     fig_net.add_hline(y=0, line_dash="dash", line_color="black")
-                    fig_net.update_layout(coloraxis_showscale=False, height=350, margin=dict(t=20, b=20))
+                    fig_net.update_layout(
+                        coloraxis_showscale=False,
+                        height=350,
+                        margin=dict(t=20, b=60),
+                        xaxis=dict(title="Territoire", showgrid=False),
+                        yaxis=dict(title="Solde (entrées - sorties)", showgrid=True, gridcolor="#eeeeee")
+                    )
                     st.plotly_chart(fig_net, use_container_width=True)
 
                 with st.expander("💡 Comment interpréter ces deux graphiques ?"):
@@ -1839,33 +1923,56 @@ if vue == "Démographie":
                     """)
 
                 st.markdown("---")
-                # Titre de la section géographique avec aide contextuelle dynamique
                 st.markdown("#### 🔍 Analyse géographique des partenaires", help=txt_aide_geo)
-                
-                # Message informatif si plusieurs communes sont sélectionnées
+
                 if mode_mob == "Détail Communal" and len(sel_communes_mob) > 1:
                     st.info(f"💡 **Analyse de groupe** : Les graphiques ci-dessous affichent les partenaires cumulés pour : {', '.join(sel_communes_mob)}.")
 
                 col_l, col_r = st.columns(2)
                 with col_l:
-                    st.markdown(f"##### 📍 Top 10 provenances ({label_in})")
+                    st.markdown(
+                        f"<h5 style='text-align:center;'>📍 Top 10 provenances ({label_in})</h5>",
+                        unsafe_allow_html=True
+                    )
                     top_in = df_mob_filtered[df_mob_filtered[col_dest].isin(coms_selection)].nlargest(10, "flux")
                     if not top_in.empty:
-                        fig_in = px.bar(top_in, x="flux", y=col_orig, orientation="h", color_discrete_sequence=[color_in], text_auto=".0f")
-                        fig_in.update_layout(yaxis={"categoryorder": "total ascending"}, height=350, yaxis_title="")
+                        fig_in = px.bar(
+                            top_in, x="flux", y=col_orig,
+                            orientation="h",
+                            color_discrete_sequence=[color_in],
+                            text_auto=".0f"
+                        )
+                        fig_in.update_layout(
+                            yaxis=dict(categoryorder="total ascending", title="Commune d'origine"),
+                            xaxis=dict(title="Nombre de flux"),
+                            height=350,
+                            margin=dict(t=20, b=60)
+                        )
                         st.plotly_chart(fig_in, use_container_width=True)
-                
+
                 with col_r:
-                    st.markdown(f"##### 🚩 Top 10 destinations ({label_out})")
+                    st.markdown(
+                        f"<h5 style='text-align:center;'>🚩 Top 10 destinations ({label_out})</h5>",
+                        unsafe_allow_html=True
+                    )
                     top_out = df_mob_filtered[df_mob_filtered[col_orig].isin(coms_selection)].nlargest(10, "flux")
                     if not top_out.empty:
-                        fig_out = px.bar(top_out, x="flux", y=col_dest, orientation="h", color_discrete_sequence=[color_out], text_auto=".0f")
-                        fig_out.update_layout(yaxis={"categoryorder": "total ascending"}, height=350, yaxis_title="")
+                        fig_out = px.bar(
+                            top_out, x="flux", y=col_dest,
+                            orientation="h",
+                            color_discrete_sequence=[color_out],
+                            text_auto=".0f"
+                        )
+                        fig_out.update_layout(
+                            yaxis=dict(categoryorder="total ascending", title="Commune de destination"),
+                            xaxis=dict(title="Nombre de flux"),
+                            height=350,
+                            margin=dict(t=20, b=60)
+                        )
                         st.plotly_chart(fig_out, use_container_width=True)
 
-                # Aide spécifique pour la compréhension du cumul/comparaison
                 with st.expander("❓ Comment lire ces graphiques quand plusieurs communes sont choisies ?"):
-                    st.write(f"""
+                    st.write("""
                     Lorsque vous sélectionnez plusieurs communes, l'outil traite la sélection comme un **territoire unique**. 
                     - Les flux internes entre les communes sélectionnées sont ignorés pour mettre en avant les échanges avec **l'extérieur**.
                     - Cela permet de voir si un groupement de communes dépend d'un même pôle d'attraction (ex: Lyon, Paris ou une autre zone de la métropole).
