@@ -3491,4 +3491,4 @@ if vue == "Solidarité et citoyenneté":
                                               title="Profil normalisé (0–100 dans la métropole)", paper_bgcolor="rgba(0,0,0,0)",
                                               legend=dict(orientation="h", y=-0.1))
                         st.plotly_chart(fig_rad, use_container_width=True)
- 
+  
