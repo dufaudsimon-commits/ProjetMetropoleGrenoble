@@ -825,131 +825,162 @@ with st.sidebar:
 # ──────────────────────────────────────────────────────────────────────────────
 # 8. PAGES
 # ──────────────────────────────────────────────────────────────────────────────
+# ==============================================================================
+# PAGE DESCRIPTION - NOUVEAU DESIGN
+# ==============================================================================
+
 if vue == "Description":
-    st.markdown('<p class="section-header">Description</p>', unsafe_allow_html=True)
-
+    # 1. CSS Global pour la page
     st.markdown("""
-    Cette application présente des analyses comparatives sur **5 métropoles françaises** à partir des recensements INSEE 2011, 2016 et 2022.
-    Chaque page dispose de ses propres filtres en haut de page, adaptés aux données présentées.
-    Selon les onglets, il est possible de filtrer par métropole, par année ou par thématique.
-    """)
+        <style>
+        .main-intro {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 8px solid #2D6A4F;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        /* Style du Tableau */
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 1em;
+            font-family: 'Sora', sans-serif;
+            border-radius: 12px 12px 0 0;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        .modern-table thead tr {
+            background-color: #2D6A4F;
+            color: #ffffff;
+            text-align: left;
+            font-weight: bold;
+        }
+        .modern-table th, .modern-table td {
+            padding: 12px 15px;
+        }
+        .modern-table tbody tr {
+            border-bottom: 1px solid #dddddd;
+            background-color: white;
+        }
+        .modern-table tbody tr:nth-of-type(even) {
+            background-color: #f3f3f3;
+        }
+        .modern-table tbody tr:last-of-type {
+            border-bottom: 2px solid #2D6A4F;
+        }
+        .badge-count {
+            background-color: #e7f3ef;
+            color: #2D6A4F;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        /* Style des Cartes Thématiques */
+        .feature-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #E0E0E0;
+            height: 100%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .theme-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .badge-demo { background: #E6FFFA; color: #2D6A4F; }
+        .badge-solid { background: #FFF5F5; color: #C45B2A; }
+        </style>
+    """, unsafe_allow_html=True)
 
-    st.markdown("---")
+    # 1. Introduction
+    st.markdown("""
+        <div class="main-intro">
+            <p style="font-size: 1.1rem; color: #1C3A27; margin: 0;">
+                Cette application présente des analyses comparatives sur <b>5 métropoles françaises et 49 communes de la métropole de Grenoble</b> à partir des données de l'INSEE, la CAF, Data.gouv et OSM France. 
+                Chaque page dispose de ses propres filtres en haut de page, adaptés aux données présentées. 
+                Selon les onglets, il est possible de filtrer par métropole, par commune, par année ou par thématique.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("### Périmètre géographique")
-    communes_data = {
-        "Métropole": list(COMMUNES.keys()),
-        "Nombre de communes": [len(v) for v in COMMUNES.values()],
-        "Département": ["Isère (38)", "Ille-et-Vilaine (35)", "Seine-Maritime (76)", "Loire (42)", "Hérault (34)"],
-    }
-    st.dataframe(pd.DataFrame(communes_data).set_index("Métropole"), use_container_width=True)
+    # 2. Tableau du Périmètre (Généré proprement)
+    st.markdown('<p style="font-size:1.5rem; font-weight:700; color:#1C3A27; margin-bottom:10px;">Périmètre d\'analyse</p>', unsafe_allow_html=True)
+    
+    table_html = """
+    <table class="modern-table">
+        <thead>
+            <tr>
+                <th>Métropole</th>
+                <th>Nombre de communes</th>
+                <th>Département</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Grenoble-Alpes Métropole</td><td><span class="badge-count">49</span></td><td>Isère (38)</td></tr>
+            <tr><td>Rennes Métropole</td><td><span class="badge-count">43</span></td><td>Ille-et-Vilaine (35)</td></tr>
+            <tr><td>Rouen Normandie Métropole</td><td><span class="badge-count">71</span></td><td>Seine-Maritime (76)</td></tr>
+            <tr><td>Saint-Étienne Métropole</td><td><span class="badge-count">53</span></td><td>Loire (42)</td></tr>
+            <tr><td>Montpellier Méditerranée Métropole</td><td><span class="badge-count">31</span></td><td>Hérault (34)</td></tr>
+        </tbody>
+    </table>
+    """
+    st.markdown(table_html, unsafe_allow_html=True)
 
-    st.markdown("---")
+    # 3. Thématique Démographie
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<p style="font-size:1.5rem; font-weight:700; color:#2D6A4F; border-bottom: 2px solid #2D6A4F;"> Thématique 1 : Démographie</p>', unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-demo">Villes</div><div class="card-title"><b> Population globale</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">Découvrez ici le nombre total d'habitants. Cela permet de voir la densité de population et de comparer les métropoles et communes entre elles.</div></div>""", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-demo">Foyers</div><div class="card-title"><b> Ménages</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">On regarde ici comment vivent les gens chez eux. Cela montre s'il y a beaucoup de familles ou de personnes seules, et combien il y a d'habitants par logement.</div></div>""", unsafe_allow_html=True)
 
-    st.markdown("### Thématique 1 - Démographie")
+    with col2:
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-demo">Âges</div><div class="card-title"><b> Structure par âge</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">Est-ce que la ville est plutôt jeune ou vieille ? Cette partie montre le nombre d'enfants, de travailleurs et de retraités pour chaque endroit étudié.</div></div>""", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-demo">Travail</div><div class="card-title"><b> Population active</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">Ici, on s'intéresse aux personnes qui ont l'âge de travailler (25 à 54 ans). On analyse leurs métiers et leur niveau d'études ou leurs diplômes.</div></div>""", unsafe_allow_html=True)
 
-    demo_onglets = [
-        {
-            "titre": "Population globale",
-            "description": "Évolution et comparaison des populations totales entre métropoles.",
-            "source": "INSEE - Données générales comparatives (RP 2011–2022)",
-            "lien": "https://www.insee.fr/fr/statistiques/1405599?geo=EPCI-200040715+EPCI-243500139",
-        },
-        {
-            "titre": "Structure par âge",
-            "description": "Pyramides des âges, part des jeunes, actifs et seniors.",
-            "source": "INSEE - Population par tranche d'âge (RP 2011–2022)",
-            "lien": "https://www.insee.fr/fr/statistiques/1893204",
-        },
-        {
-            "titre": "Mobilités résidentielles",
-            "description": "Flux de migrations résidentielles entre communes et métropoles.",
-            "source": "INSEE - Migrations résidentielles 2019–2022",
-            "lien": "https://www.insee.fr/fr/statistiques/8582988",
-        },
-        {
-            "titre": "Mobilités professionnelles",
-            "description": "Déplacements domicile-travail à l'échelle des métropoles.",
-            "source": "INSEE - Mobilité professionnelle 2019–2022",
-            "lien": "https://www.insee.fr/fr/statistiques/8582949",
-        },
-        {
-            "titre": "Mobilités scolaires",
-            "description": "Flux de déplacements vers les établissements scolaires.",
-            "source": "INSEE - Mobilité scolaire 2019–2022",
-            "lien": "https://www.insee.fr/fr/statistiques/8582969",
-        },
-        {
-            "titre": "Ménages",
-            "description": "Taille et composition des ménages selon l'âge et la CSP.",
-            "source": "INSEE - Ménages par âge et situation (RP 2011–2022)",
-            "lien": "https://www.insee.fr/fr/statistiques/8582448",
-        },
-        {
-            "titre": "Population active 25-54 ans",
-            "description": "Structure socioprofessionnelle et indice de spécialisation entre métropoles.",
-            "source": "INSEE - Population 25-54 ans par CSP et diplôme (RP 2011–2022)",
-            "lien": "https://www.insee.fr/fr/statistiques/1893185",
-        },
-    ]
+    with col3:
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-demo">Trajets</div><div class="card-title"><b> Mobilité</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;"><b>Toutes les mobilités :</b> On étudie les déplacements des habitants. Cela comprend les nouveaux arrivants, les trajets domicile-travail et les déplacements pour l'école.</div></div>""", unsafe_allow_html=True)
 
-    for onglet in demo_onglets:
-        with st.expander(onglet["titre"]):
-            st.markdown(onglet["description"])
-            st.markdown(f"**Source :** {onglet['source']} · [🔗 Accéder]({onglet['lien']})")
+    # 4. Thématique Solidarité
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<p style="font-size:1.5rem; font-weight:700; color:#C45B2A; border-bottom: 2px solid #C45B2A;"> Thématique 2 : Solidarité & Citoyenneté</p>', unsafe_allow_html=True)
+    
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-solid">Aide</div><div class="card-title"><b> Solidarité</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">Retrouvez ici les aides versées aux familles par la CAF. Cela permet de voir les zones où les gens ont le plus besoin de soutien financier.</div></div>""", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-solid">Vote</div><div class="card-title"><b> Participation</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">On regarde ici si les habitants votent beaucoup aux élections locales. C'est un bon moyen de voir si les gens s'intéressent à la vie de leur commune.</div></div>""", unsafe_allow_html=True)
+    with c2:
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-solid">École</div><div class="card-title"><b> Éducation</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">On regarde combien de jeunes étudient et quels diplômes ils obtiennent dans chaque territoire et suivre leurs évolutions.</div></div>""", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-solid">Argent</div><div class="card-title"><b> Pauvreté</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">Découvrez les revenus médians des habitants. On regarde si les gens gagnent bien leur vie ou s'ils sont dans une situation de pauvreté monétaire.</div></div>""", unsafe_allow_html=True)
+    with c3:
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-solid">Soin</div><div class="card-title"><b> Santé</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">Cette page liste les établissements de santés disponibles. Cela sert à voir si l'on peut se soigner facilement près de chez soi dans chaque quartier.</div></div>""", unsafe_allow_html=True)
 
-    st.markdown("---")
-
-    st.markdown("### Thématique 2 - Solidarité & citoyenneté")
-
-    solid_onglets = [
-        {
-            "titre": "Solidarité",
-            "description": "Analyse des données CAF : foyers bénéficiaires, montants versés, évolution temporelle.",
-            "sources": [
-                ("INSEE - Filosofi : âge, type de ménage, niveau de vie", "https://catalogue-donnees.insee.fr/fr/catalogue/recherche/DS_FILOSOFI_AGE_TP_NIVVIE"),
-                ("CAF - Allocataires par commune (NDUR)", "https://data.caf.fr/explore/dataset/ndur_s_qf_400_com_f/table/"),
-                ("CAF - Bénéficiaires par commune (complément)", "https://data.caf.fr/explore/dataset/s_ben_com_f/table/"),
-                ("INSEE - Données générales comparatives EPCI", "https://www.insee.fr/fr/statistiques/1405599?geo=EPCI-200040715+EPCI-243500139"),
-            ],
-        },
-        {
-            "titre": "Éducation",
-            "description": "Analyse des niveaux de diplôme et de la scolarisation par métropole.",
-            "sources": [
-                ("INSEE - Statistiques locales (diplômes, scolarisation)", "https://www.insee.fr/fr/statistiques/8307327?sommaire=2500477"),
-            ],
-        },
-        {
-            "titre": "Santé",
-            "description": "Cartographie et analyse des équipements de santé.",
-            "sources": [
-                ("OpenData - Équipements de santé OSM France", "https://smartregionidf.opendatasoft.com/explore/dataset/osm-france-healthcare/table/"),
-            ],
-        },
-        {
-            "titre": "Participation citoyenne",
-            "description": "Taux de participation et résultats des élections municipales 2020.",
-            "sources": [
-                ("Data.gouv - Élections municipales 2020 (1er tour)", "https://www.data.gouv.fr/datasets/elections-municipales-2020-resultats-1er-tour/"),
-            ],
-        },
-        {
-            "titre": "Revenus & pauvreté",
-            "description": "...",
-            "sources": [
-                ("...", "..."),
-            ],
-        },
-    ]
-
-    for onglet in solid_onglets:
-        with st.expander(onglet["titre"]):
-            st.markdown(onglet["description"])
-            for source, lien in onglet["sources"]:
-                st.markdown(f"**Source :** {source} · [🔗 Accéder]({lien})")
-
-    st.stop()
+    st.stop()   
 
 if vue == "Démographie":
     tab1, tab2, tab3, tab4, tab6 = st.tabs([
@@ -2964,24 +2995,14 @@ if vue == "Solidarité et citoyenneté":
                                                  labels={"geo_nom": "", "effectif": "Étudiants", "sexe_de_l_etudiant": "Genre"},
                                                  title="Parité H/F", height=400)
                                 st.plotly_chart(style(fig_sex, 40), use_container_width=True)
-
+        # ──────────────────────────────────────────────────────────────────────────
+        # ONGLET SANTE
+        # ──────────────────────────────────────────────────────────────────────────
         with s3:
-            st.markdown(
-                '<p class="source-note">Source : OpenStreetMap - Établissements de santé géolocalisés</p>',
-                unsafe_allow_html=True,
-            )
-
-            # ── Chargement GeoJSON établissements ────────────────────────────────────
             import json
 
             GEOJSON_PATH = Path("solidarite&citoyennete/data_clean/sante/Etablissements_santé_filtre.geojson")
-
-            # ── Chargement GeoJSON contours métropoles ────────────────────────────────
-            # Propriété utilisée : "METROPOLE" (ex : "Grenoble", "Rennes", ...)
-            GEOJSON_METROS_PATH = Path("solidarite&citoyennete/data_clean/sante/contour_metropoles.geojson")
-
-            # ── Chargement GeoJSON contours communes de Grenoble ─────────────────────
-            # Propriété utilisée : "DCOE_L_LIB" pour le nom de commune
+            GEOJSON_METROS_PATH = Path("solidarite&citoyennete/data_clean/sante/contour_metropole.geojson")
             GEOJSON_COMMUNES_PATH = Path("solidarite&citoyennete/data_clean/sante/contour_communes.geojson")
 
             @st.cache_data
@@ -2994,13 +3015,11 @@ if vue == "Solidarité et citoyenneté":
                     coords = feat["geometry"]["coordinates"]
                     rows.append({
                         "type_etab": p.get("type_etablissement", ""),
-                        "nom":       p.get("nom_etablissement") or "-",
-                        # ✅ CORRIGÉ : utiliser DCOE_L_LIB pour la commune
-                        "commune":   p.get("DCOE_L_LIB", p.get("commune", "")),
-                        # ✅ CORRIGÉ : utiliser METROPOLE (majuscules) pour la métropole
+                        "nom": p.get("nom_etablissement") or "-",
+                        "commune": p.get("DCOE_L_LIB", p.get("commune", "")),
                         "metropole": p.get("METROPOLE", p.get("Métropole", p.get("metropole", ""))),
-                        "lon":       coords[0],
-                        "lat":       coords[1],
+                        "lon": coords[0],
+                        "lat": coords[1],
                     })
                 return pd.DataFrame(rows)
 
@@ -3018,65 +3037,53 @@ if vue == "Solidarité et citoyenneté":
                 with open(GEOJSON_COMMUNES_PATH, "r", encoding="utf-8") as f:
                     return json.load(f)
 
-            df_sante          = charger_sante()
-            geojson_metros    = charger_geojson_metros()
-            geojson_communes  = charger_geojson_communes()
+            df_sante = charger_sante()
+            geojson_metros = charger_geojson_metros()
+            geojson_communes = charger_geojson_communes()
 
             TYPE_LABELS = {
-                "pharmacy":    "Pharmacie",
-                "doctors":     "Médecins / Soins",
-                "dentist":     "Dentiste",
-                "hospital":    "Hôpital",
-                "nursing_home":"EHPAD / Maison de retraite",
-                "clinic":      "Clinique / Centre de santé",
+                "pharmacy": "Pharmacie",
+                "doctors": "Médecins / Soins",
+                "dentist": "Dentiste",
+                "hospital": "Hôpital",
+                "nursing_home": "EHPAD / Maison de retraite",
+                "clinic": "Clinique / Centre de santé",
             }
 
-            TYPE_COLORS_GREEN = {
-                "pharmacy":    "#1B4332",
-                "doctors":     "#2D6A4F",
-                "dentist":     "#40916C",
-                "hospital":    "#52B788",
-                "nursing_home":"#74C69D",
-                "clinic":      "#95D5B2",
+            TYPE_COLORS = {
+                "pharmacy": "#264653",
+                "doctors": "#2a9d8f",
+                "dentist": "#e9c46a",
+                "hospital": "#f4a261",
+                "nursing_home": "#e76f51",
+                "clinic": "#5DC26E",
             }
 
             metros_sante = sorted(df_sante["metropole"].dropna().unique())
-            types_sante  = sorted(df_sante["type_etab"].dropna().unique())
+            types_sante = sorted(df_sante["type_etab"].dropna().unique())
 
             # ── Filtres ───────────────────────────────────────────────────────────────
             with st.container():
-
                 filter_bar("Filtres - Établissements de santé")
-                pv1, pv2, pv3 = st.columns(3)
-                with pv1:
+                fs1, fs2 = st.columns([1, 3])
+                with fs1:
+                    filter_row_label("Niveau géographique")
+                with fs2:
                     mode_sante = st.radio(
-                        "Niveau géographique",
+                        "",
                         ["Comparaison Métropoles", "Détail Communal"],
-                        key="sante_mode", horizontal=True,
+                        key="sante_mode",
+                        horizontal=True,
+                        label_visibility="collapsed",
                     )
-                with pv2:
-                    if mode_sante == "Comparaison Métropoles":
-                        sel_metros_sante = st.multiselect(
-                            "Métropoles",
-                            metros_sante,
-                            default=metros_sante,
-                            key="sante_metros_multi",
-                        )
-                        if not sel_metros_sante:
-                            sel_metros_sante = metros_sante
-                    else:
-                        st.info("📍 Détail limité à la métropole de **Grenoble**")
-                        sel_metros_sante = ["Grenoble"]
-                with pv3:
-                    sel_types_sante = st.multiselect(
-                        "Type d'établissement",
-                        options=types_sante,
-                        default=types_sante,
-                        format_func=lambda t: TYPE_LABELS.get(t, t),
-                        key="sante_types_t1",
+                if mode_sante == "Comparaison Métropoles":
+                    sel_metros_sante = st.multiselect(
+                        "Métropoles à comparer",
+                        metros_sante,
+                        default=metros_sante,
+                        key="sante_metros_multi",
                     )
-
-                if mode_sante == "Détail Communal":
+                else:
                     communes_sante_dispo = sorted(
                         df_sante[df_sante["metropole"] == "Grenoble"]["commune"].dropna().unique()
                     )
@@ -3086,6 +3093,13 @@ if vue == "Solidarité et citoyenneté":
                         default=communes_sante_dispo[:5],
                         key="sante_communes_t1",
                     )
+                sel_types_sante = st.multiselect(
+                    "Type d'établissement",
+                    options=types_sante,
+                    default=types_sante,
+                    format_func=lambda t: TYPE_LABELS.get(t, t),
+                    key="sante_types_t1",
+                )
                 st.markdown('</div>', unsafe_allow_html=True)
 
             # ── Filtrage du DataFrame ─────────────────────────────────────────────────
@@ -3102,146 +3116,222 @@ if vue == "Solidarité et citoyenneté":
                 ].copy()
 
             # ── KPIs ──────────────────────────────────────────────────────────────────
+            st.markdown("---")
+
             sk1, sk2, sk3, sk4, sk5 = st.columns(5)
-            sk1.metric("Total établissements", len(df_sf))
-            sk2.metric("Pharmacies",           len(df_sf[df_sf["type_etab"] == "pharmacy"]))
-            sk3.metric("Médecins / Soins",     len(df_sf[df_sf["type_etab"] == "doctors"]))
-            sk4.metric("Hôpitaux",             len(df_sf[df_sf["type_etab"] == "hospital"]))
-            sk5.metric("Communes couvertes",   df_sf["commune"].nunique())
+
+            sante_cards = [
+                (sk1, "Total établissements", len(df_sf)),
+                (sk2, "Pharmacies", len(df_sf[df_sf["type_etab"] == "pharmacy"])),
+                (sk3, "Médecins / Soins", len(df_sf[df_sf["type_etab"] == "doctors"])),
+                (sk4, "Hôpitaux", len(df_sf[df_sf["type_etab"] == "hospital"])),
+                (sk5, "Communes couvertes", df_sf["commune"].nunique()),
+            ]
+
+            for col, title, value in sante_cards:
+                with col:
+                    st.markdown(f"""
+                    <div style='
+                        display: flex;
+                        flex-direction: row;
+                        align-items: stretch;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                        background: #fff;
+                        min-height: 80px;
+                        border-left: 6px solid #1e5631;
+                    '>
+                        <div style='
+                            padding: 10px 16px;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: center;
+                        '>
+                            <div style='font-size:11px; font-weight:700; letter-spacing:0.08em; color:#666; text-transform:uppercase;'>{title}</div>
+                            <div style='font-size:24px; font-weight:bold; color:#111; margin: 2px 0;'>{value}</div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
             st.markdown("---")
 
-            # ── Calcul du zoom automatique selon l'étendue géographique ──────────────
-            def auto_zoom_and_center(df):
-                """Retourne (lat_center, lon_center, zoom) en fonction de l'étendue des points."""
-                if df.empty:
-                    return 46.5, 2.5, 5
-                lat_min, lat_max = df["lat"].min(), df["lat"].max()
-                lon_min, lon_max = df["lon"].min(), df["lon"].max()
+            # ── Helpers zoom ──────────────────────────────────────────────────────────
+            def bbox_from_features(features):
+                lons, lats = [], []
+                for feat in features:
+                    geom = feat.get("geometry", {})
+                    t    = geom.get("type", "")
+                    if t == "Point":
+                        lons.append(geom["coordinates"][0])
+                        lats.append(geom["coordinates"][1])
+                    elif t == "Polygon":
+                        for ring in geom["coordinates"]:
+                            for c in ring:
+                                lons.append(c[0]); lats.append(c[1])
+                    elif t == "MultiPolygon":
+                        for poly in geom["coordinates"]:
+                            for ring in poly:
+                                for c in ring:
+                                    lons.append(c[0]); lats.append(c[1])
+                if not lons:
+                    return None
+                return min(lats), max(lats), min(lons), max(lons)
+
+            def zoom_from_span(span):
+                if span < 0.1: return 13
+                if span < 0.3: return 11
+                if span < 0.8: return 10
+                if span < 3: return 8
+                if span < 6: return 7
+                return 5
+
+            # ── Calcul zoom/centre depuis la bbox des contours ────────────────────────────
+            import math
+
+            def bbox_from_features(features):
+                """Retourne (lat_min, lat_max, lon_min, lon_max) depuis une liste de features GeoJSON."""
+                lons, lats = [], []
+                for feat in features:
+                    geom = feat.get("geometry", {})
+                    t = geom.get("type", "")
+                    if t == "Point":
+                        lons.append(geom["coordinates"][0]); lats.append(geom["coordinates"][1])
+                    elif t == "Polygon":
+                        for ring in geom["coordinates"]:
+                            for c in ring: lons.append(c[0]); lats.append(c[1])
+                    elif t == "MultiPolygon":
+                        for poly in geom["coordinates"]:
+                            for ring in poly:
+                                for c in ring: lons.append(c[0]); lats.append(c[1])
+                if not lons:
+                    return None
+                return min(lats), max(lats), min(lons), max(lons)
+
+            def zoom_from_bbox(bbox, map_width_px=1200, map_height_px=480, margin=1.3):
+                lat_min, lat_max, lon_min, lon_max = bbox
+                span_lat = (lat_max - lat_min) * margin
+                span_lon = (lon_max - lon_min) * margin
+                span_lat = max(span_lat, 0.01)
+                span_lon = max(span_lon, 0.01)
+                zoom_lon = math.log2(360 / span_lon) + math.log2(map_width_px / 256)
+                zoom_lat = math.log2(180 / span_lat) + math.log2(map_height_px / 256)
+                return round(min(zoom_lon, zoom_lat) - 0.5, 1)
+
+            # Choisir les features selon le mode
+            if mode_sante == "Comparaison Métropoles" and geojson_metros is not None and sel_metros_sante:
+                feats_zoom = [f for f in geojson_metros["features"]
+                            if f["properties"].get("METROPOLE") in sel_metros_sante]
+            elif mode_sante == "Détail Communal" and geojson_communes is not None and sel_communes_sante:
+                feats_zoom = [f for f in geojson_communes["features"]
+                            if f["properties"].get("DCOE_L_LIB") in sel_communes_sante]
+            else:
+                feats_zoom = []
+
+            bbox = bbox_from_features(feats_zoom)
+            if bbox:
+                lat_min, lat_max, lon_min, lon_max = bbox
+                lat_c      = (lat_min + lat_max) / 2
+                lon_c      = (lon_min + lon_max) / 2
+                zoom_level = zoom_from_bbox(bbox)
+            elif not df_sf.empty:
+                bbox_pts = bbox_from_features([
+                    {"geometry": {"type": "Point", "coordinates": [row.lon, row.lat]}}
+                    for _, row in df_sf.iterrows()
+                ])
+                lat_min, lat_max, lon_min, lon_max = bbox_pts
                 lat_c = (lat_min + lat_max) / 2
                 lon_c = (lon_min + lon_max) / 2
-                span = max(lat_max - lat_min, lon_max - lon_min)
-                if span < 0.1:
-                    zoom = 13
-                elif span < 0.3:
-                    zoom = 11
-                elif span < 1:
-                    zoom = 10
-                elif span < 3:
-                    zoom = 8
-                elif span < 6:
-                    zoom = 7
-                else:
-                    zoom = 5
-                return lat_c, lon_c, zoom
+                zoom_level = zoom_from_bbox(bbox_pts)
+            else:
+                lat_c, lon_c, zoom_level = 46.5, 2.5, 5
 
-            lat_c, lon_c, zoom_level = auto_zoom_and_center(df_sf)
+            # ── Construction des layers de contours ───────────────────────────────────
+            mapbox_layers = []
 
-            # ── Carte + graphique principal ───────────────────────────────────────────
-            col_map, col_chart = st.columns([1.1, 0.9])
+            if mode_sante == "Comparaison Métropoles" and geojson_metros is not None:
+                feats_filtrees = [
+                    f for f in geojson_metros["features"]
+                    if f["properties"].get("METROPOLE") in sel_metros_sante
+                ]
+                if feats_filtrees:
+                    mapbox_layers.append({
+                        "source":  {"type": "FeatureCollection", "features": feats_filtrees},
+                        "type":    "line",
+                        "color":   "#2D6A4F",
+                        "line":    {"width": 2},
+                        "opacity": 0.8,
+                    })
 
-            with col_map:
-                st.markdown("##### 🗺️ Carte des établissements")
-                if df_sf.empty:
-                    st.info("Aucun établissement pour ces filtres.")
-                else:
-                    fig_map = px.scatter_mapbox(
-                        df_sf,
-                        lat="lat", lon="lon",
-                        color="type_etab",
-                        color_discrete_map=TYPE_COLORS_GREEN,
-                        hover_name="nom",
-                        hover_data={"commune": True, "metropole": True, "type_etab": False, "lat": False, "lon": False},
-                        labels={"type_etab": "Type", "commune": "Commune", "metropole": "Métropole"},
-                        zoom=zoom_level,
-                        center={"lat": lat_c, "lon": lon_c},
-                        height=480,
-                        mapbox_style="carto-positron",
-                    )
-                    fig_map.update_traces(marker=dict(size=7, opacity=0.85))
+            elif mode_sante == "Détail Communal":
+                # Contours des communes sélectionnées
+                if geojson_communes is not None:
+                    feats_communes = [
+                        f for f in geojson_communes["features"]
+                        if f["properties"].get("DCOE_L_LIB") in sel_communes_sante
+                    ]
+                    if feats_communes:
+                        mapbox_layers.append({
+                            "source": {"type": "FeatureCollection", "features": feats_communes},
+                            "type": "line",
+                            "color": "#40916C",
+                            "line": {"width": 1.5},
+                            "opacity": 0.9,
+                        })
+                # Contour global de la métropole Grenoble
+                if geojson_metros is not None:
+                    feats_grenoble = [
+                        f for f in geojson_metros["features"]
+                        if f["properties"].get("METROPOLE") == "Grenoble"
+                    ]
+                    if feats_grenoble:
+                        mapbox_layers.append({
+                            "source": {"type": "FeatureCollection", "features": feats_grenoble},
+                            "type": "line",
+                            "color": "#1B4332",
+                            "line": {"width": 2.5},
+                            "opacity": 0.6,
+                        })
 
-                    # ── Contours : métropoles ou communes selon le mode ───────────────
-                    if mode_sante == "Comparaison Métropoles" and geojson_metros is not None:
-                        # ✅ CORRIGÉ : filtrer sur la clé "METROPOLE" (majuscules)
-                        feats_filtrees = [
-                            f for f in geojson_metros["features"]
-                            if f["properties"].get("METROPOLE") in sel_metros_sante
-                        ]
-                        geojson_filtre = {"type": "FeatureCollection", "features": feats_filtrees}
-                        fig_map.update_layout(
-                            mapbox={
-                                "layers": [{
-                                    "source":  geojson_filtre,
-                                    "type":    "line",
-                                    "color":   "#2D6A4F",
-                                    "line":    {"width": 2},
-                                    "opacity": 0.8,
-                                }]
-                            }
-                        )
+            # ── Carte ─────────────────────────────────────────────────────────────────
+            st.markdown("##### Carte des établissements")
 
-                    elif mode_sante == "Détail Communal" and geojson_communes is not None:
-                        # ✅ CORRIGÉ : filtrer sur la clé "DCOE_L_LIB" (nom de commune réel)
-                        feats_filtrees = [
-                            f for f in geojson_communes["features"]
-                            if f["properties"].get("DCOE_L_LIB") in sel_communes_sante
-                        ]
-                        geojson_filtre = {"type": "FeatureCollection", "features": feats_filtrees}
-                        fig_map.update_layout(
-                            mapbox={
-                                "layers": [{
-                                    "source":  geojson_filtre,
-                                    "type":    "line",
-                                    "color":   "#40916C",
-                                    "line":    {"width": 1.5},
-                                    "opacity": 0.9,
-                                }]
-                            }
-                        )
-
-                    for trace in fig_map.data:
-                        trace.name = TYPE_LABELS.get(trace.name, trace.name)
-                    fig_map.update_layout(
-                        legend=dict(
-                            title="Type", orientation="v", x=0.01, y=0.99,
-                            bgcolor="rgba(255,255,255,0.85)",
-                            bordercolor="#C8E6D4", borderwidth=1,
-                            font=dict(size=11),
-                        ),
-                        margin=dict(l=0, r=0, t=0, b=0),
-                        paper_bgcolor="rgba(0,0,0,0)",
-                        font_family="Sora",
-                    )
-                    st.plotly_chart(fig_map, use_container_width=True)
-
-            with col_chart:
-                st.markdown("##### 📊 Nombre d'établissements par type")
-                counts_sf = (
-                    df_sf.groupby("type_etab").size()
-                        .reset_index(name="count")
-                        .sort_values("count", ascending=True)
-                )
-                counts_sf["label"] = counts_sf["type_etab"].map(lambda t: TYPE_LABELS.get(t, t))
-                fig_bar = px.bar(
-                    counts_sf, x="count", y="label", orientation="h",
-                    color="type_etab", color_discrete_map=TYPE_COLORS_GREEN,
-                    text="count",
-                    labels={"count": "Nombre", "label": ""},
+            if df_sf.empty:
+                st.info("Aucun établissement pour ces filtres.")
+            else:
+                fig_map = px.scatter_mapbox(
+                    df_sf,
+                    lat="lat", lon="lon",
+                    color="type_etab",
+                    color_discrete_map=TYPE_COLORS,
+                    hover_name="nom",
+                    hover_data={"commune": True, "metropole": True, "type_etab": False, "lat": False, "lon": False},
+                    labels={"type_etab": "Type", "commune": "Commune", "metropole": "Métropole"},
                     height=480,
+                    mapbox_style="carto-positron",
                 )
-                fig_bar.update_traces(textposition="outside", showlegend=False)
-                fig_bar.update_layout(
-                    xaxis_title="Nombre d'établissements",
-                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                    font_family="Sora",
-                    margin=dict(l=10, r=30, t=10, b=40),
-                    xaxis=dict(gridcolor="#E8F5EE"),
-                )
-                st.plotly_chart(style(fig_bar, 40), use_container_width=True)
 
-            # ── Graphiques supplémentaires ────────────────────────────────────────────
+                for trace in fig_map.data:
+                    trace.name = TYPE_LABELS.get(trace.name, trace.name)
+
+                fig_map.update_layout(
+                    mapbox_zoom=zoom_level,
+                    mapbox_center={"lat": lat_c, "lon": lon_c},
+                    mapbox_layers=mapbox_layers,
+                    legend=dict(
+                        title="Type", orientation="v", x=0.01, y=0.99,
+                        bgcolor="rgba(255,255,255,0.85)",
+                        bordercolor="#C8E6D4", borderwidth=1,
+                        font=dict(size=11),
+                    ),
+                    margin=dict(l=0, r=0, t=0, b=0),
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    font_family="Sora",
+                )
+
+                st.plotly_chart(fig_map, use_container_width=True)
+
             st.markdown("---")
-            st.markdown("##### 📈 Analyses complémentaires")
 
             extra1, extra2 = st.columns(2)
 
@@ -3258,7 +3348,7 @@ if vue == "Solidarité et citoyenneté":
                         df_pivot,
                         x="metropole", y="count",
                         color="type_etab",
-                        color_discrete_map=TYPE_COLORS_GREEN,
+                        color_discrete_map=TYPE_COLORS,
                         text="count",
                         labels={"metropole": "Métropole", "count": "Nombre", "type_etab": "Type"},
                         height=380,
@@ -3288,7 +3378,7 @@ if vue == "Solidarité et citoyenneté":
                         df_comm,
                         x="commune", y="count",
                         color="type_etab",
-                        color_discrete_map=TYPE_COLORS_GREEN,
+                        color_discrete_map=TYPE_COLORS,
                         text="count",
                         labels={"commune": "Commune", "count": "Nombre", "type_etab": "Type"},
                         height=380,
@@ -3316,7 +3406,7 @@ if vue == "Solidarité et citoyenneté":
                     names="label",
                     values="count",
                     color="type_etab",
-                    color_discrete_map=TYPE_COLORS_GREEN,
+                    color_discrete_map=TYPE_COLORS,
                     height=380,
                     hole=0.4,
                 )
@@ -3332,64 +3422,6 @@ if vue == "Solidarité et citoyenneté":
                     margin=dict(l=10, r=10, t=10, b=10),
                 )
                 st.plotly_chart(fig_pie, use_container_width=True)
-
-            if mode_sante == "Comparaison Métropoles":
-                st.markdown("---")
-                st.markdown("###### 🏙️ Nombre d'établissements par métropole sélectionnée")
-
-                df_metro_count = (
-                    df_sf.groupby("metropole")
-                        .size()
-                        .reset_index(name="count")
-                        .sort_values("count", ascending=False)
-                )
-                fig_metros = px.bar(
-                    df_metro_count,
-                    x="metropole", y="count",
-                    color="count",
-                    color_continuous_scale=["#B7E4C7", "#1B4332"],
-                    text="count",
-                    labels={"metropole": "Métropole", "count": "Nombre d'établissements"},
-                    height=320,
-                )
-                fig_metros.update_traces(textposition="outside")
-                fig_metros.update_layout(
-                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                    font_family="Sora",
-                    coloraxis_showscale=False,
-                    xaxis=dict(tickangle=-20),
-                    yaxis=dict(gridcolor="#E8F5EE"),
-                    margin=dict(l=10, r=10, t=10, b=60),
-                )
-                st.plotly_chart(style(fig_metros, 40), use_container_width=True)
-
-            if mode_sante == "Détail Communal" and not df_sf.empty:
-                st.markdown("---")
-                st.markdown("###### 🏘️ Classement des communes sélectionnées par nombre d'établissements")
-                df_top_comm = (
-                    df_sf.groupby("commune")
-                        .size()
-                        .reset_index(name="count")
-                        .sort_values("count", ascending=True)
-                )
-                fig_top = px.bar(
-                    df_top_comm,
-                    x="count", y="commune", orientation="h",
-                    color="count",
-                    color_continuous_scale=["#B7E4C7", "#1B4332"],
-                    text="count",
-                    labels={"commune": "Commune", "count": "Nombre d'établissements"},
-                    height=max(300, 40 * len(df_top_comm)),
-                )
-                fig_top.update_traces(textposition="outside")
-                fig_top.update_layout(
-                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                    font_family="Sora",
-                    coloraxis_showscale=False,
-                    xaxis=dict(gridcolor="#E8F5EE"),
-                    margin=dict(l=10, r=30, t=10, b=40),
-                )
-                st.plotly_chart(style(fig_top, 40), use_container_width=True)
 
     with s4:
         st.markdown(
