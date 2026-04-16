@@ -1077,7 +1077,7 @@ if vue == "Démographie":
                         xaxis_title="Superficie (km²)",
                         yaxis_title="Densité (hab/km²)",
                     )
-                    st.plotly_chart(style(fig_dens_c), use_container_width=True)
+                    st.plotly_chart(style(fig_dens_c), use_container_width=True)    
 
             with st.expander("💡 Comment interpréter ces deux graphiques ?"):
                 st.write("Une barre plus haute signifie une population plus importante ; sur le nuage, une bulle haute et volumineuse indique une commune dense et peuplée.")
@@ -2251,11 +2251,6 @@ if vue == "Solidarité et citoyenneté":
     # ONGLET SOLIDARITÉ - CAF
     # ──────────────────────────────────────────────────────────────────────────
     with s1:
-        st.markdown(
-            '<p class="source-note">Source : <a href="https://data.caf.fr" target="_blank">' +
-            "Caisse d\'Allocations Familiales - CAF 5 Métropoles 2020–2023</a></p>",
-            unsafe_allow_html=True,
-        )
         if df_caf is None or df_caf.empty:
             st.info("📂 Fichier `CAF_5_Metropoles.csv` introuvable.")
         else:
@@ -2292,22 +2287,53 @@ if vue == "Solidarité et citoyenneté":
                     with st.container():
                         
                         filter_bar("Filtres - Solidarité CAF")
-                        caf_f1, caf_f2, caf_f3 = st.columns([1, 1, 2])
+                        
+                        # ──────────────────────────────────────────────────────────
+                        # 1. Filtre Géographique (À gauche, en ligne, sans effet bouton)
+                        # ──────────────────────────────────────────────────────────
+                        col_geo_label, col_geo_options = st.columns([1, 3])
+                        with col_geo_label:
+                            filter_row_label("Niveau géographique")
+                        with col_geo_options:
+                            mode_caf = st.radio(
+                                "Niveau géographique",  # Le label est là pour l'accessibilité
+                                ["Comparaison Métropoles", "Détail Communal (Grenoble)"],
+                                key="caf_mode", 
+                                horizontal=True,
+                                label_visibility="collapsed"  # Fait disparaître totalement l'espace du label natif
+                            )
+
+                        # ──────────────────────────────────────────────────────────
+                        # 2. Filtres Indicateur et Année
+                        # ──────────────────────────────────────────────────────────
+                        caf_f1, caf_f2 = st.columns([1, 1])
                         
                         with caf_f1:
-                            metric_key = st.selectbox("Indicateur", list(available_metrics.keys()),
-                                                    format_func=lambda k: available_metrics[k], index=0, key="caf_metric")
+                            metric_key = st.selectbox(
+                                "Indicateur", 
+                                list(available_metrics.keys()),
+                                format_func=lambda k: available_metrics[k], 
+                                index=0, 
+                                key="caf_metric"
+                            )
                         with caf_f2:
-                            year_caf = st.selectbox("Année", years_caf, index=len(years_caf)-1, key="caf_year")
-                        with caf_f3:
-                            mode_caf = st.radio("Niveau géographique", ["Comparaison Métropoles", "Détail Communal (Grenoble)"], key="caf_mode", horizontal=True)
+                            year_caf = st.selectbox(
+                                "Année", 
+                                years_caf, 
+                                index=len(years_caf)-1, 
+                                key="caf_year"
+                            )
 
+                        # ──────────────────────────────────────────────────────────
+                        # 3. Sélecteurs dynamiques selon le niveau géographique
+                        # ──────────────────────────────────────────────────────────
                         if mode_caf == "Comparaison Métropoles":
-                            sel_agglos_caf = st.multiselect("Agglomérations", agglos_caf, default=agglos_caf, key="caf_agglos")
+                            sel_agglos_caf = st.multiselect("Métropole", agglos_caf, default=agglos_caf, key="caf_agglos")
                         else:
                             gre_agglo = next((a for a in agglos_caf if "Grenoble" in a), "Grenoble Alpes Métropole")
                             communes_gre_caf = sorted(df_caf[df_caf["Agglomeration"] == gre_agglo]["Nom_Commune"].dropna().unique()) if "Nom_Commune" in df_caf.columns else []
                             sel_communes_caf = st.multiselect("Communes de Grenoble", communes_gre_caf, default=communes_gre_caf[:2] if communes_gre_caf else [], key="caf_communes")
+                        
                         st.markdown('</div>', unsafe_allow_html=True)
 
                     if mode_caf == "Comparaison Métropoles":
@@ -2337,10 +2363,27 @@ if vue == "Solidarité et citoyenneté":
                             for col, title, value, subtitle in caf_cards:
                                 with col:
                                     st.markdown(f"""
-                                    <div class='kpi-card-mob' style='border-top: none; border-left: 5px solid #1e5631; padding: 10px 15px; text-align: left; background-color: #f9f9f9; border-radius: 4px;'>
-                                        <div class='kpi-label' style='font-size: 11px; color: #666; font-weight: bold; text-transform: uppercase;'>{title}</div>
-                                        <div class='kpi-value' style='font-size: 22px; font-weight: bold; color: #1e5631; margin: 5px 0;'>{value}</div>
-                                        <div style='font-size:10px; color:#888;'>{subtitle}</div>
+                                    <div style='
+                                        display: flex;
+                                        flex-direction: row;
+                                        align-items: stretch;
+                                        border-radius: 8px;
+                                        overflow: hidden;
+                                        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                                        background: #fff;
+                                        min-height: 80px;
+                                        border-left: 6px solid #1e5631;
+                                    '>
+                                        <div style='
+                                            padding: 10px 16px;
+                                            display: flex;
+                                            flex-direction: column;
+                                            justify-content: center;
+                                        '>
+                                            <div style='font-size:11px; font-weight:700; letter-spacing:0.08em; color:#666; text-transform:uppercase;'>{title}</div>
+                                            <div style='font-size:24px; font-weight:bold; color:#111; margin: 2px 0;'>{value}</div>
+                                            <div style='color:#888; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;'>{subtitle}</div>
+                                        </div>
                                     </div>
                                     """, unsafe_allow_html=True)
 
@@ -2348,7 +2391,7 @@ if vue == "Solidarité et citoyenneté":
 
                             c3, c4 = st.columns(2)
                             with c3:
-                                st.markdown(f"##### 👨‍👩‍👧 Quotient familial ({year_caf})")
+                                st.markdown(f"##### Quotient familial ({year_caf})")
                                 if "Quotient familial" in df_yr.columns:
                                     qf_order = ["Moins de 400 euros","Entre 400 et 799 euros",
                                         "Entre 800 et 1199 euros","Entre 1200 et 1599 euros",
@@ -2362,23 +2405,34 @@ if vue == "Solidarité et citoyenneté":
                                     fig_qf = px.bar(qf_data.sort_values("QF_ord"), x="Agglomeration", y=metric,
                                         color="Quotient familial", barmode="stack",
                                         color_discrete_sequence=px.colors.sequential.Greens_r,
-                                        labels={"Agglomeration": "", metric: label_metric},
-                                        title="Composition par quotient familial", height=380)
+                                        labels={"Agglomeration": "", metric: label_metric}, height=380)
                                     st.plotly_chart(style(fig_qf, 40), use_container_width=True)
                             with c4:
-                                st.markdown(f"##### 🏆 Top 15 communes - {year_caf}")
-                                if "Nom_Commune" in df_yr.columns:
-                                    top15 = df_yr.groupby(["Nom_Commune","Agglomeration"], as_index=False)[metric].sum().nlargest(15, metric)
-                                    top15["Metropole_Key"] = top15["Agglomeration"].apply(lambda x: next((m for m in COULEURS.keys() if m in x), x))
-                                    fig_top = px.bar(top15, x=metric, y="Nom_Commune", orientation="h",
-                                        color="Metropole_Key", color_discrete_map=COULEURS, text_auto=".3s",
-                                        labels={"Nom_Commune": "", metric: label_metric, "Metropole_Key": "Métropole"},
-                                        title=f"Top 15 communes - {label_metric}", height=420)
-                                    fig_top.update_layout(yaxis={"categoryorder": "total ascending"})
-                                    st.plotly_chart(style(fig_top, 40), use_container_width=True)
+                                st.markdown(f"##### Classement des métropoles - {year_caf}")
+                                
+                                # Regroupement par agglomération
+                                top_metros = df_yr.groupby("Agglomeration", as_index=False)[metric].sum().sort_values(by=metric, ascending=False)
+                                top_metros["Metropole_Key"] = top_metros["Agglomeration"].apply(lambda x: next((m for m in COULEURS.keys() if m in x), x))
+                                
+                                fig_top = px.bar(
+                                    top_metros, 
+                                    x=metric, 
+                                    y="Agglomeration", 
+                                    orientation="h",
+                                    color="Metropole_Key", 
+                                    color_discrete_map=COULEURS, 
+                                    text_auto=".3s",
+                                    labels={"Agglomeration": "", metric: label_metric}, 
+                                    height=420
+                                )
+                                fig_top.update_layout(
+                                    yaxis={"categoryorder": "total ascending"},
+                                    showlegend=False
+                                )
+                                st.plotly_chart(style(fig_top, 40), use_container_width=True)
                             st.markdown("---")
 
-                            st.markdown("##### 🕸️ Profil comparatif des aides - radar")
+                            st.markdown("##### Profil comparatif des aides - radar")
                             aides_f = {"Foyers PAJE":"Nombre foyers NDURPAJE","Foyers aj. enf.":"Nombre foyers NDUREJ",
                                 "Foyers alloc. log.":"Nombre foyers NDURAL","Foyers insertion":"Nombre foyers NDURINS",
                                 "Foyers total":"Nombre foyers NDUR"}
@@ -2394,15 +2448,11 @@ if vue == "Solidarité et citoyenneté":
                                     fig_radar.add_trace(go.Scatterpolar(r=vv, theta=cats_r+[cats_r[0]],
                                         fill="toself", name=rr["Metropole_Key"],
                                         line_color=COULEURS.get(rr["Metropole_Key"], "#999")))
-                                fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True)), height=420,
-                                    title=f"Profil des aides - {year_caf}", font_family="Sora",
+                                fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True)), height=420, 
+                                                        font_family="Sora",
                                     paper_bgcolor="rgba(0,0,0,0)")
                                 st.plotly_chart(fig_radar, use_container_width=True)
                             st.markdown("---")
-                            with st.expander("📄 Données détaillées"):
-                                st.dataframe(df_yr.groupby(
-                                    ["Agglomeration","Quotient familial"] if "Quotient familial" in df_yr.columns else ["Agglomeration"],
-                                    as_index=False)[list(available_metrics.keys())].sum(), use_container_width=True)
                             with st.expander("📖 Note méthodologique"):
                                 st.write("**Sources** : CAF - données communales 2020–2023.\n\n"
                                     "**NDUR** : dossiers unifiés réels. **NDURPAJE** : prestation jeune enfant. "
@@ -2423,7 +2473,30 @@ if vue == "Solidarité et citoyenneté":
                             for i, comm in enumerate(sel_communes_caf):
                                 val = df_yr[df_yr["Nom_Commune"] == comm][metric].sum() if not df_yr.empty else 0
                                 with kpi_cols[i]:
-                                    st.metric(label=f"🏘️ {comm}", value=fmt(val))
+                                    st.markdown(f"""
+                                    <div style='
+                                        display: flex;
+                                        flex-direction: row;
+                                        align-items: stretch;
+                                        border-radius: 8px;
+                                        overflow: hidden;
+                                        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                                        background: #fff;
+                                        min-height: 80px;
+                                        border-left: 6px solid #1e5631;
+                                    '>
+                                        <div style='
+                                            padding: 10px 16px;
+                                            display: flex;
+                                            flex-direction: column;
+                                            justify-content: center;
+                                        '>
+                                            <div style='font-size:11px; font-weight:700; letter-spacing:0.08em; color:#666; text-transform:uppercase;'>{comm}</div>
+                                            <div style='font-size:24px; font-weight:bold; color:#111; margin: 2px 0;'>{fmt(val)}</div>
+                                            <div style='color:#888; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;'>{label_metric}</div>
+                                        </div>
+                                    </div>
+                                    """, unsafe_allow_html=True)
 
                             st.markdown("---")
                             c1, c2 = st.columns(2)
@@ -2571,7 +2644,7 @@ if vue == "Solidarité et citoyenneté":
 
                     c5, c6 = st.columns(2)
                     with c5:
-                        st.markdown(f"##### 🏆 Top 15 communes - {annee_eff}")
+                        st.markdown(f"##### Top 15 communes - {annee_eff}")
                         top_com = df_e_yr.groupby(["geo_nom","metropole"], as_index=False)["effectif"].sum().nlargest(15,"effectif")
                         fig_tc = px.bar(top_com, x="effectif", y="geo_nom", orientation="h",
                             color="metropole", color_discrete_map=COULEURS, text_auto=".3s",
