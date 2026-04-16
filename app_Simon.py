@@ -1992,8 +1992,6 @@ if vue == "Démographie":
             st.info("📂 Fichiers de données sur les ménages introuvables.")
         else:
             # ── Définition des regroupements ──────────────────────────────────
-
-            # Types de ménages (regroupés depuis les colonnes de Menage_age_situation)
             TYPE_GROUPES = {
                 "Personne seule":        lambda cols: [c for c in cols if "pers_seule" in c],
                 "Couple sans enfant":    lambda cols: [c for c in cols if "cpl_sans_enf" in c],
@@ -2002,7 +2000,6 @@ if vue == "Démographie":
                 "Autre ménage":          lambda cols: [c for c in cols if "autre_menage" in c],
             }
 
-            # CSP regroupées en 6 grandes catégories lisibles
             CSP_GROUPES = {
                 "Agriculteurs":              ["agriculteurs"],
                 "Artisans / Commerçants /\nChefs d'entreprise": ["artisans", "commercants", "chef_entreprise"],
@@ -2029,41 +2026,57 @@ if vue == "Démographie":
                 "Retraités /\nInactifs": ["retraites_inactifs", "chomeur_jamais_travaille"],
             }
 
-            # Tailles de ménages pour le calcul de la taille moyenne
             TAILLES = {
-                "1 pers.": (1, "1pers"),
-                "2 pers.": (2, "2pers"),
-                "3 pers.": (3, "3pers"),
-                "4 pers.": (4, "4pers"),
-                "5 pers.": (5, "5pers"),
+                "1 pers.":     (1, "1pers"),
+                "2 pers.":     (2, "2pers"),
+                "3 pers.":     (3, "3pers"),
+                "4 pers.":     (4, "4pers"),
+                "5 pers.":     (5, "5pers"),
                 "6 pers. et +": (6, "6pers_ouplus"),
             }
 
             # ── Fonctions utilitaires ────────────────────────────────────────
             def somme_colonnes(df_ent, mots_cles):
-                """Somme les colonnes qui contiennent au moins un mot-clé."""
                 cols = [c for c in df_ent.columns if any(k in c for k in mots_cles)]
                 return df_ent[cols].sum().sum() if cols else 0
 
-            def taille_moyenne_menage(df_ent_csp):
+            def nb_menages_total(df_ent_csp):
                 """
-                Calcule la taille moyenne pondérée depuis les colonnes Npers_CSP.
-                Formule : Σ(nb_menages_Npers × N) / Σ(nb_menages_Npers)
-                Pour 6 pers. et +, on utilise 6 comme valeur minimale (borne inf.).
+                Nombre total de ménages depuis le fichier CSP×taille.
+                On somme toutes les colonnes Menages_Npers_* pour obtenir
+                le nombre de ménages recensés (chaque ménage est compté une fois).
                 """
-                total_menages = 0
-                total_personnes = 0
+                total = 0
+                for label, (nb_pers, slug) in TAILLES.items():
+                    cols = [c for c in df_ent_csp.columns if slug in c]
+                    total += df_ent_csp[cols].sum().sum() if cols else 0
+                return int(total)
+
+            def nb_personnes_total(df_ent_csp):
+                """
+                Nombre total de personnes dans les ménages depuis le fichier CSP×taille.
+                Formule : Σ(nb_ménages_Npers × N).
+                Pour 6 pers. et +, on utilise 6 comme valeur plancher (borne inférieure).
+                """
+                total = 0
                 for label, (nb_pers, slug) in TAILLES.items():
                     cols = [c for c in df_ent_csp.columns if slug in c]
                     nb = df_ent_csp[cols].sum().sum() if cols else 0
-                    total_menages += nb
-                    total_personnes += nb * nb_pers
-                if total_menages == 0:
+                    total += nb * nb_pers
+                return int(total)
+
+            def taille_moyenne_menage(df_ent_csp):
+                """
+                Taille moyenne = nb_personnes_total / nb_menages_total.
+                Retourne (taille_moyenne, nb_menages).
+                """
+                nb_men = nb_menages_total(df_ent_csp)
+                nb_pers = nb_personnes_total(df_ent_csp)
+                if nb_men == 0:
                     return np.nan, 0
-                return total_personnes / total_menages, int(total_menages)
+                return nb_pers / nb_men, nb_men
 
             def distrib_taille(df_ent_csp):
-                """Retourne la distribution par taille de ménage (nb et %)."""
                 rows = []
                 for label, (nb_pers, slug) in TAILLES.items():
                     cols = [c for c in df_ent_csp.columns if slug in c]
@@ -2092,6 +2105,8 @@ if vue == "Démographie":
             # ── Bandeau filtres ──────────────────────────────────────────────
             with st.container():
                 filter_bar("Filtres - Ménages")
+
+                # Ligne 1 : Niveau géographique
                 col_geo_label, col_geo_options = st.columns([1, 3])
                 with col_geo_label:
                     st.markdown(
@@ -2105,36 +2120,36 @@ if vue == "Démographie":
                         help="Comparez les métropoles entre elles, ou analysez les communes de Grenoble.",
                     )
 
-                men_col1, men_col2 = st.columns(2)
-                with men_col1:
-                    theme_men = st.selectbox(
-                        "Thématique d'analyse",
-                        ["👨‍👩‍👧 Type & taille de ménage", "🧑‍💼 CSP du chef de ménage"],
-                        key="theme_men",
-                        help=(
-                            "**Type & taille** : Composition familiale (personne seule, couple, "
-                            "famille monoparentale…) et taille moyenne du ménage.\n\n"
-                            "**CSP** : Catégorie socio-professionnelle de la personne de référence "
-                            "du foyer, croisée avec la taille du ménage."
-                        ),
+                # Ligne 2 : Sélection territoire (pleine largeur)
+                if mode_men == "Détail Communal (Grenoble)":
+                    sel_communes_men = st.multiselect(
+                        "Communes de Grenoble",
+                        sorted(COMMUNES["Grenoble"]),
+                        default=sorted(COMMUNES["Grenoble"])[:3],
+                        key="men_communes",
+                        help="Communes de la métropole grenobloise à comparer.",
                     )
-                with men_col2:
-                    if mode_men == "Détail Communal (Grenoble)":
-                        sel_communes_men = st.multiselect(
-                            "Communes de Grenoble",
-                            sorted(COMMUNES["Grenoble"]),
-                            default=sorted(COMMUNES["Grenoble"])[:3],
-                            key="men_communes",
-                            help="Communes de la métropole grenobloise à comparer.",
-                        )
-                        selection_men = sel_communes_men
-                    else:
-                        sel_metros_men = st.multiselect(
-                            "Métropoles à comparer", TOUTES, default=TOUTES[:3],
-                            key="men_metros",
-                            help="Sélectionnez les métropoles à comparer.",
-                        )
-                        selection_men = sel_metros_men
+                    selection_men = sel_communes_men
+                else:
+                    sel_metros_men = st.multiselect(
+                        "Métropoles à comparer", TOUTES, default=TOUTES[:3],
+                        key="men_metros",
+                        help="Sélectionnez les métropoles à comparer.",
+                    )
+                    selection_men = sel_metros_men
+
+                # Ligne 3 : Thématique
+                theme_men = st.selectbox(
+                    "Thématique d'analyse",
+                    ["👨‍👩‍👧 Type & taille de ménage", "🧑‍💼 CSP du chef de ménage"],
+                    key="theme_men",
+                    help=(
+                        "**Type & taille** : Composition familiale (personne seule, couple, "
+                        "famille monoparentale…) et taille moyenne du ménage.\n\n"
+                        "**CSP** : Catégorie socio-professionnelle de la personne de référence "
+                        "du foyer, croisée avec la taille du ménage."
+                    ),
+                )
 
             st.markdown("---")
 
@@ -2152,6 +2167,23 @@ if vue == "Démographie":
                 if mode_men == "Comparaison Métropoles":
                     return df_men_csp[df_men_csp["metropole"] == ent]
                 return df_men_csp[df_men_csp["LIBGEO"] == ent]
+
+            # ── Population par territoire (pour ratio pers/ménage) ────────────
+            def get_population(ent):
+                """
+                Retourne la population municipale pour calculer le ratio
+                personnes/ménage. Pour les métropoles on utilise epci_val,
+                pour les communes on utilise df_pop (tranche d'âge).
+                """
+                if mode_men == "Comparaison Métropoles":
+                    return epci_val(ent, "population_2022")
+                else:
+                    if df_pop is not None:
+                        df_c = df_pop[(df_pop["LIBELLE"] == ent) & (df_pop["annee"] == 2022)]
+                        age_cols = [c for c in df_pop.columns if "ageq_rec" in c]
+                        if not df_c.empty:
+                            return float(df_c[age_cols].sum().sum())
+                    return np.nan
 
             PALETTE_TYPE = ["#1B4332", "#2D6A4F", "#40916C", "#74C69D", "#D8F3DC"]
             PALETTE_CSP  = ["#081C15", "#1B4332", "#2D6A4F", "#40916C",
@@ -2173,23 +2205,28 @@ if vue == "Démographie":
                 st.markdown(
                     "#### Aperçu global des ménages",
                     help=(
-                        "**Nombre de ménages** : total des foyers ordinaires recensés (RP 2022).\n\n"
-                        "**Taille moyenne** : calculée par la formule pondérée "
-                        "Σ(nb_ménages × taille) / nb_ménages_total, "
-                        "en utilisant 1, 2, 3, 4, 5 et 6 pers. (valeur minimale pour 6+). "
-                        "La valeur nationale tourne autour de 2,2 personnes par ménage en France."
+                        "**Nombre de ménages** : total des foyers ordinaires recensés (RP 2022), "
+                        "calculé en sommant toutes les colonnes du fichier CSP × taille.\n\n"
+                        "**Personnes par ménage** : ratio Population 2022 / Nombre de ménages. "
+                        "La valeur nationale est d'environ 2,2 personnes par ménage en France."
                     ),
                 )
                 kpi_cols = st.columns(len(selection_men))
                 for i, ent in enumerate(selection_men):
                     df_csp_ent = get_df_csp(ent)
-                    taille, nb_men = taille_moyenne_menage(df_csp_ent)
-                    taille_str = f"{taille:.2f} pers./ménage" if not np.isnan(taille) else "N/D"
+                    nb_men = nb_menages_total(df_csp_ent)
+                    pop = get_population(ent)
+                    if nb_men > 0 and not np.isnan(pop):
+                        ratio = pop / nb_men
+                        ratio_str = f"{ratio:.2f} pers./ménage"
+                    else:
+                        ratio_str = "N/D"
                     with kpi_cols[i]:
                         st.markdown(
                             render_kpi_card(
-                                ent, fmt(nb_men),
-                                taille_str,
+                                ent,
+                                fmt(nb_men),
+                                ratio_str,
                                 COLOR_ENT[i % len(COLOR_ENT)],
                             ),
                             unsafe_allow_html=True,
@@ -2197,7 +2234,7 @@ if vue == "Démographie":
 
                 st.markdown("---")
 
-                # ── Graphique 1 : Distribution par taille de ménage ──────────
+                # ── Graphique 1 : Distribution par taille ────────────────────
                 st.markdown(
                     "##### Distribution par taille de ménage (%)",
                     help=(
@@ -2234,7 +2271,7 @@ if vue == "Démographie":
 
                 st.markdown("---")
 
-                # ── Graphique 2 : Type de ménage ─────────────────────────────
+                # ── Graphiques 2 & 3 : Type de ménage ────────────────────────
                 c1, c2 = st.columns(2)
                 rows_type = []
                 for ent in selection_men:
@@ -2301,8 +2338,8 @@ if vue == "Démographie":
                     st.write(
                         "**Distribution par taille (en haut)** : révèle si le territoire est "
                         "plutôt composé de petits foyers (urbain, vieillissant) ou de grandes "
-                        "familles (périurbain, populations immigrées). La moyenne nationale est "
-                        "d'environ **2,2 personnes par ménage**.\n\n"
+                        "familles (périurbain). La moyenne nationale est d'environ **2,2 personnes "
+                        "par ménage**.\n\n"
                         "**Volume (gauche)** : montre les besoins absolus en logements. "
                         "Utile pour les politiques d'urbanisme.\n\n"
                         "**Structure % (droite)** : neutralise l'effet taille pour comparer "
@@ -2321,6 +2358,13 @@ if vue == "Démographie":
                 for ent in selection_men:
                     df_csp_ent = get_df_csp(ent)
                     nb_total_csp = df_csp_ent[cols_csp].sum().sum()
+                    nb_men = nb_menages_total(df_csp_ent)
+                    pop = get_population(ent)
+                    ratio_str = (
+                        f"{pop / nb_men:.2f} pers./ménage"
+                        if nb_men > 0 and not np.isnan(pop)
+                        else "N/D"
+                    )
                     best_grp, best_val = "N/D", 0
                     for nom_grp, mots in CSP_GROUPES.items():
                         val = somme_colonnes(df_csp_ent, mots)
@@ -2334,11 +2378,11 @@ if vue == "Démographie":
                         if val > best_val:
                             best_val = val
                             best_grp = nom_grp.replace("\n", " ")
-                    taille, nb_men = taille_moyenne_menage(df_csp_ent)
                     kpi_csp.append({
-                        "ent": ent, "total": nb_men,
+                        "ent": ent,
+                        "total": nb_men,
                         "dominante": best_grp,
-                        "taille": taille,
+                        "ratio": ratio_str,
                     })
 
                 df_csp_all = pd.DataFrame(rows_csp)
@@ -2348,18 +2392,15 @@ if vue == "Démographie":
                     "#### Profil socio-professionnel des ménages",
                     help=(
                         "La **CSP du chef de ménage** est celle de la personne de référence "
-                        "du foyer (généralement la personne avec le revenu le plus élevé, "
-                        "ou la plus âgée). Source : INSEE RP 2022, fichier Ménages × CSP × "
-                        "nombre de personnes.\n\n"
+                        "du foyer. Source : INSEE RP 2022.\n\n"
+                        "**Nombre de ménages** : total des foyers recensés.\n\n"
                         "**CSP dominante** : la catégorie qui rassemble le plus grand nombre "
                         "de ménages dans le territoire sélectionné.\n\n"
-                        "**Taille moy.** : calculée à partir du nombre de personnes par ménage "
-                        "(Σ(nb_ménages_Npers × N) / total ménages)."
+                        "**Personnes par ménage** : ratio Population 2022 / Nombre de ménages."
                     ),
                 )
                 kpi_cols = st.columns(len(kpi_csp))
                 for i, d in enumerate(kpi_csp):
-                    taille_str = f"Taille moy. {d['taille']:.2f} pers." if not np.isnan(d['taille']) else ""
                     with kpi_cols[i]:
                         st.markdown(
                             render_kpi_card(
@@ -2370,8 +2411,6 @@ if vue == "Démographie":
                             ),
                             unsafe_allow_html=True,
                         )
-                        if taille_str:
-                            st.caption(taille_str)
 
                 st.markdown("---")
 
@@ -2409,7 +2448,7 @@ if vue == "Démographie":
 
                 st.markdown("---")
 
-                # ── Graphique 2 : Volume CSP ─────────────────────────────────
+                # ── Graphiques 2 & 3 ────────────────────────────────────────
                 c1, c2 = st.columns(2)
                 with c1:
                     st.markdown(
