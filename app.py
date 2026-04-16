@@ -825,131 +825,162 @@ with st.sidebar:
 # ──────────────────────────────────────────────────────────────────────────────
 # 8. PAGES
 # ──────────────────────────────────────────────────────────────────────────────
+# ==============================================================================
+# PAGE DESCRIPTION - NOUVEAU DESIGN
+# ==============================================================================
+
 if vue == "Description":
-    st.markdown('<p class="section-header">Description</p>', unsafe_allow_html=True)
-
+    # 1. CSS Global pour la page
     st.markdown("""
-    Cette application présente des analyses comparatives sur **5 métropoles françaises** à partir des recensements INSEE 2011, 2016 et 2022.
-    Chaque page dispose de ses propres filtres en haut de page, adaptés aux données présentées.
-    Selon les onglets, il est possible de filtrer par métropole, par année ou par thématique.
-    """)
+        <style>
+        .main-intro {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 8px solid #2D6A4F;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        /* Style du Tableau */
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 1em;
+            font-family: 'Sora', sans-serif;
+            border-radius: 12px 12px 0 0;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        .modern-table thead tr {
+            background-color: #2D6A4F;
+            color: #ffffff;
+            text-align: left;
+            font-weight: bold;
+        }
+        .modern-table th, .modern-table td {
+            padding: 12px 15px;
+        }
+        .modern-table tbody tr {
+            border-bottom: 1px solid #dddddd;
+            background-color: white;
+        }
+        .modern-table tbody tr:nth-of-type(even) {
+            background-color: #f3f3f3;
+        }
+        .modern-table tbody tr:last-of-type {
+            border-bottom: 2px solid #2D6A4F;
+        }
+        .badge-count {
+            background-color: #e7f3ef;
+            color: #2D6A4F;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        /* Style des Cartes Thématiques */
+        .feature-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #E0E0E0;
+            height: 100%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .theme-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .badge-demo { background: #E6FFFA; color: #2D6A4F; }
+        .badge-solid { background: #FFF5F5; color: #C45B2A; }
+        </style>
+    """, unsafe_allow_html=True)
 
-    st.markdown("---")
+    # 1. Introduction
+    st.markdown("""
+        <div class="main-intro">
+            <p style="font-size: 1.1rem; color: #1C3A27; margin: 0;">
+                Cette application présente des analyses comparatives sur <b>5 métropoles françaises et 49 communes de la métropole de Grenoble</b> à partir des données de l'INSEE, la CAF, Data.gouv et OSM France. 
+                Chaque page dispose de ses propres filtres en haut de page, adaptés aux données présentées. 
+                Selon les onglets, il est possible de filtrer par métropole, par commune, par année ou par thématique.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("### Périmètre géographique")
-    communes_data = {
-        "Métropole": list(COMMUNES.keys()),
-        "Nombre de communes": [len(v) for v in COMMUNES.values()],
-        "Département": ["Isère (38)", "Ille-et-Vilaine (35)", "Seine-Maritime (76)", "Loire (42)", "Hérault (34)"],
-    }
-    st.dataframe(pd.DataFrame(communes_data).set_index("Métropole"), use_container_width=True)
+    # 2. Tableau du Périmètre (Généré proprement)
+    st.markdown('<p style="font-size:1.5rem; font-weight:700; color:#1C3A27; margin-bottom:10px;">Périmètre d\'analyse</p>', unsafe_allow_html=True)
+    
+    table_html = """
+    <table class="modern-table">
+        <thead>
+            <tr>
+                <th>Métropole</th>
+                <th>Nombre de communes</th>
+                <th>Département</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Grenoble-Alpes Métropole</td><td><span class="badge-count">49</span></td><td>Isère (38)</td></tr>
+            <tr><td>Rennes Métropole</td><td><span class="badge-count">43</span></td><td>Ille-et-Vilaine (35)</td></tr>
+            <tr><td>Rouen Normandie Métropole</td><td><span class="badge-count">71</span></td><td>Seine-Maritime (76)</td></tr>
+            <tr><td>Saint-Étienne Métropole</td><td><span class="badge-count">53</span></td><td>Loire (42)</td></tr>
+            <tr><td>Montpellier Méditerranée Métropole</td><td><span class="badge-count">31</span></td><td>Hérault (34)</td></tr>
+        </tbody>
+    </table>
+    """
+    st.markdown(table_html, unsafe_allow_html=True)
 
-    st.markdown("---")
+    # 3. Thématique Démographie
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<p style="font-size:1.5rem; font-weight:700; color:#2D6A4F; border-bottom: 2px solid #2D6A4F;"> Thématique 1 : Démographie</p>', unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-demo">Villes</div><div class="card-title"><b> Population globale</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">Découvrez ici le nombre total d'habitants. Cela permet de voir la densité de population et de comparer les métropoles et communes entre elles.</div></div>""", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-demo">Foyers</div><div class="card-title"><b> Ménages</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">On regarde ici comment vivent les gens chez eux. Cela montre s'il y a beaucoup de familles ou de personnes seules, et combien il y a d'habitants par logement.</div></div>""", unsafe_allow_html=True)
 
-    st.markdown("### Thématique 1 - Démographie")
+    with col2:
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-demo">Âges</div><div class="card-title"><b> Structure par âge</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">Est-ce que la ville est plutôt jeune ou vieille ? Cette partie montre le nombre d'enfants, de travailleurs et de retraités pour chaque endroit étudié.</div></div>""", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-demo">Travail</div><div class="card-title"><b> Population active</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">Ici, on s'intéresse aux personnes qui ont l'âge de travailler (25 à 54 ans). On analyse leurs métiers et leur niveau d'études ou leurs diplômes.</div></div>""", unsafe_allow_html=True)
 
-    demo_onglets = [
-        {
-            "titre": "Population globale",
-            "description": "Évolution et comparaison des populations totales entre métropoles.",
-            "source": "INSEE - Données générales comparatives (RP 2011–2022)",
-            "lien": "https://www.insee.fr/fr/statistiques/1405599?geo=EPCI-200040715+EPCI-243500139",
-        },
-        {
-            "titre": "Structure par âge",
-            "description": "Pyramides des âges, part des jeunes, actifs et seniors.",
-            "source": "INSEE - Population par tranche d'âge (RP 2011–2022)",
-            "lien": "https://www.insee.fr/fr/statistiques/1893204",
-        },
-        {
-            "titre": "Mobilités résidentielles",
-            "description": "Flux de migrations résidentielles entre communes et métropoles.",
-            "source": "INSEE - Migrations résidentielles 2019–2022",
-            "lien": "https://www.insee.fr/fr/statistiques/8582988",
-        },
-        {
-            "titre": "Mobilités professionnelles",
-            "description": "Déplacements domicile-travail à l'échelle des métropoles.",
-            "source": "INSEE - Mobilité professionnelle 2019–2022",
-            "lien": "https://www.insee.fr/fr/statistiques/8582949",
-        },
-        {
-            "titre": "Mobilités scolaires",
-            "description": "Flux de déplacements vers les établissements scolaires.",
-            "source": "INSEE - Mobilité scolaire 2019–2022",
-            "lien": "https://www.insee.fr/fr/statistiques/8582969",
-        },
-        {
-            "titre": "Ménages",
-            "description": "Taille et composition des ménages selon l'âge et la CSP.",
-            "source": "INSEE - Ménages par âge et situation (RP 2011–2022)",
-            "lien": "https://www.insee.fr/fr/statistiques/8582448",
-        },
-        {
-            "titre": "Population active 25-54 ans",
-            "description": "Structure socioprofessionnelle et indice de spécialisation entre métropoles.",
-            "source": "INSEE - Population 25-54 ans par CSP et diplôme (RP 2011–2022)",
-            "lien": "https://www.insee.fr/fr/statistiques/1893185",
-        },
-    ]
+    with col3:
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-demo">Trajets</div><div class="card-title"><b> Mobilité</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;"><b>Toutes les mobilités :</b> On étudie les déplacements des habitants. Cela comprend les nouveaux arrivants, les trajets domicile-travail et les déplacements pour l'école.</div></div>""", unsafe_allow_html=True)
 
-    for onglet in demo_onglets:
-        with st.expander(onglet["titre"]):
-            st.markdown(onglet["description"])
-            st.markdown(f"**Source :** {onglet['source']} · [🔗 Accéder]({onglet['lien']})")
+    # 4. Thématique Solidarité
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<p style="font-size:1.5rem; font-weight:700; color:#C45B2A; border-bottom: 2px solid #C45B2A;"> Thématique 2 : Solidarité & Citoyenneté</p>', unsafe_allow_html=True)
+    
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-solid">Aide</div><div class="card-title"><b> Solidarité</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">Retrouvez ici les aides versées aux familles par la CAF. Cela permet de voir les zones où les gens ont le plus besoin de soutien financier.</div></div>""", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-solid">Vote</div><div class="card-title"><b> Participation</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">On regarde ici si les habitants votent beaucoup aux élections locales. C'est un bon moyen de voir si les gens s'intéressent à la vie de leur commune.</div></div>""", unsafe_allow_html=True)
+    with c2:
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-solid">École</div><div class="card-title"><b> Éducation</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">On regarde combien de jeunes étudient et quels diplômes ils obtiennent dans chaque territoire et suivre leurs évolutions.</div></div>""", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-solid">Argent</div><div class="card-title"><b> Pauvreté</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">Découvrez les revenus médians des habitants. On regarde si les gens gagnent bien leur vie ou s'ils sont dans une situation de pauvreté monétaire.</div></div>""", unsafe_allow_html=True)
+    with c3:
+        st.markdown("""<div class="feature-card"><div class="theme-badge badge-solid">Soin</div><div class="card-title"><b> Santé</b></div>
+        <div class="card-body" style="font-size:0.9rem; color:#555;">Cette page liste les établissements de santés disponibles. Cela sert à voir si l'on peut se soigner facilement près de chez soi dans chaque quartier.</div></div>""", unsafe_allow_html=True)
 
-    st.markdown("---")
-
-    st.markdown("### Thématique 2 - Solidarité & citoyenneté")
-
-    solid_onglets = [
-        {
-            "titre": "Solidarité",
-            "description": "Analyse des données CAF : foyers bénéficiaires, montants versés, évolution temporelle.",
-            "sources": [
-                ("INSEE - Filosofi : âge, type de ménage, niveau de vie", "https://catalogue-donnees.insee.fr/fr/catalogue/recherche/DS_FILOSOFI_AGE_TP_NIVVIE"),
-                ("CAF - Allocataires par commune (NDUR)", "https://data.caf.fr/explore/dataset/ndur_s_qf_400_com_f/table/"),
-                ("CAF - Bénéficiaires par commune (complément)", "https://data.caf.fr/explore/dataset/s_ben_com_f/table/"),
-                ("INSEE - Données générales comparatives EPCI", "https://www.insee.fr/fr/statistiques/1405599?geo=EPCI-200040715+EPCI-243500139"),
-            ],
-        },
-        {
-            "titre": "Éducation",
-            "description": "Analyse des niveaux de diplôme et de la scolarisation par métropole.",
-            "sources": [
-                ("INSEE - Statistiques locales (diplômes, scolarisation)", "https://www.insee.fr/fr/statistiques/8307327?sommaire=2500477"),
-            ],
-        },
-        {
-            "titre": "Santé",
-            "description": "Cartographie et analyse des équipements de santé.",
-            "sources": [
-                ("OpenData - Équipements de santé OSM France", "https://smartregionidf.opendatasoft.com/explore/dataset/osm-france-healthcare/table/"),
-            ],
-        },
-        {
-            "titre": "Participation citoyenne",
-            "description": "Taux de participation et résultats des élections municipales 2020.",
-            "sources": [
-                ("Data.gouv - Élections municipales 2020 (1er tour)", "https://www.data.gouv.fr/datasets/elections-municipales-2020-resultats-1er-tour/"),
-            ],
-        },
-        {
-            "titre": "Revenus & pauvreté",
-            "description": "...",
-            "sources": [
-                ("...", "..."),
-            ],
-        },
-    ]
-
-    for onglet in solid_onglets:
-        with st.expander(onglet["titre"]):
-            st.markdown(onglet["description"])
-            for source, lien in onglet["sources"]:
-                st.markdown(f"**Source :** {source} · [🔗 Accéder]({lien})")
-
-    st.stop()
+    st.stop()   
 
 if vue == "Démographie":
     tab1, tab2, tab3, tab4, tab6 = st.tabs([
