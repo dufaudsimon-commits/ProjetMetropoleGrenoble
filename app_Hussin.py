@@ -2391,7 +2391,9 @@ if vue == "Solidarité et citoyenneté":
 
                             c3, c4 = st.columns(2)
                             with c3:
-                                st.markdown(f"##### Quotient familial ({year_caf})")
+                                st.markdown(f"##### Quotient familial ({year_caf})",
+                                            help="Répartition des foyers selon leur tranche de revenus. Permet d'identifier la proportion de foyers les plus précaires (tranches basses) dans chaque commune."
+                                )
                                 if "Quotient familial" in df_yr.columns:
                                     qf_order = ["Moins de 400 euros","Entre 400 et 799 euros",
                                         "Entre 800 et 1199 euros","Entre 1200 et 1599 euros",
@@ -2408,7 +2410,8 @@ if vue == "Solidarité et citoyenneté":
                                         labels={"Agglomeration": "", metric: label_metric}, height=380)
                                     st.plotly_chart(style(fig_qf, 40), use_container_width=True)
                             with c4:
-                                st.markdown(f"##### Classement des métropoles - {year_caf}")
+                                st.markdown(f"##### Classement des métropoles - {year_caf}",
+                                            help="Volume total pour l'indicateur sélectionné. Permet d'identifier rapidement les communes avec la plus forte concentration d'allocataires.")
                                 
                                 # Regroupement par agglomération
                                 top_metros = df_yr.groupby("Agglomeration", as_index=False)[metric].sum().sort_values(by=metric, ascending=False)
@@ -2432,31 +2435,82 @@ if vue == "Solidarité et citoyenneté":
                                 st.plotly_chart(style(fig_top, 40), use_container_width=True)
                             st.markdown("---")
 
-                            st.markdown("##### Profil comparatif des aides - radar")
-                            aides_f = {"Foyers PAJE":"Nombre foyers NDURPAJE","Foyers aj. enf.":"Nombre foyers NDUREJ",
-                                "Foyers alloc. log.":"Nombre foyers NDURAL","Foyers insertion":"Nombre foyers NDURINS",
-                                "Foyers total":"Nombre foyers NDUR"}
+                            st.markdown("##### Profil comparatif des aides",
+                                        help="Comparaison directe des trois aides principales (Insertion, Logement, Petite enfance). Utile pour comprendre la nature dominante des besoins (précarité vs famille) de chaque territoire.")
+                            
+                            # Conservation des 3 aides principales pour plus de lisibilité
+                            aides_f = {
+                                "Foyers insertion": "Nombre foyers NDURINS",
+                                "Foyers alloc. log.": "Nombre foyers NDURAL",
+                                "Foyers PAJE": "Nombre foyers NDURPAJE"
+                            }
+                            
                             aides_d = {k: v for k, v in aides_f.items() if v in df_yr.columns}
-                            if len(aides_d) >= 3:
-                                rdata = df_yr.groupby("Agglomeration")[list(aides_d.values())].sum().reset_index()
-                                rdata.columns = ["Agglomeration"] + list(aides_d.keys())
-                                rdata["Metropole_Key"] = rdata["Agglomeration"].apply(lambda x: next((m for m in COULEURS.keys() if m in x), x))
-                                fig_radar = go.Figure()
-                                cats_r = list(aides_d.keys())
-                                for _, rr in rdata.iterrows():
-                                    vv = [rr[c] for c in cats_r] + [rr[cats_r[0]]]
-                                    fig_radar.add_trace(go.Scatterpolar(r=vv, theta=cats_r+[cats_r[0]],
-                                        fill="toself", name=rr["Metropole_Key"],
-                                        line_color=COULEURS.get(rr["Metropole_Key"], "#999")))
-                                fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True)), height=420, 
-                                                        font_family="Sora",
-                                    paper_bgcolor="rgba(0,0,0,0)")
-                                st.plotly_chart(fig_radar, use_container_width=True)
+                            
+                            if aides_d:
+                                # 1. Grouper les colonnes
+                                bdata = df_yr.groupby("Agglomeration", as_index=False)[list(aides_d.values())].sum()
+                                bdata["Metropole_Key"] = bdata["Agglomeration"].apply(lambda x: next((m for m in COULEURS.keys() if m in x), x))
+                                
+                                # Inversion du dictionnaire pour bien renommer (Technique -> Lisible)
+                                rename_dict = {v: k for k, v in aides_d.items()}
+                                bdata = bdata.rename(columns=rename_dict)
+                                
+                                # 2. Passer au format long pour Plotly
+                                bdata_long = bdata.melt(
+                                    id_vars=["Agglomeration", "Metropole_Key"],
+                                    value_vars=list(aides_d.keys()),
+                                    var_name="Type d'aide",
+                                    value_name="Nombre de foyers"
+                                )
+                                
+                                # 3. Créer le graphique
+                                fig_bar_comp = px.bar(
+                                    bdata_long,
+                                    x="Nombre de foyers",
+                                    y="Type d'aide",
+                                    color="Metropole_Key",
+                                    color_discrete_map=COULEURS,
+                                    barmode="group",
+                                    orientation="h",
+                                    text_auto=".3s",
+                                    labels={"Metropole_Key": "Métropole", "Nombre de foyers": "Foyers", "Type d'aide": ""},
+                                    height=400  # Légèrement rehaussé pour la légende
+                                )
+                                
+                                # 4. Mise en page avec la légende horizontale au-dessus
+                                fig_bar_comp.update_layout(
+                                    legend=dict(
+                                        orientation="h",     # Légende à l'horizontale
+                                        yanchor="bottom",    # Point d'ancrage en bas
+                                        y=1.05,              # Placement au-dessus du graph (1.0 = limite haute)
+                                        xanchor="left",
+                                        x=0,                 # Alignement à gauche
+                                        title=""             # Masque le titre de la légende pour l'épurer
+                                    ),
+                                    margin=dict(t=80, b=40, l=100), # t=80 augmente la marge haute pour la légende
+                                    xaxis_title="Nombre de foyers",
+                                    yaxis={"categoryorder": "total ascending"}
+                                )
+                                
+                                st.plotly_chart(style(fig_bar_comp, 40), use_container_width=True)
+
+
                             st.markdown("---")
-                            with st.expander("📖 Note méthodologique"):
-                                st.write("**Sources** : CAF - données communales 2020–2023.\n\n"
-                                    "**NDUR** : dossiers unifiés réels. **NDURPAJE** : prestation jeune enfant. "
-                                    "**NDURAL** : allocation logement. **NDURINS** : insertion sociale (RSA...).")
+                            with st.expander(" Note méthodologique"):
+                                st.markdown("""
+                               **Comprendre les indicateurs généraux :**
+                                * **Foyers (NDUR - Nombre de Dossiers Unifiés Réels) :** Un dossier correspond à un foyer allocataire unique percevant au moins une aide de la CAF.
+                                * **Personnes couvertes :** Il s'agit du nombre total de personnes vivant dans ces foyers (l'allocataire, son conjoint éventuel et les personnes à charge, comme les enfants).
+                                * **Quotient Familial :** Indicateur de niveau de vie calculé par la CAF (revenus divisés par le nombre de parts du foyer). Il détermine l'éligibilité et le montant de nombreuses aides.
+                                
+                                **Les grandes familles d'aides analysées :**
+                                * **Toutes aides confondues (Global) :** Englobe l'ensemble des prestations légales versées par la CAF sur le territoire.
+                                * **Allocation logement (NDURAL) :** Aides destinées à réduire la dépense de loyer ou de mensualité d'emprunt (APL, ALF, ALS).
+                                * **Insertion sociale (NDURINS) :** Prestations visant à garantir un revenu minimum et à encourager l'activité (principalement le RSA, la Prime d'activité et l'AAH - Allocation aux Adultes Handicapés).
+                                * **PAJE (NDURPAJE) :** Prestation d'Accueil du Jeune Enfant. Regroupe les aides versées à la naissance ou l'adoption, ainsi que pour l'entretien et la garde des enfants en bas âge.
+                                * **Aide jeunes enfants (NDUREJ) :** Prestations liées à l'enfance et la jeunesse au sens plus large (Allocations familiales, allocation de rentrée scolaire, etc.).
+                                """)
 
                     else:
                         if not sel_communes_caf:
@@ -2465,67 +2519,116 @@ if vue == "Solidarité et citoyenneté":
                             metric = metric_key
                             label_metric = available_metrics[metric]
                             gre_agglo = next((a for a in agglos_caf if "Grenoble" in a), "Grenoble Alpes Métropole")
+                            
+                            # Filtrage des données
                             df_fil = df_caf[(df_caf["Agglomeration"] == gre_agglo) & (df_caf["Nom_Commune"].isin(sel_communes_caf))]
                             df_yr  = df_fil[df_fil["Annee"] == year_caf]
 
                             st.markdown("---")
-                            kpi_cols = st.columns(len(sel_communes_caf))
-                            for i, comm in enumerate(sel_communes_caf):
-                                val = df_yr[df_yr["Nom_Commune"] == comm][metric].sum() if not df_yr.empty else 0
-                                with kpi_cols[i]:
+                            
+                            # 1. KPIs au nouveau format
+                            total_val = df_yr[metric].sum()
+                            nb_com    = int(df_yr["Nom_Commune"].nunique())
+                            max_com   = df_yr.groupby("Nom_Commune")[metric].sum().idxmax() if not df_yr.empty else "-"
+
+                            k1, k2, k3 = st.columns(3)
+                            caf_cards_com = [
+                                (k1, f"Total {year_caf}", fmt(total_val), label_metric),
+                                (k2, "Communes", nb_com, "Sélectionnées"),
+                                (k3, "Top Commune", max_com, "Volume le plus élevé")
+                            ]
+
+                            for col, title, value, subtitle in caf_cards_com:
+                                with col:
                                     st.markdown(f"""
-                                    <div style='
-                                        display: flex;
-                                        flex-direction: row;
-                                        align-items: stretch;
-                                        border-radius: 8px;
-                                        overflow: hidden;
-                                        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-                                        background: #fff;
-                                        min-height: 80px;
-                                        border-left: 6px solid #1e5631;
-                                    '>
-                                        <div style='
-                                            padding: 10px 16px;
-                                            display: flex;
-                                            flex-direction: column;
-                                            justify-content: center;
-                                        '>
-                                            <div style='font-size:11px; font-weight:700; letter-spacing:0.08em; color:#666; text-transform:uppercase;'>{comm}</div>
-                                            <div style='font-size:24px; font-weight:bold; color:#111; margin: 2px 0;'>{fmt(val)}</div>
-                                            <div style='color:#888; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;'>{label_metric}</div>
+                                    <div style='display: flex; flex-direction: row; align-items: stretch; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #fff; min-height: 80px; border-left: 6px solid #1e5631;'>
+                                        <div style='padding: 10px 16px; display: flex; flex-direction: column; justify-content: center;'>
+                                            <div style='font-size:11px; font-weight:700; letter-spacing:0.08em; color:#666; text-transform:uppercase;'>{title}</div>
+                                            <div style='font-size:24px; font-weight:bold; color:#111; margin: 2px 0;'>{value}</div>
+                                            <div style='color:#888; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;'>{subtitle}</div>
                                         </div>
                                     </div>
                                     """, unsafe_allow_html=True)
 
                             st.markdown("---")
-                            c1, c2 = st.columns(2)
-                            with c1:
-                                st.markdown(f"##### 📊 {label_metric} par commune")
-                                fig_ccb = px.bar(df_yr, x="Nom_Commune", y=metric, color="Nom_Commune",
-                                                 color_discrete_sequence=px.colors.sequential.Greens_r,
-                                                 labels={"Nom_Commune": "", metric: label_metric},
-                                                 title=f"Comparaison - {year_caf}", height=400)
-                                st.plotly_chart(style(fig_ccb, 40), use_container_width=True)
-                            with c2:
-                                st.markdown(f"##### 📈 Évolution - {label_metric}")
-                                df_evo = df_fil.groupby(["Annee", "Nom_Commune"], as_index=False)[metric].sum()
-                                fig_ecc = px.line(df_evo, x="Annee", y=metric, color="Nom_Commune",
-                                                  color_discrete_sequence=px.colors.sequential.Greens_r,
-                                                  markers=True, title=f"Évolution des aides", height=400)
-                                st.plotly_chart(style(fig_ecc, 40), use_container_width=True)
 
-                            if "Quotient familial" in df_caf.columns:
+                            # 2. GRAPHIQUES : Quotient Familial et Classement
+                            c1, c2 = st.columns(2)
+                            
+                            with c1:
+                                # AIDE AJOUTÉE ICI 👇
+                                st.markdown(
+                                    f"##### Quotient familial ({year_caf})", 
+                                    help="Répartition des foyers selon leur tranche de revenus. Permet d'identifier la proportion de foyers les plus précaires (tranches basses) dans chaque commune."
+                                )
+                                if "Quotient familial" in df_yr.columns:
+                                    qf_order = ["Moins de 400 euros","Entre 400 et 799 euros","Entre 800 et 1199 euros","Entre 1200 et 1599 euros","Entre 1600 et 1999 euros","Entre 2000 et 3999 euros","4000 euros ou plus","Inconnu"]
+                                    qf_data = df_yr.groupby(["Nom_Commune","Quotient familial"], as_index=False)[metric].sum()
+                                    qf_data["QF_ord"] = pd.Categorical(qf_data["Quotient familial"], categories=qf_order, ordered=True)
+                                    
+                                    fig_qf = px.bar(qf_data.sort_values("QF_ord"), x="Nom_Commune", y=metric,
+                                        color="Quotient familial", barmode="stack",
+                                        color_discrete_sequence=px.colors.sequential.Greens_r,
+                                        labels={"Nom_Commune": "", metric: label_metric}, height=400)
+                                    st.plotly_chart(style(fig_qf, 40), use_container_width=True)
+
+                            with c2:
+                                # AIDE AJOUTÉE ICI 👇
+                                st.markdown(
+                                    f"##### Classement des communes - {year_caf}",
+                                    help="Volume total pour l'indicateur sélectionné. Permet d'identifier rapidement les communes avec la plus forte concentration d'allocataires."
+                                )
+                                top_coms = df_yr.groupby("Nom_Commune", as_index=False)[metric].sum().sort_values(by=metric, ascending=True)
+                                fig_top = px.bar(top_coms, x=metric, y="Nom_Commune", orientation="h",
+                                    color_discrete_sequence=["#1e5631"], text_auto=".3s",
+                                    labels={"Nom_Commune": "", metric: label_metric}, height=400)
+                                st.plotly_chart(style(fig_top, 40), use_container_width=True)
+
+                            st.markdown("---")
+
+                            # 3. GRAPHIQUE : Profil comparatif des aides (Barres groupées)
+                            # AIDE AJOUTÉE ICI 👇
+                            st.markdown(
+                                "##### Profil comparatif des aides",
+                                help="Comparaison directe des trois aides principales (Insertion, Logement, Petite enfance). Utile pour comprendre la nature dominante des besoins (précarité vs famille) de chaque territoire."
+                            )
+                            aides_f = {"Foyers insertion": "Nombre foyers NDURINS", "Foyers alloc. log.": "Nombre foyers NDURAL", "Foyers PAJE": "Nombre foyers NDURPAJE"}
+                            aides_d = {k: v for k, v in aides_f.items() if v in df_yr.columns}
+
+                            if aides_d:
+                                bdata = df_yr.groupby("Nom_Commune", as_index=False)[list(aides_d.values())].sum()
+                                rename_dict = {v: k for k, v in aides_d.items()}
+                                bdata = bdata.rename(columns=rename_dict)
+                                
+                                bdata_long = bdata.melt(id_vars=["Nom_Commune"], value_vars=list(aides_d.keys()), var_name="Type d'aide", value_name="Nombre de foyers")
+                                
+                                fig_bar_comp = px.bar(bdata_long, x="Nombre de foyers", y="Type d'aide", color="Nom_Commune",
+                                    barmode="group", orientation="h", text_auto=".3s",
+                                    color_discrete_sequence=px.colors.sequential.Greens_r,
+                                    labels={"Nombre de foyers": "Foyers", "Type d'aide": ""}, height=400)
+                                
+                                fig_bar_comp.update_layout(
+                                    legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="left", x=0, title=""),
+                                    margin=dict(t=80, b=40, l=100),
+                                    yaxis={"categoryorder": "total ascending"}
+                                )
+                                st.plotly_chart(style(fig_bar_comp, 40), use_container_width=True)
+
                                 st.markdown("---")
-                                st.markdown("##### 👨‍👩‍👧 Structure par quotient familial")
-                                qf_data = df_yr.groupby(["Nom_Commune", "Quotient familial"], as_index=False)[metric].sum()
-                                if not qf_data.empty:
-                                    fig_qfcc = px.bar(qf_data, x="Quotient familial", y=metric, color="Nom_Commune", barmode="group",
-                                                      color_discrete_sequence=px.colors.sequential.Greens_r,
-                                                      labels={"Nom_Commune": "", metric: "Foyers / Montant"},
-                                                      title="Répartition par quotient familial", height=380)
-                                    fig_qfcc.update_layout(xaxis_tickangle=-30)
-                                    st.plotly_chart(style(fig_qfcc, 40), use_container_width=True)
+                            with st.expander(" Note méthodologique"):
+                                st.markdown("""
+                               **Comprendre les indicateurs généraux :**
+                                * **Foyers (NDUR - Nombre de Dossiers Unifiés Réels) :** Un dossier correspond à un foyer allocataire unique percevant au moins une aide de la CAF.
+                                * **Personnes couvertes :** Il s'agit du nombre total de personnes vivant dans ces foyers (l'allocataire, son conjoint éventuel et les personnes à charge, comme les enfants).
+                                * **Quotient Familial :** Indicateur de niveau de vie calculé par la CAF (revenus divisés par le nombre de parts du foyer). Il détermine l'éligibilité et le montant de nombreuses aides.
+                                
+                                **Les grandes familles d'aides analysées :**
+                                * **Toutes aides confondues (Global) :** Englobe l'ensemble des prestations légales versées par la CAF sur le territoire.
+                                * **Allocation logement (NDURAL) :** Aides destinées à réduire la dépense de loyer ou de mensualité d'emprunt (APL, ALF, ALS).
+                                * **Insertion sociale (NDURINS) :** Prestations visant à garantir un revenu minimum et à encourager l'activité (principalement le RSA, la Prime d'activité et l'AAH - Allocation aux Adultes Handicapés).
+                                * **PAJE (NDURPAJE) :** Prestation d'Accueil du Jeune Enfant. Regroupe les aides versées à la naissance ou l'adoption, ainsi que pour l'entretien et la garde des enfants en bas âge.
+                                * **Aide jeunes enfants (NDUREJ) :** Prestations liées à l'enfance et la jeunesse au sens plus large (Allocations familiales, allocation de rentrée scolaire, etc.).
+                                """)
 
     # ──────────────────────────────────────────────────────────────────────────
     # ONGLET ÉDUCATION - Effectifs étudiants
