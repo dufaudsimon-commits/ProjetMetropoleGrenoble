@@ -2970,9 +2970,9 @@ if vue == "Solidarité et citoyenneté":
         with s3:
             import json
 
-            GEOJSON_PATH         = Path("solidarite&citoyennete/data_clean/sante/Etablissements_santé_filtre.geojson")
-            GEOJSON_METROS_PATH  = Path("solidarite&citoyennete/data_clean/sante/contour_metropole.geojson")
-            GEOJSON_COMMUNES_PATH= Path("solidarite&citoyennete/data_clean/sante/contour_communes.geojson")
+            GEOJSON_PATH = Path("solidarite&citoyennete/data_clean/sante/Etablissements_santé_filtre.geojson")
+            GEOJSON_METROS_PATH = Path("solidarite&citoyennete/data_clean/sante/contour_metropole.geojson")
+            GEOJSON_COMMUNES_PATH = Path("solidarite&citoyennete/data_clean/sante/contour_communes.geojson")
 
             @st.cache_data
             def charger_sante():
@@ -2980,15 +2980,15 @@ if vue == "Solidarité et citoyenneté":
                     data = json.load(f)
                 rows = []
                 for feat in data["features"]:
-                    p      = feat["properties"]
+                    p = feat["properties"]
                     coords = feat["geometry"]["coordinates"]
                     rows.append({
                         "type_etab": p.get("type_etablissement", ""),
-                        "nom":       p.get("nom_etablissement") or "-",
-                        "commune":   p.get("DCOE_L_LIB", p.get("commune", "")),
+                        "nom": p.get("nom_etablissement") or "-",
+                        "commune": p.get("DCOE_L_LIB", p.get("commune", "")),
                         "metropole": p.get("METROPOLE", p.get("Métropole", p.get("metropole", ""))),
-                        "lon":       coords[0],
-                        "lat":       coords[1],
+                        "lon": coords[0],
+                        "lat": coords[1],
                     })
                 return pd.DataFrame(rows)
 
@@ -3006,30 +3006,30 @@ if vue == "Solidarité et citoyenneté":
                 with open(GEOJSON_COMMUNES_PATH, "r", encoding="utf-8") as f:
                     return json.load(f)
 
-            df_sante         = charger_sante()
-            geojson_metros   = charger_geojson_metros()
+            df_sante = charger_sante()
+            geojson_metros = charger_geojson_metros()
             geojson_communes = charger_geojson_communes()
 
             TYPE_LABELS = {
-                "pharmacy":    "Pharmacie",
-                "doctors":     "Médecins / Soins",
-                "dentist":     "Dentiste",
-                "hospital":    "Hôpital",
-                "nursing_home":"EHPAD / Maison de retraite",
-                "clinic":      "Clinique / Centre de santé",
+                "pharmacy": "Pharmacie",
+                "doctors": "Médecins / Soins",
+                "dentist": "Dentiste",
+                "hospital": "Hôpital",
+                "nursing_home": "EHPAD / Maison de retraite",
+                "clinic": "Clinique / Centre de santé",
             }
 
             TYPE_COLORS = {
-                "pharmacy":    "#264653",
-                "doctors":     "#2a9d8f",
-                "dentist":     "#e9c46a",
-                "hospital":    "#f4a261",
-                "nursing_home":"#e76f51",
-                "clinic":      "#5DC26E",
+                "pharmacy": "#264653",
+                "doctors": "#2a9d8f",
+                "dentist": "#e9c46a",
+                "hospital": "#f4a261",
+                "nursing_home": "#e76f51",
+                "clinic": "#5DC26E",
             }
 
             metros_sante = sorted(df_sante["metropole"].dropna().unique())
-            types_sante  = sorted(df_sante["type_etab"].dropna().unique())
+            types_sante = sorted(df_sante["type_etab"].dropna().unique())
 
             # ── Filtres ───────────────────────────────────────────────────────────────
             with st.container():
@@ -3090,11 +3090,11 @@ if vue == "Solidarité et citoyenneté":
             sk1, sk2, sk3, sk4, sk5 = st.columns(5)
 
             sante_cards = [
-                (sk1, "Total établissements",  len(df_sf)),
-                (sk2, "Pharmacies",            len(df_sf[df_sf["type_etab"] == "pharmacy"])),
-                (sk3, "Médecins / Soins",      len(df_sf[df_sf["type_etab"] == "doctors"])),
-                (sk4, "Hôpitaux",              len(df_sf[df_sf["type_etab"] == "hospital"])),
-                (sk5, "Communes couvertes",    df_sf["commune"].nunique()),
+                (sk1, "Total établissements", len(df_sf)),
+                (sk2, "Pharmacies", len(df_sf[df_sf["type_etab"] == "pharmacy"])),
+                (sk3, "Médecins / Soins", len(df_sf[df_sf["type_etab"] == "doctors"])),
+                (sk4, "Hôpitaux", len(df_sf[df_sf["type_etab"] == "hospital"])),
+                (sk5, "Communes couvertes", df_sf["commune"].nunique()),
             ]
 
             for col, title, value in sante_cards:
@@ -3209,8 +3209,8 @@ if vue == "Solidarité et citoyenneté":
                     for _, row in df_sf.iterrows()
                 ])
                 lat_min, lat_max, lon_min, lon_max = bbox_pts
-                lat_c      = (lat_min + lat_max) / 2
-                lon_c      = (lon_min + lon_max) / 2
+                lat_c = (lat_min + lat_max) / 2
+                lon_c = (lon_min + lon_max) / 2
                 zoom_level = zoom_from_bbox(bbox_pts)
             else:
                 lat_c, lon_c, zoom_level = 46.5, 2.5, 5
@@ -3241,10 +3241,10 @@ if vue == "Solidarité et citoyenneté":
                     ]
                     if feats_communes:
                         mapbox_layers.append({
-                            "source":  {"type": "FeatureCollection", "features": feats_communes},
-                            "type":    "line",
-                            "color":   "#40916C",
-                            "line":    {"width": 1.5},
+                            "source": {"type": "FeatureCollection", "features": feats_communes},
+                            "type": "line",
+                            "color": "#40916C",
+                            "line": {"width": 1.5},
                             "opacity": 0.9,
                         })
                 # Contour global de la métropole Grenoble
@@ -3255,10 +3255,10 @@ if vue == "Solidarité et citoyenneté":
                     ]
                     if feats_grenoble:
                         mapbox_layers.append({
-                            "source":  {"type": "FeatureCollection", "features": feats_grenoble},
-                            "type":    "line",
-                            "color":   "#1B4332",
-                            "line":    {"width": 2.5},
+                            "source": {"type": "FeatureCollection", "features": feats_grenoble},
+                            "type": "line",
+                            "color": "#1B4332",
+                            "line": {"width": 2.5},
                             "opacity": 0.6,
                         })
 
