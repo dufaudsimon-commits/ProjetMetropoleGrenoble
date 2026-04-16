@@ -524,8 +524,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
 # ──────────────────────────────────────────────────────────────────────────────
-# 6. PAGE D'ACCUEIL (nouvelle version)
+# 6. PAGE D'ACCUEIL (Version avec Objectif agrandi)
 # ──────────────────────────────────────────────────────────────────────────────
 if st.session_state.page == "home":
     st.markdown("""
@@ -576,18 +577,38 @@ if st.session_state.page == "home":
     .stat-lbl { font-size: 11px; color: #4A7C59; font-weight: 700;
         text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
 
-    .cards-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    /* Grille pour les deux thématiques du bas */
+    .cards-grid-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    
     .info-card {
         background: white; border: 1px solid #C8E6D4; border-radius: 12px;
-        padding: 20px 22px; border-left: 5px solid #2D6A4F;
+        padding: 22px; border-left: 5px solid #2D6A4F;
     }
+    
+    /* STYLE SPÉCIFIQUE OBJECTIF (BLEU ET GRANDE POLICE) */
+    .info-card.blue { 
+        border-left: 6px solid #111184; 
+        border-color: #111184;
+        box-shadow: 0 4px 12px rgba(42, 92, 154, 0.08); /* Petit relief bleu */
+    }
+    .info-card.blue .info-card-title { color: #111184; font-size: 14px; }
+    .info-card.blue .info-card-body { 
+        font-size: 16px; /* Taille augmentée */
+        font-weight: 400;
+        line-height: 1.6;
+        color: #1a1a1a;
+    }
+
     .info-card.orange { border-left-color: #C45B2A; }
+    
     .info-card-title {
         font-size: 12px; font-weight: 700; color: #2D6A4F; text-transform: uppercase;
-        letter-spacing: 0.08em; margin-bottom: 10px;
+        letter-spacing: 0.08em; margin-bottom: 12px;
     }
     .info-card.orange .info-card-title { color: #C45B2A; }
+    
     .info-card-body { font-size: 13px; color: #2c2c2c; line-height: 1.7; text-align: justify; }
+    
     .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
     .tag-green {
         font-size: 11px; font-weight: 600; padding: 3px 11px; border-radius: 20px;
@@ -597,38 +618,33 @@ if st.session_state.page == "home":
         font-size: 11px; font-weight: 600; padding: 3px 11px; border-radius: 20px;
         background: #FEF3ED; color: #C45B2A; border: 1px solid #F5C4B3;
     }
-    .cta-wrapper { margin-top: 8px; }
+    
+    .cta-wrapper { margin-top: 20px; }
     div[data-testid="stButton"] > button[kind="primary"] {
         background: #2D6A4F !important; color: white !important;
         border: none !important; border-radius: 12px !important;
         padding: 14px 28px !important; font-size: 15px !important;
         font-weight: 700 !important; width: 100% !important;
-        letter-spacing: 0.03em !important; transition: background 0.2s !important;
+        transition: background 0.2s !important;
     }
-    div[data-testid="stButton"] > button[kind="primary"]:hover {
-        background: #1C3A27 !important;
-    }
-    .footer-note { font-size: 11px; color: #88A898; text-align: center; margin-top: 12px; }
     </style>
     """, unsafe_allow_html=True)
 
     # ── Hero banner ────────────────────────────────────────────────────────
     img_path = Path("grenoble-1600x900.jpg")
+    img_col_html = ""
     if img_path.exists():
         import base64
         with open(img_path, "rb") as f:
             img_b64 = base64.b64encode(f.read()).decode()
-        img_tag = f'<img src="data:image/jpeg;base64,{img_b64}" alt="Grenoble"/>'
-        img_col_html = f'<div class="hero-img-col">{img_tag}<div class="hero-img-overlay"></div></div>'
-    else:
-        img_col_html = ""
+        img_col_html = f'<div class="hero-img-col"><img src="data:image/jpeg;base64,{img_b64}"/><div class="hero-img-overlay"></div></div>'
 
     st.markdown(f"""
     <div class="hero-accueil">
         <div class="hero-inner">
             <div class="hero-text-col">
                 <div class="hero-badge">Outil d'aide à la décision</div>
-                <div class="hero-title">Différentes dynamiques<br>et enjeux territoriales</div>
+                <div class="hero-title">Différentes dynamiques<br>et enjeux territoriaux</div>
                 <div class="hero-subtitle">
                     Grenoble · Rennes · Rouen<br>Saint-Étienne · Montpellier
                 </div>
@@ -642,55 +658,50 @@ if st.session_state.page == "home":
     st.markdown("""
     <div class="stats-row">
         <div class="stat-box"><div class="stat-num">5</div><div class="stat-lbl">Métropoles</div></div>
-        <div class="stat-box"><div class="stat-num">49</div><div class="stat-lbl">Communes (Grenoble)</div></div>
+        <div class="stat-box"><div class="stat-num">49</div><div class="stat-lbl">Communes</div></div>
         <div class="stat-box"><div class="stat-num">2</div><div class="stat-lbl">Thématiques</div></div>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Cartes objectif + sources ──────────────────────────────────────────
+    # ── Carte Objectif (Pleine largeur + Bleue + Police agrandie) ──────────
     st.markdown("""
-    <div class="cards-row">
-        <div class="info-card">
-            <div class="info-card-title">Objectif</div>
-            <div class="info-card-body">
-                Analyser les données de démographie et de solidarité & citoyenneté afin de produire une analyse complète pour chaque commune de la métropole de Grenoble. 
-                Cette étude vise à permettre la comparaison des communes entre elles, ainsi qu’à situer la métropole de Grenoble par rapport à celles de Rouen, Saint-Étienne, Rennes et Montpellier. 
-                Elle est également destinée à accompagner les nouveaux élus dans la compréhension des dynamiques territoriales.
-            </div>
+    <div class="info-card blue">
+        <div class="info-card-title"> Objectif</div>
+        <div class="info-card-body">
+            Analyser les données de démographie et de solidarité & citoyenneté afin de produire une analyse complète pour chaque commune de la métropole de Grenoble. 
+            Cette étude vise à permettre la comparaison des communes entre elles, ainsi qu’à situer la métropole de Grenoble par rapport à celles de Rouen, Saint-Étienne, Rennes et Montpellier. 
+            Elle est également destinée à accompagner les nouveaux élus dans la compréhension des dynamiques territoriales.
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Cartes thématiques ─────────────────────────────────────────────────
+    # ── Cartes thématiques (Deux colonnes en dessous) ──────────────────────
     st.markdown("""
-    <div class="cards-row">
+    <div class="cards-grid-bottom">
         <div class="info-card">
-            <div class="info-card-title">Démographie</div>
+            <div class="info-card-title"> Démographie</div>
             <div class="info-card-body">
-                Analyse de la population, de la structure par âge, des mobilités, des ménages, des mobilités résidentielles, professionnelles et scolaires
-                à l'échelle des communes et des EPCI.
+                Analyse de la population, de la structure par âge, des ménages, des mobilités résidentielles, professionnelles et scolaires.
             </div>
             <div class="tag-row">
                 <span class="tag-green">Population</span>
-                <span class="tag-green">Structure des âges</span>
-                <span class="tag-green">Population active 25-54 ans</span>
+                <span class="tag-green">Âges</span>
+                <span class="tag-green">Actifs</span>
                 <span class="tag-green">Mobilités</span>
-                <span class="tag-green">Ménages</span>
+                <span class="tag-green">Population active 25-54 ans</span>
             </div>
         </div>
         <div class="info-card orange">
-            <div class="info-card-title">Solidarité & citoyenneté</div>
+            <div class="info-card-title"> Solidarité & citoyenneté</div>
             <div class="info-card-body">
-                Étude des allocations CAF, des indicateurs éducatifs et de santé,
-                ainsi que de la participation citoyenne sur l'ensemble
-                des territoires métropolitains.
+                Étude des allocations CAF, des indicateurs éducatifs et de santé, ainsi que de la participation citoyenne et du taux de pauvreté.
             </div>
             <div class="tag-row">
                 <span class="tag-orange">Solidarité</span>
-                <span class="tag-orange">Éducation</span>
+                <span class="tag-orange">Education</span>
                 <span class="tag-orange">Santé</span>
-                <span class="tag-orange">Participation citoyenne</span>
-                <span class="tag-orange">Revenus & pauvreté</span>
+                <span class="tag-orange">Participation</span>
+                <span class="tag-orange">Revenus et pauvreté</span>
             </div>
         </div>
     </div>
@@ -698,7 +709,7 @@ if st.session_state.page == "home":
 
     # ── Bouton CTA ─────────────────────────────────────────────────────────
     st.markdown('<div class="cta-wrapper">', unsafe_allow_html=True)
-    if st.button("→  Accéder à l'application", type="primary"):
+    if st.button("→   Accéder à l'application", type="primary"):
         st.session_state.page = "app"
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
@@ -1815,7 +1826,7 @@ if vue == "Démographie":
                         """
                     )
 
-                # Logique des couleurs et labels (dépend de theme_mob)
+                # Logique des couleurs et labels
                 if "Migrations" in theme_mob:
                     current_mob_df, col_orig, col_dest = df_res, "commune_origine", "commune_destination"
                     label_in, label_out, color_in, color_out = "Arrivées", "Départs", "#2D6A4F", "#B7E4C7"
@@ -1830,8 +1841,6 @@ if vue == "Démographie":
                     annees_mob = sorted(current_mob_df["annee"].dropna().unique().astype(int), reverse=True)
                     with mob_col2:
                         sel_annee_mob = st.selectbox("Année", annees_mob, key="mob_annee")
-
-                st.markdown('</div>', unsafe_allow_html=True)
 
             # ── Calculs ──────────────────────────────────────────────────────
             df_mob_filtered = current_mob_df[
@@ -1855,33 +1864,18 @@ if vue == "Démographie":
             # ── Affichage Principal ───────────────────────────────────────────
             if not df_plot_mob.empty:
                 st.markdown(
-                    f"#### 📌 Bilan net - {theme_mob} ({sel_annee_mob})",
+                    f"#### Bilan net - {theme_mob} ({sel_annee_mob})",
                     help="Le bilan net (solde) est la différence entre ceux qui arrivent et ceux qui partent. Un chiffre positif indique une attractivité."
                 )
 
-                # KPI cards — bordure verte à GAUCHE uniquement
+                # KPI cards
                 kpi_cols = st.columns(len(df_plot_mob))
                 for i, row in df_plot_mob.iterrows():
                     color_solde = "#2ecc71" if row["solde"] >= 0 else "#e74c3c"
                     with kpi_cols[i]:
                         st.markdown(f"""
-                        <div style='
-                            display: flex;
-                            flex-direction: row;
-                            align-items: stretch;
-                            border-radius: 8px;
-                            overflow: hidden;
-                            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-                            background: #fff;
-                            min-height: 80px;
-                            border-left: 6px solid #1a7a4a;
-                        '>
-                            <div style='
-                                padding: 10px 16px;
-                                display: flex;
-                                flex-direction: column;
-                                justify-content: center;
-                            '>
+                        <div style='display: flex; flex-direction: row; align-items: stretch; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #fff; min-height: 80px; border-left: 6px solid #1a7a4a;'>
+                            <div style='padding: 10px 16px; display: flex; flex-direction: column; justify-content: center;'>
                                 <div style='font-size:11px; font-weight:700; letter-spacing:0.08em; color:#666; text-transform:uppercase;'>{row['name']}</div>
                                 <div style='font-size:24px; font-weight:bold; color:#111;'>{int(row['solde']):+,d}</div>
                                 <div style='color:{color_solde}; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;'>SOLDE</div>
@@ -1893,536 +1887,783 @@ if vue == "Démographie":
 
                 c1, c2 = st.columns(2)
                 with c1:
-                    # CORRECTION ICI : Utilisation de ##### en Markdown pur au lieu de <h5> en HTML
                     st.markdown(
-                        "##### ⚖️ Volume des échanges",
+                        "#####  Volume des échanges",
                         help="Compare les entrées (foncé) et les sorties (clair). Si les deux barres sont hautes, la commune est un pôle d'échange majeur."
                     )
                     fig_vol = go.Figure()
-                    fig_vol.add_trace(go.Bar(
-                        x=df_plot_mob["name"], y=df_plot_mob["in"],
-                        name=label_in, marker_color=color_in
-                    ))
-                    fig_vol.add_trace(go.Bar(
-                        x=df_plot_mob["name"], y=df_plot_mob["out"],
-                        name=label_out, marker_color=color_out
-                    ))
-                    fig_vol.update_layout(
-                        barmode="group",
-                        height=350,
-                        margin=dict(t=20, b=60),
-                        legend=dict(orientation="h", y=1.2),
-                        xaxis=dict(title="Territoire", showgrid=False),
-                        yaxis=dict(title="Nombre de flux", showgrid=True, gridcolor="#eeeeee")
-                    )
+                    fig_vol.add_trace(go.Bar(x=df_plot_mob["name"], y=df_plot_mob["in"], name=label_in, marker_color=color_in))
+                    fig_vol.add_trace(go.Bar(x=df_plot_mob["name"], y=df_plot_mob["out"], name=label_out, marker_color=color_out))
+                    fig_vol.update_layout(barmode="group", height=350, margin=dict(t=20, b=60), legend=dict(orientation="h", y=1.2),
+                                          xaxis=dict(title="Territoire", showgrid=False), yaxis=dict(title="Nombre de flux", showgrid=True, gridcolor="#eeeeee"))
                     st.plotly_chart(fig_vol, use_container_width=True)
 
                 with c2:
-                    # CORRECTION ICI : Utilisation de ##### en Markdown pur au lieu de <h5> en HTML
                     st.markdown(
-                        "##### 🎯 Performance nette",
+                        "#####  Performance nette",
                         help="Visualisation directe du gain ou de la perte. Utile pour classer les territoires du plus attractif au moins attractif."
                     )
-                    fig_net = px.bar(
-                        df_plot_mob, x="name", y="solde",
-                        color="solde", color_continuous_scale="RdYlGn"
-                    )
+                    fig_net = px.bar(df_plot_mob, x="name", y="solde", color="solde", color_continuous_scale="RdYlGn")
                     fig_net.add_hline(y=0, line_dash="dash", line_color="black")
-                    fig_net.update_layout(
-                        coloraxis_showscale=False,
-                        height=350,
-                        margin=dict(t=20, b=60),
-                        xaxis=dict(title="Territoire", showgrid=False),
-                        yaxis=dict(title="Solde (entrées - sorties)", showgrid=True, gridcolor="#eeeeee")
-                    )
+                    fig_net.update_layout(coloraxis_showscale=False, height=350, margin=dict(t=20, b=60),
+                                          xaxis=dict(title="Territoire", showgrid=False), yaxis=dict(title="Solde (entrées - sorties)", showgrid=True, gridcolor="#eeeeee"))
                     st.plotly_chart(fig_net, use_container_width=True)
 
-                with st.expander("💡 Comment interpréter ces deux graphiques ?"):
+                with st.expander("Comment interpréter ces deux graphiques ?"):
                     st.write("""
                     - **Si le volume est élevé mais le solde est proche de zéro** : La commune "brasse" beaucoup de monde (ex: ville étape) mais ne retient pas de population.
                     - **Si le solde est très positif** : Le territoire est un 'aspirateur'. En résidentiel, cela signifie qu'il est très demandé. En professionnel, qu'il est un moteur d'emploi régional.
                     """)
 
                 st.markdown("---")
-                st.markdown("#### 🔍 Analyse géographique des partenaires", help=txt_aide_geo)
+                st.markdown("####  Analyse géographique des partenaires", help=txt_aide_geo)
 
                 if mode_mob == "Détail Communal" and len(sel_communes_mob) > 1:
-                    st.info(f"💡 **Analyse de groupe** : Les graphiques ci-dessous affichent les partenaires cumulés pour : {', '.join(sel_communes_mob)}.")
+                    st.info(f"**Analyse de groupe** : Les graphiques ci-dessous affichent les partenaires cumulés pour : {', '.join(sel_communes_mob)}.")
 
                 col_l, col_r = st.columns(2)
+                
+                # --- TOP 10 PROVENANCES (CUMULÉ) ---
                 with col_l:
-                    st.markdown(
-                        f"<h5 style='text-align:center;'>📍 Top 10 provenances ({label_in})</h5>",
-                        unsafe_allow_html=True
-                    )
-                    top_in = df_mob_filtered[df_mob_filtered[col_dest].isin(coms_selection)].nlargest(10, "flux")
+                    st.markdown(f"<h5 style='text-align:center;'> Top 10 provenances ({label_in})</h5>", unsafe_allow_html=True)
+                    
+                    # On filtre les flux arrivant dans la sélection
+                    raw_in = df_mob_filtered[df_mob_filtered[col_dest].isin(coms_selection)]
+                    # On regroupe par origine pour cumuler les flux
+                    grouped_in = raw_in.groupby(col_orig)["flux"].sum().reset_index()
+                    top_in = grouped_in.nlargest(10, "flux")
+                    
                     if not top_in.empty:
-                        fig_in = px.bar(
-                            top_in, x="flux", y=col_orig,
-                            orientation="h",
-                            color_discrete_sequence=[color_in],
-                            text_auto=".0f"
-                        )
-                        fig_in.update_layout(
-                            yaxis=dict(categoryorder="total ascending", title="Commune d'origine"),
-                            xaxis=dict(title="Nombre de flux"),
-                            height=350,
-                            margin=dict(t=20, b=60)
-                        )
+                        fig_in = px.bar(top_in, x="flux", y=col_orig, orientation="h", color_discrete_sequence=[color_in], text_auto=".0f")
+                        fig_in.update_layout(yaxis=dict(categoryorder="total ascending", title="Commune d'origine"), xaxis=dict(title="Nombre de flux"), height=350, margin=dict(t=20, b=60))
                         st.plotly_chart(fig_in, use_container_width=True)
 
+                # --- TOP 10 DESTINATIONS (CUMULÉ) ---
                 with col_r:
-                    st.markdown(
-                        f"<h5 style='text-align:center;'>🚩 Top 10 destinations ({label_out})</h5>",
-                        unsafe_allow_html=True
-                    )
-                    top_out = df_mob_filtered[df_mob_filtered[col_orig].isin(coms_selection)].nlargest(10, "flux")
+                    st.markdown(f"<h5 style='text-align:center;'> Top 10 destinations ({label_out})</h5>", unsafe_allow_html=True)
+                    
+                    # On filtre les flux partant de la sélection
+                    raw_out = df_mob_filtered[df_mob_filtered[col_orig].isin(coms_selection)]
+                    # On regroupe par destination pour cumuler les flux
+                    grouped_out = raw_out.groupby(col_dest)["flux"].sum().reset_index()
+                    top_out = grouped_out.nlargest(10, "flux")
+                    
                     if not top_out.empty:
-                        fig_out = px.bar(
-                            top_out, x="flux", y=col_dest,
-                            orientation="h",
-                            color_discrete_sequence=[color_out],
-                            text_auto=".0f"
-                        )
-                        fig_out.update_layout(
-                            yaxis=dict(categoryorder="total ascending", title="Commune de destination"),
-                            xaxis=dict(title="Nombre de flux"),
-                            height=350,
-                            margin=dict(t=20, b=60)
-                        )
+                        fig_out = px.bar(top_out, x="flux", y=col_dest, orientation="h", color_discrete_sequence=[color_out], text_auto=".0f")
+                        fig_out.update_layout(yaxis=dict(categoryorder="total ascending", title="Commune de destination"), xaxis=dict(title="Nombre de flux"), height=350, margin=dict(t=20, b=60))
                         st.plotly_chart(fig_out, use_container_width=True)
 
-                with st.expander("❓ Comment lire ces graphiques quand plusieurs communes sont choisies ?"):
-                    st.write("""
-                    Lorsque vous sélectionnez plusieurs communes, l'outil traite la sélection comme un **territoire unique**. 
-                    - Les flux internes entre les communes sélectionnées sont ignorés pour mettre en avant les échanges avec **l'extérieur**.
-                    - Cela permet de voir si un groupement de communes dépend d'un même pôle d'attraction (ex: Lyon, Paris ou une autre zone de la métropole).
+                with st.expander(" Guide d'interprétation des flux cumulés"):
+                    nom_territoire = "votre sélection" if len(coms_selection) > 1 else coms_selection[0]
+                    
+                    st.markdown(f"""
+                    ### Comment lire ces graphiques ?
+                    Lorsque vous analysez **{nom_territoire}**, l'outil regroupe les données pour offrir une vision stratégique.
+                    
+                    
+                    ####  1. Le principe du "Territoire Unique"
+                    L'outil trace une frontière globale autour de votre sélection. Toutes les communes choisies sont traitées comme un seul bloc cohérent. 
+                    * **L'objectif :** Ne plus regarder les détails ville par ville, mais comprendre la dynamique globale du bassin de vie.
+                    
+                    ####  2. Fusion et Cumul des données
+                    Les flux venant d'une même ville vers différentes communes de votre zone sont **additionnés**.
+                    * *Exemple :* Si 100 personnes de Lyon vont à Grenoble et 50 à Meylan, vous verrez une seule barre **"Lyon : 150"**.
+                    * **L'intérêt :** Vous identifiez immédiatement les partenaires qui ont la plus grosse influence réelle sur votre territoire.
+                    
+                    ####  3. Pertinence de l'analyse
+                    * **Analyse Métropolitaine :** Idéale pour voir les grandes tendances et éviter les résultats trop "hachés".
+                    * **Analyse Communale :** Utile pour un zoom précis, mais attention aux petits chiffres qui peuvent varier brusquement d'une année à l'autre.
+                    
+                    ####  4. Filtrage des flux internes
+                    Les déplacements effectués **entre** les communes que vous avez sélectionnées sont masqués.
+                    * *Pourquoi ?* Pour ne pas "polluer" le graphique. On se concentre uniquement sur ce qui entre ou sort de votre territoire (échanges avec l'extérieur).
+                    
+                    ** Résumé :** Une barre longue et pleine signifie que la ville partenaire est un moteur majeur pour **l'ensemble** de votre zone sélectionnée.
                     """)
                     
 # ==============================================================================
-# ONGLET 4 - MÉNAGES
+# ONGLET 4 — MÉNAGES
 # ==============================================================================
 if vue == "Démographie":
     with tab4:
-        sous1, sous2 = st.tabs(["👨‍👩‍👧 Type & taille de ménage", "🧑‍💼 CSP des ménages"])
 
-        with sous1:
-            if df_men_age is None:
-                st.info("📂 Fichier `Menage_age_situation_clean.csv` introuvable.")
-            else:
-                # ── Bandeau filtres ──────────────────────────────────────────
-                with st.container():
-                    
-                    filter_bar("Filtres - Type & taille de ménage")
-                    fm1, fm2 = st.columns([1, 3])
-                    with fm1:
-                        filter_row_label("Niveau géographique")
-                    with fm2:
-                        mode_men = st.radio(
-                            "",
-                            ["Comparaison Métropoles", "Détail Communal"],
-                            key="men_mode", horizontal=True,
-                            help="Choisissez une vue globale métropole ou un détail communal.",
-                        )
-                    metro_men = st.selectbox("Métropole parente", TOUTES, key="m_men",
-                                             help="Métropole de référence pour les données ménages.")
-                    if mode_men == "Détail Communal":
-                        cmns_men = sorted(COMMUNES.get(metro_men, []))
+        data_men_ok = (df_men_age is not None) and (df_men_csp is not None)
+        if not data_men_ok:
+            st.info("📂 Fichiers de données sur les ménages introuvables.")
+        else:
+            # ── Définition des regroupements ──────────────────────────────────
+
+            # Types de ménages (regroupés depuis les colonnes de Menage_age_situation)
+            TYPE_GROUPES = {
+                "Personne seule":        lambda cols: [c for c in cols if "pers_seule" in c],
+                "Couple sans enfant":    lambda cols: [c for c in cols if "cpl_sans_enf" in c],
+                "Couple avec enfant(s)": lambda cols: [c for c in cols if "cpl_avec_enfant" in c or "cpl_1enf" in c],
+                "Famille monoparentale": lambda cols: [c for c in cols if "fam_monoparentale" in c],
+                "Autre ménage":          lambda cols: [c for c in cols if "autre_menage" in c],
+            }
+
+            # CSP regroupées en 6 grandes catégories lisibles
+            CSP_GROUPES = {
+                "Agriculteurs":              ["agriculteurs"],
+                "Artisans / Commerçants /\nChefs d'entreprise": ["artisans", "commercants", "chef_entreprise"],
+                "Cadres & Prof.\nintellectuelles sup.": [
+                    "professions_liberales", "cadre_admin_fonction_pub",
+                    "prof_scientifique_sup", "info_art_spectacle",
+                    "cadre_commercial", "ingenieur_cadre_tech",
+                ],
+                "Professions\nintermédiaires": [
+                    "prof_enseignement", "prof_inter_sante_social",
+                    "prof_inter_fonction_pub", "prof_inter_admin_com",
+                    "technicien", "agent_maitrise",
+                ],
+                "Employés": [
+                    "emp_fonction_pub", "securite_defense",
+                    "emp_admin_entreprise", "emp_commerce", "service_particulier",
+                ],
+                "Ouvriers": [
+                    "ouvrier_qualif_indus", "ouvrier_qualif_artisanal",
+                    "conducteur_transport", "cariste_magasinier",
+                    "ouvrier_peu_qualif_indus", "ouvrier_peu_qualif_artisanal",
+                    "ouvrier_agricole",
+                ],
+                "Retraités /\nInactifs": ["retraites_inactifs", "chomeur_jamais_travaille"],
+            }
+
+            # Tailles de ménages pour le calcul de la taille moyenne
+            TAILLES = {
+                "1 pers.": (1, "1pers"),
+                "2 pers.": (2, "2pers"),
+                "3 pers.": (3, "3pers"),
+                "4 pers.": (4, "4pers"),
+                "5 pers.": (5, "5pers"),
+                "6 pers. et +": (6, "6pers_ouplus"),
+            }
+
+            # ── Fonctions utilitaires ────────────────────────────────────────
+            def somme_colonnes(df_ent, mots_cles):
+                """Somme les colonnes qui contiennent au moins un mot-clé."""
+                cols = [c for c in df_ent.columns if any(k in c for k in mots_cles)]
+                return df_ent[cols].sum().sum() if cols else 0
+
+            def taille_moyenne_menage(df_ent_csp):
+                """
+                Calcule la taille moyenne pondérée depuis les colonnes Npers_CSP.
+                Formule : Σ(nb_menages_Npers × N) / Σ(nb_menages_Npers)
+                Pour 6 pers. et +, on utilise 6 comme valeur minimale (borne inf.).
+                """
+                total_menages = 0
+                total_personnes = 0
+                for label, (nb_pers, slug) in TAILLES.items():
+                    cols = [c for c in df_ent_csp.columns if slug in c]
+                    nb = df_ent_csp[cols].sum().sum() if cols else 0
+                    total_menages += nb
+                    total_personnes += nb * nb_pers
+                if total_menages == 0:
+                    return np.nan, 0
+                return total_personnes / total_menages, int(total_menages)
+
+            def distrib_taille(df_ent_csp):
+                """Retourne la distribution par taille de ménage (nb et %)."""
+                rows = []
+                for label, (nb_pers, slug) in TAILLES.items():
+                    cols = [c for c in df_ent_csp.columns if slug in c]
+                    nb = df_ent_csp[cols].sum().sum() if cols else 0
+                    rows.append({"Taille": label, "Ménages": int(nb)})
+                df_t = pd.DataFrame(rows)
+                total = df_t["Ménages"].sum()
+                df_t["Part (%)"] = df_t["Ménages"] / total * 100 if total > 0 else 0
+                return df_t
+
+            def render_kpi_card(title, value, subtitle, accent_color="#1a7a4a"):
+                return f"""
+                <div style='display:flex;flex-direction:row;align-items:stretch;border-radius:8px;
+                    overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.1);background:#fff;
+                    min-height:80px;border-left:6px solid {accent_color};margin-bottom:10px;'>
+                    <div style='padding:10px 16px;display:flex;flex-direction:column;
+                        justify-content:center;width:100%;'>
+                        <div style='font-size:11px;font-weight:700;letter-spacing:0.08em;
+                            color:#666;text-transform:uppercase;'>{title}</div>
+                        <div style='font-size:24px;font-weight:bold;color:#111;margin:4px 0;'>{value}</div>
+                        <div style='color:{accent_color};font-size:11px;font-weight:700;
+                            text-transform:uppercase;letter-spacing:0.05em;'>{subtitle}</div>
+                    </div>
+                </div>"""
+
+            # ── Bandeau filtres ──────────────────────────────────────────────
+            with st.container():
+                filter_bar("Filtres - Ménages")
+                col_geo_label, col_geo_options = st.columns([1, 3])
+                with col_geo_label:
+                    st.markdown(
+                        "<div style='padding-top:8px;font-weight:600;font-size:14px;'>"
+                        "Niveau géographique</div>", unsafe_allow_html=True,
+                    )
+                with col_geo_options:
+                    mode_men = st.radio(
+                        "", ["Comparaison Métropoles", "Détail Communal (Grenoble)"],
+                        key="men_mode", horizontal=True,
+                        help="Comparez les métropoles entre elles, ou analysez les communes de Grenoble.",
+                    )
+
+                men_col1, men_col2 = st.columns(2)
+                with men_col1:
+                    theme_men = st.selectbox(
+                        "Thématique d'analyse",
+                        ["👨‍👩‍👧 Type & taille de ménage", "🧑‍💼 CSP du chef de ménage"],
+                        key="theme_men",
+                        help=(
+                            "**Type & taille** : Composition familiale (personne seule, couple, "
+                            "famille monoparentale…) et taille moyenne du ménage.\n\n"
+                            "**CSP** : Catégorie socio-professionnelle de la personne de référence "
+                            "du foyer, croisée avec la taille du ménage."
+                        ),
+                    )
+                with men_col2:
+                    if mode_men == "Détail Communal (Grenoble)":
                         sel_communes_men = st.multiselect(
-                            "Communes", cmns_men, default=cmns_men[:2], key="men_communes",
-                            help="Communes sélectionnées pour la vue détail.",
+                            "Communes de Grenoble",
+                            sorted(COMMUNES["Grenoble"]),
+                            default=sorted(COMMUNES["Grenoble"])[:3],
+                            key="men_communes",
+                            help="Communes de la métropole grenobloise à comparer.",
                         )
-                    st.markdown('</div>', unsafe_allow_html=True)
+                        selection_men = sel_communes_men
+                    else:
+                        sel_metros_men = st.multiselect(
+                            "Métropoles à comparer", TOUTES, default=TOUTES[:3],
+                            key="men_metros",
+                            help="Sélectionnez les métropoles à comparer.",
+                        )
+                        selection_men = sel_metros_men
 
-                st.markdown("---")
+            st.markdown("---")
 
-                cols_m = [c for c in df_men_age.columns if c.startswith("Menages_")]
-                TYPE_GROUPES = {
-                    "Personne seule":     [c for c in cols_m if "pers_seule" in c],
-                    "Couple sans enfant": [c for c in cols_m if "cpl_sans_enf" in c],
-                    "Couple avec enfant": [c for c in cols_m if "cpl_avec_enfant" in c or "cpl_1enf" in c],
-                    "Fam. mono. (mère)":  [c for c in cols_m if "mere_enf" in c],
-                    "Fam. mono. (père)":  [c for c in cols_m if "pere_enf" in c],
-                    "Autre ménage":       [c for c in cols_m if "autre_menage" in c],
-                }
-                AGE_LABELS = {
-                    "< 20 ans": "moins20ans", "20–24 ans": "20_24ans", "25–39 ans": "25_39ans",
-                    "40–54 ans": "40_54ans", "55–64 ans": "55_64ans",
-                    "65–79 ans": "65_79ans", "80 ans +": "plus80ans",
-                }
+            if not selection_men:
+                st.warning("⚠️ Sélectionnez au moins un territoire.")
+                st.stop()
 
+            # ── Extraction des données selon le mode ─────────────────────────
+            def get_df_age(ent):
                 if mode_men == "Comparaison Métropoles":
-                    df_men_m = df_men_age[df_men_age["metropole"] == metro_men]
-                    nb_men = df_men_m[cols_m].sum().sum() if not df_men_m.empty else np.nan
-                    pop_m  = np.nan
-                    if df_pop is not None:
-                        dm2 = df_pop[(df_pop["metropole"] == metro_men) & (df_pop["annee"] == 2022)]
-                        if not dm2.empty:
-                            pop_m = dm2[[c for c in dm2.columns if "ageq_rec" in c]].sum().sum()
-                    taille = (pop_m / nb_men) if (not np.isnan(nb_men) and nb_men > 0) else np.nan
-                    st.subheader("📌 Indicateurs clés des ménages", help="Volume total de ménages et taille moyenne.")
-                    k1, k2 = st.columns(2)
-                    k1.metric(f"Nombre de ménages - {metro_men}", fmt(nb_men))
-                    k2.metric("Taille moyenne du ménage", f"{taille:.2f} pers." if not np.isnan(taille) else "N/D")
-                    st.markdown("---")
-                    totaux = {lbl: df_men_m[[c for c in cols if c in df_men_m.columns]].sum().sum()
-                              for lbl, cols in TYPE_GROUPES.items()}
-                    df_t = pd.DataFrame(list(totaux.items()), columns=["Type", "Ménages"])
-                    df_t = df_t[df_t["Ménages"] > 0].sort_values("Ménages", ascending=False)
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        st.markdown(f"##### Types de ménages - {metro_men}")
-                        fig_t = px.bar(df_t, x="Ménages", y="Type", orientation="h",
-                                       color_discrete_sequence=[COULEURS[metro_men]], text_auto=".0f")
-                        fig_t.update_layout(yaxis={"autorange": "reversed"}, yaxis_title="",
-                                            xaxis_title="Ménages")
-                        st.plotly_chart(style(fig_t), use_container_width=True)
-                    with c2:
-                        st.markdown("##### Répartition")
-                        fig_pie = px.pie(df_t, names="Type", values="Ménages", hole=0.42,
-                                         color_discrete_sequence=px.colors.sequential.Greens_r)
-                        st.plotly_chart(style(fig_pie), use_container_width=True)
-                    with st.expander("💡 Comment interpréter ces deux graphiques ?"):
-                        st.write("Le bar chart classe les types en volume ; le camembert indique leur poids relatif dans l'ensemble des ménages.")
-                    st.markdown("---")
-                    st.markdown("##### Composition par âge du référent du ménage")
-                    rows_a = []
-                    for age_l, age_k in AGE_LABELS.items():
-                        for type_l, tcols in TYPE_GROUPES.items():
-                            inter = [c for c in tcols if age_k in c and c in df_men_m.columns]
-                            val = df_men_m[inter].sum().sum() if inter else 0
-                            if val > 0:
-                                rows_a.append({"Âge référent": age_l, "Type": type_l, "Ménages": val})
-                    if rows_a:
-                        fig_a = px.bar(pd.DataFrame(rows_a), x="Âge référent", y="Ménages",
-                                       color="Type", barmode="stack",
-                                       color_discrete_sequence=px.colors.sequential.Greens_r)
-                        fig_a.update_layout(legend=dict(orientation="h", y=1.1, font_size=10))
-                        st.plotly_chart(style(fig_a, 50), use_container_width=True)
-                        with st.expander("💡 Comment interpréter ce graphique ?"):
-                            st.write("Chaque barre représente un âge du référent ; les couleurs montrent quels types de ménages dominent selon l'âge.")
+                    return df_men_age[df_men_age["metropole"] == ent]
+                return df_men_age[df_men_age["LIBGEO"] == ent]
 
-                else:
-                    # ── Vue Détail Communal ──────────────────────────────────
-                    communes_men = sel_communes_men if sel_communes_men else []
-                    if not communes_men:
-                        st.info("Sélectionnez au moins une commune.")
-                    else:
-                        rows_cc = []
-                        for comm in communes_men:
-                            df_cc = df_men_age[df_men_age["LIBGEO"] == comm]
-                            for lbl, cols in TYPE_GROUPES.items():
-                                valid = [c for c in cols if c in df_cc.columns]
-                                rows_cc.append({"Commune": comm, "Type": lbl,
-                                                "Ménages": df_cc[valid].sum().sum() if valid else 0})
-                        df_ccp = pd.DataFrame(rows_cc)
-                        if len(communes_men) == 1:
-                            comm = communes_men[0]
-                            df_single = df_ccp[df_ccp["Ménages"] > 0].sort_values("Ménages", ascending=False)
-                            c1, c2 = st.columns(2)
-                            with c1:
-                                st.markdown(f"##### Types de ménages - {comm}")
-                                fig_t = px.bar(df_single, x="Ménages", y="Type", orientation="h",
-                                               color_discrete_sequence=[COULEURS.get(metro_men, "#2D6A4F")],
-                                               text_auto=".0f")
-                                fig_t.update_layout(yaxis={"autorange": "reversed"}, yaxis_title="")
-                                st.plotly_chart(style(fig_t), use_container_width=True)
-                            with c2:
-                                st.markdown("##### Répartition")
-                                fig_pie = px.pie(df_single, names="Type", values="Ménages", hole=0.42,
-                                                 color_discrete_sequence=px.colors.sequential.Greens_r)
-                                st.plotly_chart(style(fig_pie), use_container_width=True)
-                        elif df_ccp["Ménages"].sum() > 0:
-                            st.markdown(f"##### Comparaison - {' · '.join(communes_men)}")
-                            fig_ccp = px.bar(df_ccp, x="Type", y="Ménages", color="Commune",
-                                             barmode="group",
-                                             color_discrete_sequence=["#2D6A4F", "#95D5B2", "#1A6FA3",
-                                                                       "#C45B2A", "#D4A017"])
-                            fig_ccp.update_layout(xaxis_tickangle=-20, legend=dict(orientation="h"))
-                            st.plotly_chart(style(fig_ccp), use_container_width=True)
-                            with st.expander("💡 Comment interpréter ce graphique ?"):
-                                st.write("Pour chaque type de ménage, compare la hauteur des barres pour voir les écarts entre communes.")
-                        else:
-                            st.info("Données non disponibles pour ces communes.")
+            def get_df_csp(ent):
+                if mode_men == "Comparaison Métropoles":
+                    return df_men_csp[df_men_csp["metropole"] == ent]
+                return df_men_csp[df_men_csp["LIBGEO"] == ent]
 
-        with sous2:
-            if df_men_csp is None:
-                st.info("📂 Fichier `Menages_csp_nbpers_clean.csv` introuvable.")
-            else:
-                # ── Bandeau filtres ──────────────────────────────────────────
-                with st.container():
-                    
-                    filter_bar("Filtres - CSP des ménages")
-                    fc1, fc2 = st.columns([2, 2])
-                    with fc1:
-                        metro_csp_m = st.selectbox("Métropole", TOUTES, key="m_csp",
-                                                   help="Métropole analysée pour la répartition des ménages par CSP.")
-                    with fc2:
-                        comp_csp = st.checkbox("Comparer toutes les métropoles (%)", key="comp_csp",
-                                               help="Active une vue en pourcentage pour comparer les structures entre métropoles.")
-                    st.markdown('</div>', unsafe_allow_html=True)
+            PALETTE_TYPE = ["#1B4332", "#2D6A4F", "#40916C", "#74C69D", "#D8F3DC"]
+            PALETTE_CSP  = ["#081C15", "#1B4332", "#2D6A4F", "#40916C",
+                            "#52B788", "#74C69D", "#B7E4C7"]
+            COLOR_ENT = (
+                [COULEURS.get(e, "#333") for e in selection_men]
+                if mode_men == "Comparaison Métropoles"
+                else ["#081C15","#2D6A4F","#40916C","#74C69D","#95D5B2",
+                      "#B7E4C7","#1A6FA3","#C45B2A","#7B3FA0"]
+            )
+
+            # ════════════════════════════════════════════════════════════════
+            # THÈME 1 — TYPE & TAILLE DE MÉNAGE
+            # ════════════════════════════════════════════════════════════════
+            if "Type" in theme_men:
+                cols_age = [c for c in df_men_age.columns if c.startswith("Menages_")]
+
+                # ── KPIs ────────────────────────────────────────────────────
+                st.markdown(
+                    "#### Aperçu global des ménages",
+                    help=(
+                        "**Nombre de ménages** : total des foyers ordinaires recensés (RP 2022).\n\n"
+                        "**Taille moyenne** : calculée par la formule pondérée "
+                        "Σ(nb_ménages × taille) / nb_ménages_total, "
+                        "en utilisant 1, 2, 3, 4, 5 et 6 pers. (valeur minimale pour 6+). "
+                        "La valeur nationale tourne autour de 2,2 personnes par ménage en France."
+                    ),
+                )
+                kpi_cols = st.columns(len(selection_men))
+                for i, ent in enumerate(selection_men):
+                    df_csp_ent = get_df_csp(ent)
+                    taille, nb_men = taille_moyenne_menage(df_csp_ent)
+                    taille_str = f"{taille:.2f} pers./ménage" if not np.isnan(taille) else "N/D"
+                    with kpi_cols[i]:
+                        st.markdown(
+                            render_kpi_card(
+                                ent, fmt(nb_men),
+                                taille_str,
+                                COLOR_ENT[i % len(COLOR_ENT)],
+                            ),
+                            unsafe_allow_html=True,
+                        )
 
                 st.markdown("---")
 
-                cols_csp_m = [c for c in df_men_csp.columns if c.startswith("Menages_")]
-                CSP_GROUPES = {
-                    "Agriculteurs":           ["agriculteurs"],
-                    "Artisans / Commerçants": ["artisans", "commercants", "chef_entreprise"],
-                    "Cadres & Prof. sup.":    ["professions_liberales", "cadre_admin", "prof_scientifique",
-                                               "ingenieur", "info_art", "cadre_commercial"],
-                    "Prof. intermédiaires":   ["prof_enseignement", "prof_inter", "technicien", "agent_maitrise"],
-                    "Employés":               ["emp_fonction", "emp_admin", "emp_commerce",
-                                               "service_particulier", "securite"],
-                    "Ouvriers":               ["ouvrier", "conducteur", "cariste"],
-                    "Inactifs / Retraités":   ["retraites_inactifs", "chomeur"],
-                }
+                # ── Graphique 1 : Distribution par taille de ménage ──────────
+                st.markdown(
+                    "##### Distribution par taille de ménage (%)",
+                    help=(
+                        "Répartition des ménages selon leur nombre de personnes. "
+                        "En France, environ 37% des ménages sont des personnes seules (1 pers.), "
+                        "et 33% sont des couples sans enfant (2 pers.). "
+                        "Une forte part de grands ménages (4+ pers.) indique un profil familial."
+                    ),
+                )
+                rows_taille = []
+                for ent in selection_men:
+                    df_csp_ent = get_df_csp(ent)
+                    df_t = distrib_taille(df_csp_ent)
+                    df_t["Territoire"] = ent
+                    rows_taille.append(df_t)
+                df_taille_all = pd.concat(rows_taille, ignore_index=True) if rows_taille else pd.DataFrame()
 
-                def agg_csp_men(df_src):
-                    return {grp: df_src[[c for c in cols_csp_m if any(kw in c for kw in kws) and c in df_src.columns]].sum().sum()
-                            for grp, kws in CSP_GROUPES.items()}
+                if not df_taille_all.empty:
+                    fig_taille = px.bar(
+                        df_taille_all, x="Taille", y="Part (%)", color="Territoire",
+                        barmode="group", text_auto=".1f",
+                        color_discrete_sequence=COLOR_ENT,
+                        category_orders={"Taille": list(TAILLES.keys())},
+                        height=380,
+                    )
+                    fig_taille.update_traces(textposition="outside", textfont_size=9)
+                    fig_taille.update_layout(
+                        legend=dict(orientation="h", y=1.12, title=""),
+                        xaxis_title="Taille du ménage",
+                        yaxis_title="Part des ménages (%)",
+                        margin=dict(t=20),
+                    )
+                    st.plotly_chart(style(fig_taille), use_container_width=True)
 
-                if not comp_csp:
-                    df_csp_men = df_men_csp[df_men_csp["metropole"] == metro_csp_m]
-                    if df_csp_men.empty:
-                        st.warning(f"Aucune donnée CSP pour {metro_csp_m}.")
-                    else:
-                        tot_csp = agg_csp_men(df_csp_men)
-                        df_cp = pd.DataFrame(list(tot_csp.items()), columns=["CSP", "Ménages"])
-                        df_cp = df_cp[df_cp["Ménages"] > 0].sort_values("Ménages", ascending=False)
-                        c1, c2 = st.columns(2)
-                        with c1:
-                            st.markdown(f"##### Ménages par CSP - {metro_csp_m}")
-                            fig_cp = px.bar(df_cp, x="Ménages", y="CSP", orientation="h",
-                                            color="Ménages", color_continuous_scale="Greens", text_auto=".0f")
-                            fig_cp.update_layout(yaxis={"autorange": "reversed"},
-                                                 coloraxis_showscale=False, yaxis_title="")
-                            st.plotly_chart(style(fig_cp), use_container_width=True)
-                        with c2:
-                            st.markdown("##### Répartition")
-                            fig_cp2 = px.pie(df_cp, names="CSP", values="Ménages", hole=0.42,
-                                              color_discrete_sequence=px.colors.sequential.Greens_r)
-                            st.plotly_chart(style(fig_cp2), use_container_width=True)
-                        with st.expander("💡 Comment interpréter ces deux graphiques ?"):
-                            st.write("Le graphique en barres donne les volumes par CSP ; le camembert montre la structure relative des ménages.")
-                else:
-                    st.markdown("##### Part des grandes CSP - toutes métropoles (%)")
-                    rows_c = []
-                    for m in TOUTES:
-                        df_m_csp = df_men_csp[df_men_csp["metropole"] == m]
-                        tot = agg_csp_men(df_m_csp)
-                        total_m = sum(tot.values())
-                        for grp, val in tot.items():
-                            rows_c.append({"Métropole": m, "CSP": grp,
-                                           "Part (%)": (val / total_m * 100) if total_m > 0 else 0})
-                    fig_comp_csp = px.bar(pd.DataFrame(rows_c), x="Métropole", y="Part (%)",
-                                          color="CSP", barmode="stack",
-                                          color_discrete_sequence=px.colors.sequential.Greens_r)
-                    fig_comp_csp.update_layout(yaxis_title="Part des ménages (%)",
-                                               legend=dict(orientation="h", y=1.1, font_size=10))
-                    st.plotly_chart(style(fig_comp_csp, 50), use_container_width=True)
-                    with st.expander("💡 Comment interpréter ce graphique ?"):
-                        st.write("Chaque barre vaut 100% : compare la composition des CSP entre métropoles, indépendamment de leur taille.")
-                    
+                st.markdown("---")
+
+                # ── Graphique 2 : Type de ménage ─────────────────────────────
+                c1, c2 = st.columns(2)
+                rows_type = []
+                for ent in selection_men:
+                    df_age_ent = get_df_age(ent)
+                    nb_total = df_age_ent[cols_age].sum().sum()
+                    for nom, fn in TYPE_GROUPES.items():
+                        cols_grp = fn(cols_age)
+                        val = df_age_ent[cols_grp].sum().sum() if cols_grp else 0
+                        rows_type.append({
+                            "Territoire": ent,
+                            "Type de ménage": nom,
+                            "Nombre": int(val),
+                            "Part (%)": val / nb_total * 100 if nb_total > 0 else 0,
+                        })
+                df_type = pd.DataFrame(rows_type)
+
+                with c1:
+                    st.markdown(
+                        "##### Composition des ménages — volume",
+                        help=(
+                            "Nombre absolu de foyers par type de composition familiale. "
+                            "Permet de dimensionner les besoins réels en logements adaptés "
+                            "(studios pour personnes seules, grands logements pour familles…)."
+                        ),
+                    )
+                    if not df_type.empty:
+                        fig_vol = px.bar(
+                            df_type, x="Type de ménage", y="Nombre", color="Territoire",
+                            barmode="group", color_discrete_sequence=COLOR_ENT, height=400,
+                        )
+                        fig_vol.update_layout(
+                            legend=dict(orientation="h", y=1.12, title=""),
+                            xaxis_title="", yaxis_title="Nombre de ménages",
+                            xaxis_tickangle=-15, margin=dict(t=20),
+                        )
+                        st.plotly_chart(style(fig_vol), use_container_width=True)
+
+                with c2:
+                    st.markdown(
+                        "##### Composition des ménages — structure (%)",
+                        help=(
+                            "Répartition en % pour chaque territoire (base 100%). "
+                            "Permet de comparer la 'sociologie' des territoires indépendamment "
+                            "de leur taille. Une forte part de *Personnes seules* caractérise "
+                            "souvent les centres-villes ; une forte part de *Couples avec enfants* "
+                            "indique un profil périurbain ou résidentiel familial."
+                        ),
+                    )
+                    if not df_type.empty:
+                        fig_pct = px.bar(
+                            df_type, x="Part (%)", y="Territoire", color="Type de ménage",
+                            orientation="h", barmode="stack", text_auto=".1f",
+                            color_discrete_sequence=PALETTE_TYPE, height=400,
+                        )
+                        fig_pct.update_traces(textposition="inside", textfont_size=9)
+                        fig_pct.update_layout(
+                            legend=dict(orientation="h", y=1.12, title=""),
+                            xaxis_title="Part des ménages (%)", yaxis_title="",
+                            margin=dict(t=20),
+                        )
+                        st.plotly_chart(style(fig_pct), use_container_width=True)
+
+                with st.expander("💡 Comment interpréter ces graphiques ?"):
+                    st.write(
+                        "**Distribution par taille (en haut)** : révèle si le territoire est "
+                        "plutôt composé de petits foyers (urbain, vieillissant) ou de grandes "
+                        "familles (périurbain, populations immigrées). La moyenne nationale est "
+                        "d'environ **2,2 personnes par ménage**.\n\n"
+                        "**Volume (gauche)** : montre les besoins absolus en logements. "
+                        "Utile pour les politiques d'urbanisme.\n\n"
+                        "**Structure % (droite)** : neutralise l'effet taille pour comparer "
+                        "deux communes de populations très différentes sur un pied d'égalité."
+                    )
+
+            # ════════════════════════════════════════════════════════════════
+            # THÈME 2 — CSP DU CHEF DE MÉNAGE
+            # ════════════════════════════════════════════════════════════════
+            else:
+                cols_csp = [c for c in df_men_csp.columns if c.startswith("Menages_")]
+
+                # ── Agrégation CSP par territoire ────────────────────────────
+                rows_csp = []
+                kpi_csp = []
+                for ent in selection_men:
+                    df_csp_ent = get_df_csp(ent)
+                    nb_total_csp = df_csp_ent[cols_csp].sum().sum()
+                    best_grp, best_val = "N/D", 0
+                    for nom_grp, mots in CSP_GROUPES.items():
+                        val = somme_colonnes(df_csp_ent, mots)
+                        pct = val / nb_total_csp * 100 if nb_total_csp > 0 else 0
+                        rows_csp.append({
+                            "Territoire": ent,
+                            "CSP": nom_grp,
+                            "Nombre": int(val),
+                            "Part (%)": round(pct, 1),
+                        })
+                        if val > best_val:
+                            best_val = val
+                            best_grp = nom_grp.replace("\n", " ")
+                    taille, nb_men = taille_moyenne_menage(df_csp_ent)
+                    kpi_csp.append({
+                        "ent": ent, "total": nb_men,
+                        "dominante": best_grp,
+                        "taille": taille,
+                    })
+
+                df_csp_all = pd.DataFrame(rows_csp)
+
+                # ── KPIs ────────────────────────────────────────────────────
+                st.markdown(
+                    "#### Profil socio-professionnel des ménages",
+                    help=(
+                        "La **CSP du chef de ménage** est celle de la personne de référence "
+                        "du foyer (généralement la personne avec le revenu le plus élevé, "
+                        "ou la plus âgée). Source : INSEE RP 2022, fichier Ménages × CSP × "
+                        "nombre de personnes.\n\n"
+                        "**CSP dominante** : la catégorie qui rassemble le plus grand nombre "
+                        "de ménages dans le territoire sélectionné.\n\n"
+                        "**Taille moy.** : calculée à partir du nombre de personnes par ménage "
+                        "(Σ(nb_ménages_Npers × N) / total ménages)."
+                    ),
+                )
+                kpi_cols = st.columns(len(kpi_csp))
+                for i, d in enumerate(kpi_csp):
+                    taille_str = f"Taille moy. {d['taille']:.2f} pers." if not np.isnan(d['taille']) else ""
+                    with kpi_cols[i]:
+                        st.markdown(
+                            render_kpi_card(
+                                d["ent"],
+                                fmt(d["total"]),
+                                f"Majorité : {d['dominante']}",
+                                COLOR_ENT[i % len(COLOR_ENT)],
+                            ),
+                            unsafe_allow_html=True,
+                        )
+                        if taille_str:
+                            st.caption(taille_str)
+
+                st.markdown("---")
+
+                # ── Graphique 1 : Structure CSP empilée ──────────────────────
+                st.markdown(
+                    "##### Structure socio-professionnelle des ménages (%)",
+                    help=(
+                        "Répartition des ménages par grande catégorie socio-professionnelle "
+                        "(base 100% par territoire). Permet de comparer le profil social "
+                        "de territoires de tailles très différentes.\n\n"
+                        "**Cadres & Prof. sup.** : ingénieurs, médecins, enseignants du supérieur, "
+                        "cadres admin. et commerciaux.\n"
+                        "**Prof. intermédiaires** : infirmiers, techniciens, enseignants du 1er/2nd degré.\n"
+                        "**Employés** : agents de la fonction publique, employés de commerce, "
+                        "agents de sécurité.\n"
+                        "**Retraités/Inactifs** : inclut les chômeurs n'ayant jamais travaillé."
+                    ),
+                )
+                if not df_csp_all.empty:
+                    ordre_csp = list(CSP_GROUPES.keys())
+                    fig_pct_csp = px.bar(
+                        df_csp_all, x="Territoire", y="Part (%)", color="CSP",
+                        barmode="stack", text_auto=".1f",
+                        color_discrete_sequence=PALETTE_CSP,
+                        category_orders={"CSP": ordre_csp},
+                        height=420,
+                    )
+                    fig_pct_csp.update_traces(textposition="inside", textfont_size=9)
+                    fig_pct_csp.update_layout(
+                        legend=dict(orientation="h", y=1.15, title=""),
+                        yaxis_title="Part des ménages (%)",
+                        xaxis_title="", margin=dict(t=20),
+                    )
+                    st.plotly_chart(style(fig_pct_csp), use_container_width=True)
+
+                st.markdown("---")
+
+                # ── Graphique 2 : Volume CSP ─────────────────────────────────
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.markdown(
+                        "##### Volume par CSP (nombre de ménages)",
+                        help=(
+                            "Nombre absolu de ménages par catégorie. "
+                            "Utile pour estimer les besoins en services (ex : nombre de "
+                            "ménages de retraités → besoins en Ehpad, transports adaptés)."
+                        ),
+                    )
+                    if not df_csp_all.empty:
+                        fig_vol_csp = px.bar(
+                            df_csp_all, x="Nombre", y="CSP", color="Territoire",
+                            orientation="h", barmode="group",
+                            color_discrete_sequence=COLOR_ENT,
+                            category_orders={"CSP": list(CSP_GROUPES.keys())},
+                            height=420,
+                        )
+                        fig_vol_csp.update_layout(
+                            legend=dict(orientation="h", y=1.12, title=""),
+                            xaxis_title="Nombre de ménages", yaxis_title="",
+                            margin=dict(t=20),
+                        )
+                        st.plotly_chart(style(fig_vol_csp), use_container_width=True)
+
+                with c2:
+                    st.markdown(
+                        "##### Taille moyenne des ménages par CSP",
+                        help=(
+                            "Compare la taille moyenne des ménages selon la CSP du chef de ménage. "
+                            "Calcul : pour chaque CSP, Σ(nb_ménages_Npers × N) / Σ(nb_ménages_Npers). "
+                            "Les ménages de cadres et professions intermédiaires ont souvent plus d'enfants "
+                            "que les ménages d'employés, qui vivent davantage seuls."
+                        ),
+                    )
+                    rows_taille_csp = []
+                    for ent in selection_men:
+                        df_csp_ent = get_df_csp(ent)
+                        for nom_grp, mots in CSP_GROUPES.items():
+                            total_m, total_p = 0, 0
+                            for label, (nb_pers, slug) in TAILLES.items():
+                                cols_filtre = [
+                                    c for c in df_csp_ent.columns
+                                    if slug in c and any(k in c for k in mots)
+                                ]
+                                nb = df_csp_ent[cols_filtre].sum().sum() if cols_filtre else 0
+                                total_m += nb
+                                total_p += nb * nb_pers
+                            taille_grp = total_p / total_m if total_m > 0 else np.nan
+                            if not np.isnan(taille_grp):
+                                rows_taille_csp.append({
+                                    "Territoire": ent,
+                                    "CSP": nom_grp.replace("\n", " "),
+                                    "Taille moyenne": round(taille_grp, 2),
+                                })
+                    df_taille_csp = pd.DataFrame(rows_taille_csp)
+                    if not df_taille_csp.empty:
+                        fig_taille_csp = px.bar(
+                            df_taille_csp, x="Taille moyenne", y="CSP", color="Territoire",
+                            orientation="h", barmode="group",
+                            color_discrete_sequence=COLOR_ENT,
+                            height=420, text_auto=".2f",
+                        )
+                        fig_taille_csp.update_traces(textposition="outside", textfont_size=9)
+                        fig_taille_csp.update_layout(
+                            legend=dict(orientation="h", y=1.12, title=""),
+                            xaxis_title="Personnes par ménage (moyenne)",
+                            yaxis_title="", margin=dict(t=20),
+                            xaxis=dict(range=[0, 5]),
+                        )
+                        st.plotly_chart(style(fig_taille_csp), use_container_width=True)
+
+                with st.expander("💡 Guide d'interprétation des CSP"):
+                    st.write(
+                        "La **CSP** est celle de la personne de référence du ménage (chef de ménage). "
+                        "Les 7 grandes catégories regroupent les 30+ sous-catégories de l'INSEE :\n\n"
+                        "- **Cadres & Prof. sup.** : ingénieurs, médecins, cadres admin./commerciaux, "
+                        "artistes. Fort pouvoir d'achat, ménages souvent bi-actifs.\n"
+                        "- **Prof. intermédiaires** : infirmiers, techniciens, enseignants du 1er/2nd degré, "
+                        "agents de maîtrise.\n"
+                        "- **Employés** : agents de la fonction publique, employés de commerce et "
+                        "de services, agents de sécurité.\n"
+                        "- **Ouvriers** : qualifiés et peu qualifiés, conducteurs, ouvriers agricoles.\n"
+                        "- **Retraités / Inactifs** : retraités de toutes catégories + chômeurs "
+                        "n'ayant jamais travaillé. Souvent la catégorie majoritaire dans les communes "
+                        "vieillissantes.\n\n"
+                        "**Taille moyenne par CSP** : les ménages ouvriers et agricoles ont "
+                        "historiquement plus d'enfants ; les cadres ont des ménages de taille intermédiaire ; "
+                        "les retraités et employés vivent plus souvent seuls ou en couple sans enfant."
+                    )
+
 # ==============================================================================
-# ONGLET 5 - CSP COMPARATIF
+# ONGLET 5 - Population active 25-54 ans
 # ==============================================================================
 if vue == "Démographie":
     with tab6:
 
         if df_csp_new.empty or "ANNEE" not in df_csp_new.columns:
-            st.info("📂 Données CSP/Diplôme non trouvées. Vérifiez les chemins FILES_CSP / FILES_DIP.")
+            st.info("📂 Données CSP/Diplôme non trouvées. Vérifiez les fichiers.")
         else:
+            # ── Introduction Méthodologique ──────────────────────────────────
+            st.markdown("""
+            <div style='background-color: #f1f8f5; padding: 15px; border-radius: 10px; border-left: 5px solid #1C3A27; margin-bottom: 20px;'>
+                <strong>Origine des données :</strong> Ces chiffres sont issus des recensements de l'<b>INSEE</b>. 
+                Ils recensent la <b>population active de 25 à 54 ans</b>, c'est-à-dire les personnes en âge de travailler qui occupent un emploi ou en recherchent un. 
+                Cette tranche d'âge est privilégiée car elle représente le cœur stable du marché du travail, après la fin des études et avant les départs en retraite.
+                A noter, quand vous choisissez de comparer deux territoires (métropoles et communes), un graphique d'indice de spécialisation s'affiche en plus.
+            </div>
+            """, unsafe_allow_html=True)
+
             # ── Bandeau filtres ──────────────────────────────────────────────
             with st.container():
+                filter_bar("Filtres - Profil des actifs (25-54 ans)")
                 
-                filter_bar("Filtres - Population active 25-54 ans")
                 csp_geo_l, csp_geo_r = st.columns([1, 3])
                 with csp_geo_l:
                     filter_row_label("Niveau géographique")
                 with csp_geo_r:
                     mode_analyse = st.radio("",
-                                            ["Comparaison Métropoles", "Détail Communal"],
-                                            key="csp_mode", horizontal=True,
-                                            help="Choisissez une analyse à l'échelle communale ou métropolitaine.")
+                        ["Comparaison Métropoles", "Détail Communal"],
+                        key="csp_mode", horizontal=True,
+                        help="Métropoles : Compare les grandes agglomérations. Détail Communal : Zoom sur les communes grenobloises.")
+
                 csp_row1_c1, csp_row1_c2 = st.columns(2)
                 with csp_row1_c1:
                     theme_analyse = st.selectbox(
                         "Thématique",
                         ["Secteurs d'activité (CSP)", "Niveau de diplôme"],
                         key="csp_theme",
-                        help="Choix de la famille d'indicateurs comparés.",
+                        help="Choisissez si vous voulez comparer les métiers (CSP) ou le niveau d'études (Diplômes)."
                     )
+                
                 current_df_csp  = df_csp_new if theme_analyse == "Secteurs d'activité (CSP)" else df_dip_new
                 current_map_csp = CSP_MAP_NEW if theme_analyse == "Secteurs d'activité (CSP)" else DIP_MAP
 
                 annees_csp = sorted(current_df_csp["ANNEE"].dropna().unique(), reverse=True) if not current_df_csp.empty else []
                 with csp_row1_c2:
                     sel_annee_csp = st.selectbox("Année", annees_csp, key="csp_annee",
-                                                 help="Année de comparaison.") if annees_csp else None
+                                                 help="Sélectionnez l'année du recensement INSEE.") if annees_csp else None
 
-                if mode_analyse == "Par Communes (Grenoble)":
+                if mode_analyse == "Détail Communal":
                     clist = sorted(COMMUNES["Grenoble"])
-                    sel_communes_csp = st.multiselect("Communes (Grenoble)", clist,
-                                                      default=["Grenoble"], key="csp_communes",
-                                                      help="Communes comparées dans la métropole de Grenoble.")
+                    sel_communes_csp = st.multiselect("Communes", clist, default=["Grenoble", "Meylan"], 
+                                                     key="csp_communes", help="Sélectionnez deux entités ou plus pour comparer leurs profils.")
+                    entities_names = sel_communes_csp
                 else:
-                    sel_metros_csp = st.multiselect("Métropoles", TOUTES,
-                                                    default=["Grenoble", "Rouen"], key="csp_metros",
-                                                    help="Métropoles retenues pour la comparaison.")
+                    sel_metros_csp = st.multiselect("Métropoles", TOUTES, default=["Grenoble", "Rouen"], 
+                                                   key="csp_metros", help="Comparez Grenoble aux autres grandes métropoles françaises.")
+                    entities_names = sel_metros_csp
 
                 sel_cats = st.multiselect("Catégories à afficher",
                                           options=list(current_map_csp.values()),
                                           default=list(current_map_csp.values()),
                                           key="csp_cats",
-                                          help="Indicateurs affichés dans les graphiques et tableaux.")
+                                          help="Cochez ou décochez les catégories pour affiner les graphiques.")
 
-                st.markdown('</div>', unsafe_allow_html=True)
-
-            if sel_annee_csp is None:
-                st.info("Données non disponibles.")
-            else:
+            # ── Logique de calcul et Affichage ───────────────────────────────
+            if sel_annee_csp:
                 df_year_csp = current_df_csp[current_df_csp["ANNEE"] == sel_annee_csp]
                 entities_csp = []
 
-                if mode_analyse == "Par Communes (Grenoble)":
-                    for name in sel_communes_csp:
+                for name in entities_names:
+                    if mode_analyse == "Détail Communal":
                         subset = df_year_csp[(df_year_csp["LIB_NORM"] == normalize_name(name)) & (df_year_csp["DEP"] == "38")]
                         if not subset.empty:
                             entities_csp.append({"name": name, "data": subset.iloc[0]})
-                else:
-                    for m_name in sel_metros_csp:
-                        dep   = DEP_MAP[m_name]
-                        norms = [normalize_name(c) for c in COMMUNES[m_name]]
+                    else:
+                        dep = DEP_MAP[name]
+                        norms = [normalize_name(c) for c in COMMUNES[name]]
                         subset = df_year_csp[(df_year_csp["DEP"] == dep) & (df_year_csp["LIB_NORM"].isin(norms))]
                         if not subset.empty:
                             agg = subset[list(current_map_csp.values())].sum()
-                            entities_csp.append({"name": m_name, "data": agg})
+                            entities_csp.append({"name": name, "data": agg})
 
-                if not entities_csp or not sel_cats:
-                    st.warning("Sélectionnez au moins une entité et une catégorie dans les filtres ci-dessus.")
-                else:
-                    noms = " · ".join(e["name"] for e in entities_csp)
-                    st.markdown(
-                        f"<h2 style='color:#1C3A27;font-size:1.3rem;margin-bottom:4px'>"
-                        f"{theme_analyse} - {noms} · {sel_annee_csp}</h2>",
-                        unsafe_allow_html=True,
-                    )
-                    st.caption("ℹ️ Survolez les aides (?) des titres pour comprendre les indicateurs.")
-
+                if entities_csp and sel_cats:
+                    st.markdown("---")
+                    
+                    # ── INDICATEURS (KPI) - Bordure Verte ────────────────────
                     kpi_cols_csp = st.columns(len(entities_csp))
                     for i, entity in enumerate(entities_csp):
-                        total = entity["data"][sel_cats].sum()
+                        total_actifs = entity["data"][sel_cats].sum()
                         with kpi_cols_csp[i]:
                             st.markdown(f"""
-                            <div class='kpi-card'>
-                                <div class='kpi-label'>{entity['name']}</div>
-                                <div class='kpi-value'>{int(total):,}</div>
-                                <div class='kpi-subtitle'>Actifs 25–54 ans</div>
+                            <div style='display: flex; flex-direction: row; align-items: stretch; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #fff; min-height: 80px; border-left: 6px solid #1a7a4a;'>
+                                <div style='padding: 10px 16px; display: flex; flex-direction: column; justify-content: center;'>
+                                    <div style='font-size:11px; font-weight:700; letter-spacing:0.08em; color:#666; text-transform:uppercase;'>{entity['name']}</div>
+                                    <div style='font-size:24px; font-weight:bold; color:#111;'>{int(total_actifs):,}</div>
+                                    <div style='color:#1a7a4a; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;'>Actifs 25-54 ans</div>
+                                </div>
                             </div>
                             """, unsafe_allow_html=True)
 
                     st.markdown("---")
+                    
+                    # ── Graphiques de base ───────────────────────────────────
                     c1, c2 = st.columns(2)
                     with c1:
-                        st.subheader("Répartition en volume", help="Compare les effectifs absolus par catégorie.")
+                        st.subheader("Répartition en volume", help="Affiche le nombre réel de personnes dans chaque catégorie.")
                         fig_bar_csp = go.Figure()
                         for ent in entities_csp:
-                            fig_bar_csp.add_trace(go.Bar(
-                                x=sel_cats, y=ent["data"][sel_cats],
-                                name=ent["name"], marker_color=COULEURS.get(ent["name"], "#3498db"),
-                            ))
-                        fig_bar_csp.update_layout(barmode="group",
-                                                  height=420, legend=dict(orientation="h", y=1.12),
-                                                  xaxis_tickangle=-30)
-                        st.plotly_chart(style(fig_bar_csp, 50), use_container_width=True)
-                    with c2:
-                        st.subheader("Profil structurel (%)", help="Compare la composition relative de chaque territoire.")
-                        fig_radar_csp = go.Figure()
-                        max_pct = 0
-                        for ent in entities_csp:
-                            v   = ent["data"][sel_cats]
-                            tot = v.sum()
-                            pct = (v / tot * 100).fillna(0) if tot > 0 else v * 0
-                            max_pct = max(max_pct, pct.max())
-                            fig_radar_csp.add_trace(go.Scatterpolar(
-                                r=list(pct) + [pct.iloc[0]],
-                                theta=sel_cats + [sel_cats[0]],
-                                fill="toself", name=ent["name"],
-                                line_color=COULEURS.get(ent["name"], "#3498db"), opacity=0.75,
-                            ))
-                        fig_radar_csp.update_layout(
-                            polar=dict(radialaxis=dict(visible=True, range=[0, max(max_pct * 1.2, 10)])),
-                            legend=dict(orientation="h", y=-0.15), height=420,
-                        )
-                        st.plotly_chart(style(fig_radar_csp, 50), use_container_width=True)
-                    with st.expander("💡 Comment interpréter ces deux graphiques ?"):
-                        st.write("Le graphique en volume montre les effectifs bruts ; le radar montre la spécialisation relative en pourcentage.")
+                            fig_bar_csp.add_trace(go.Bar(x=sel_cats, y=ent["data"][sel_cats], name=ent["name"]))
+                        fig_bar_csp.update_layout(barmode="group", height=400, legend=dict(orientation="h", y=1.2))
+                        st.plotly_chart(fig_bar_csp, use_container_width=True)
 
+                    with c2:
+                        st.subheader("Profil structurel (%)", help="Affiche la 'forme' du territoire (composition relative).")
+                        fig_radar_csp = go.Figure()
+                        for ent in entities_csp:
+                            v = ent["data"][sel_cats]
+                            pct = (v / v.sum() * 100).fillna(0)
+                            fig_radar_csp.add_trace(go.Scatterpolar(r=list(pct) + [pct.iloc[0]], theta=sel_cats + [sel_cats[0]], fill="toself", name=ent["name"]))
+                        fig_radar_csp.update_layout(height=400, legend=dict(orientation="h", y=-0.2))
+                        st.plotly_chart(fig_radar_csp, use_container_width=True)
+
+                    with st.expander("Comment interpréter ces graphiques ?"):
+                        st.write("""
+                        - **Le volume (Barres)** : Il montre la force de frappe réelle (nombre de personnes).
+                        - **Le profil (Radar)** : Il ignore la taille pour comparer la structure. Si une pointe dépasse, cette catégorie est proportionnellement plus importante.
+                        """)
+
+                    # ── INDICE DE SPÉCIALISATION (Si 2 entités) ──────────────
                     if len(entities_csp) == 2:
                         st.markdown("---")
-                        st.markdown("### 🎯 Analyse comparative")
-                        with st.expander("ℹ️ Comment lire l'indice de spécialisation ?"):
-                            st.write(
-                                f"L'indice compare la structure de **{entities_csp[0]['name']}** "
-                                f"par rapport à **{entities_csp[1]['name']}**.\n\n"
-                                "- **100** : même poids relatif dans les deux zones.\n"
-                                "- **> 100** : sur-représenté dans la première zone.\n"
-                                "- **< 100** : sous-représenté dans la première zone."
-                            )
-                        v1 = entities_csp[0]["data"][sel_cats]
-                        v2 = entities_csp[1]["data"][sel_cats]
+                        st.markdown("### Zoom : Indice de spécialisation comparative")
+                        
+                        v1, v2 = entities_csp[0]["data"][sel_cats], entities_csp[1]["data"][sel_cats]
                         t1, t2 = v1.sum(), v2.sum()
-                        spec = ((v1 / t1) / (v2 / t2) * 100).fillna(100) if t1 > 0 and t2 > 0 else pd.Series([100] * len(sel_cats), index=sel_cats)
+                        spec = ((v1 / t1) / (v2 / t2) * 100).fillna(100)
 
-                        k1, k2, k3, k4 = st.columns(4)
-                        k1.metric(f"Actifs - {entities_csp[0]['name']}", f"{int(t1):,}".replace(",", "\u202f"))
-                        k2.metric(f"Actifs - {entities_csp[1]['name']}", f"{int(t2):,}".replace(",", "\u202f"))
-                        k3.metric("Écart brut", f"{int(t1 - t2):+,}".replace(",", "\u202f"))
-                        k4.metric("Indice de masse", f"{(t1 / t2):.2f}x" if t2 > 0 else "N/D")
+                        with st.expander("Qu'est-ce que l'Indice de Spécialisation ?"):
+                            st.write(f"""
+                            Cet indice permet de comparer **la structure** de deux territoires en ignorant leur taille.
+                            
+                            **Calcul :** On compare le poids d'une catégorie à {entities_names[0]} par rapport à son poids à {entities_names[1]}.
+                            
+                            **Lecture :**
+                            - **À 100 (Ligne noire) :** Équilibre. La catégorie pèse le même poids dans les deux zones.
+                            - **Au-dessus de 100 (Vert) :** **Spécialisation**. La catégorie est plus présente proportionnellement chez {entities_names[0]}.
+                            - **En-dessous de 100 (Rouge) :** Sous-représentation par rapport à la zone de comparaison.
+                            """)
 
-                        st.markdown("---")
-                        fig_spec = px.bar(
-                            x=sel_cats, y=spec, color=spec,
-                            color_continuous_scale="RdYlGn", range_color=[50, 150],
-                            labels={"x": "Catégorie", "y": "Indice (base 100)", "color": "Indice"},
-                            title=f"Spécialisation : {entities_csp[0]['name']} / {entities_csp[1]['name']}",
-                            height=380,
-                        )
-                        fig_spec.add_hline(y=100, line_dash="dash", line_color="black",
-                                           annotation_text="Parité (100)", annotation_position="top left")
-                        fig_spec.update_layout(xaxis_tickangle=-30)
-                        st.plotly_chart(style(fig_spec, 50), use_container_width=True)
+                        fig_spec = px.bar(x=sel_cats, y=spec, color=spec, color_continuous_scale="RdYlGn", 
+                                          title=f"Spécialisation de {entities_names[0]} / {entities_names[1]}")
+                        fig_spec.add_hline(y=100, line_dash="dash", line_color="black")
+                        st.plotly_chart(fig_spec, use_container_width=True)
 
-                        with st.expander("📄 Voir le tableau de données complet"):
+                        with st.expander("Voir le tableau de données complet"):
                             table_df = pd.DataFrame({
                                 "Catégorie": sel_cats,
-                                f"{entities_csp[0]['name']} - Effectif": [int(v1[c]) for c in sel_cats],
-                                f"{entities_csp[1]['name']} - Effectif": [int(v2[c]) for c in sel_cats],
-                                "Différence": [int(v1[c] - v2[c]) for c in sel_cats],
+                                f"{entities_csp[0]['name']} (Eff.)": [int(v1[c]) for c in sel_cats],
+                                f"{entities_csp[1]['name']} (Eff.)": [int(v2[c]) for c in sel_cats],
                                 "Indice spécialisation": [round(spec[c], 1) for c in sel_cats],
                             })
-                            st.dataframe(table_df, use_container_width=True)
-
-                    elif len(entities_csp) > 2:
-                        st.markdown("---")
-                        st.markdown("#### Tableau récapitulatif")
-                        rows_tab = []
-                        for ent in entities_csp:
-                            row = {"Entité": ent["name"]}
-                            row.update({c: int(ent["data"][c]) for c in sel_cats})
-                            row["Total"] = int(ent["data"][sel_cats].sum())
-                            rows_tab.append(row)
-                        st.dataframe(pd.DataFrame(rows_tab).set_index("Entité"), use_container_width=True)
-
-                    st.markdown("---")
-                    with st.expander("📖 Note méthodologique"):
-                        st.write(
-                            "**Population étudiée** : actifs de 25 à 54 ans.\n\n"
-                            "**Sources** : Recensements INSEE 2011, 2016, 2022.\n\n"
-                            "**Indice de spécialisation** : rapport des parts relatives de chaque catégorie "
-                            "entre les deux zones, multiplié par 100."
-                        )
-
+                            st.dataframe(table_df, use_container_width=True) 
 # ==============================================================================
 # SOLIDARITÉ & CITOYENNETÉ
 # ==============================================================================
@@ -2434,11 +2675,6 @@ if vue == "Solidarité et citoyenneté":
     # ONGLET SOLIDARITÉ - CAF
     # ──────────────────────────────────────────────────────────────────────────
     with s1:
-        st.markdown(
-            '<p class="source-note">Source : <a href="https://data.caf.fr" target="_blank">' +
-            "Caisse d\'Allocations Familiales - CAF 5 Métropoles 2020–2023</a></p>",
-            unsafe_allow_html=True,
-        )
         if df_caf is None or df_caf.empty:
             st.info("📂 Fichier `CAF_5_Metropoles.csv` introuvable.")
         else:
@@ -2475,22 +2711,53 @@ if vue == "Solidarité et citoyenneté":
                     with st.container():
                         
                         filter_bar("Filtres - Solidarité CAF")
-                        caf_f1, caf_f2, caf_f3 = st.columns([1, 1, 2])
+                        
+                        # ──────────────────────────────────────────────────────────
+                        # 1. Filtre Géographique (À gauche, en ligne, sans effet bouton)
+                        # ──────────────────────────────────────────────────────────
+                        col_geo_label, col_geo_options = st.columns([1, 3])
+                        with col_geo_label:
+                            filter_row_label("Niveau géographique")
+                        with col_geo_options:
+                            mode_caf = st.radio(
+                                "Niveau géographique",  # Le label est là pour l'accessibilité
+                                ["Comparaison Métropoles", "Détail Communal (Grenoble)"],
+                                key="caf_mode", 
+                                horizontal=True,
+                                label_visibility="collapsed"  # Fait disparaître totalement l'espace du label natif
+                            )
+
+                        # ──────────────────────────────────────────────────────────
+                        # 2. Filtres Indicateur et Année
+                        # ──────────────────────────────────────────────────────────
+                        caf_f1, caf_f2 = st.columns([1, 1])
                         
                         with caf_f1:
-                            metric_key = st.selectbox("Indicateur", list(available_metrics.keys()),
-                                                    format_func=lambda k: available_metrics[k], index=0, key="caf_metric")
+                            metric_key = st.selectbox(
+                                "Indicateur", 
+                                list(available_metrics.keys()),
+                                format_func=lambda k: available_metrics[k], 
+                                index=0, 
+                                key="caf_metric"
+                            )
                         with caf_f2:
-                            year_caf = st.selectbox("Année", years_caf, index=len(years_caf)-1, key="caf_year")
-                        with caf_f3:
-                            mode_caf = st.radio("Niveau géographique", ["Comparaison Métropoles", "Détail Communal (Grenoble)"], key="caf_mode", horizontal=True)
+                            year_caf = st.selectbox(
+                                "Année", 
+                                years_caf, 
+                                index=len(years_caf)-1, 
+                                key="caf_year"
+                            )
 
+                        # ──────────────────────────────────────────────────────────
+                        # 3. Sélecteurs dynamiques selon le niveau géographique
+                        # ──────────────────────────────────────────────────────────
                         if mode_caf == "Comparaison Métropoles":
-                            sel_agglos_caf = st.multiselect("Agglomérations", agglos_caf, default=agglos_caf, key="caf_agglos")
+                            sel_agglos_caf = st.multiselect("Métropole", agglos_caf, default=agglos_caf, key="caf_agglos")
                         else:
                             gre_agglo = next((a for a in agglos_caf if "Grenoble" in a), "Grenoble Alpes Métropole")
                             communes_gre_caf = sorted(df_caf[df_caf["Agglomeration"] == gre_agglo]["Nom_Commune"].dropna().unique()) if "Nom_Commune" in df_caf.columns else []
                             sel_communes_caf = st.multiselect("Communes de Grenoble", communes_gre_caf, default=communes_gre_caf[:2] if communes_gre_caf else [], key="caf_communes")
+                        
                         st.markdown('</div>', unsafe_allow_html=True)
 
                     if mode_caf == "Comparaison Métropoles":
@@ -2520,10 +2787,27 @@ if vue == "Solidarité et citoyenneté":
                             for col, title, value, subtitle in caf_cards:
                                 with col:
                                     st.markdown(f"""
-                                    <div class='kpi-card-mob' style='border-top: none; border-left: 5px solid #1e5631; padding: 10px 15px; text-align: left; background-color: #f9f9f9; border-radius: 4px;'>
-                                        <div class='kpi-label' style='font-size: 11px; color: #666; font-weight: bold; text-transform: uppercase;'>{title}</div>
-                                        <div class='kpi-value' style='font-size: 22px; font-weight: bold; color: #1e5631; margin: 5px 0;'>{value}</div>
-                                        <div style='font-size:10px; color:#888;'>{subtitle}</div>
+                                    <div style='
+                                        display: flex;
+                                        flex-direction: row;
+                                        align-items: stretch;
+                                        border-radius: 8px;
+                                        overflow: hidden;
+                                        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                                        background: #fff;
+                                        min-height: 80px;
+                                        border-left: 6px solid #1e5631;
+                                    '>
+                                        <div style='
+                                            padding: 10px 16px;
+                                            display: flex;
+                                            flex-direction: column;
+                                            justify-content: center;
+                                        '>
+                                            <div style='font-size:11px; font-weight:700; letter-spacing:0.08em; color:#666; text-transform:uppercase;'>{title}</div>
+                                            <div style='font-size:24px; font-weight:bold; color:#111; margin: 2px 0;'>{value}</div>
+                                            <div style='color:#888; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;'>{subtitle}</div>
+                                        </div>
                                     </div>
                                     """, unsafe_allow_html=True)
 
@@ -2531,7 +2815,9 @@ if vue == "Solidarité et citoyenneté":
 
                             c3, c4 = st.columns(2)
                             with c3:
-                                st.markdown(f"##### 👨‍👩‍👧 Quotient familial ({year_caf})")
+                                st.markdown(f"##### Quotient familial ({year_caf})",
+                                            help="Répartition des foyers selon leur tranche de revenus. Permet d'identifier la proportion de foyers les plus précaires (tranches basses) dans chaque commune."
+                                )
                                 if "Quotient familial" in df_yr.columns:
                                     qf_order = ["Moins de 400 euros","Entre 400 et 799 euros",
                                         "Entre 800 et 1199 euros","Entre 1200 et 1599 euros",
@@ -2545,51 +2831,110 @@ if vue == "Solidarité et citoyenneté":
                                     fig_qf = px.bar(qf_data.sort_values("QF_ord"), x="Agglomeration", y=metric,
                                         color="Quotient familial", barmode="stack",
                                         color_discrete_sequence=px.colors.sequential.Greens_r,
-                                        labels={"Agglomeration": "", metric: label_metric},
-                                        title="Composition par quotient familial", height=380)
+                                        labels={"Agglomeration": "", metric: label_metric}, height=380)
                                     st.plotly_chart(style(fig_qf, 40), use_container_width=True)
                             with c4:
-                                st.markdown(f"##### 🏆 Top 15 communes - {year_caf}")
-                                if "Nom_Commune" in df_yr.columns:
-                                    top15 = df_yr.groupby(["Nom_Commune","Agglomeration"], as_index=False)[metric].sum().nlargest(15, metric)
-                                    top15["Metropole_Key"] = top15["Agglomeration"].apply(lambda x: next((m for m in COULEURS.keys() if m in x), x))
-                                    fig_top = px.bar(top15, x=metric, y="Nom_Commune", orientation="h",
-                                        color="Metropole_Key", color_discrete_map=COULEURS, text_auto=".3s",
-                                        labels={"Nom_Commune": "", metric: label_metric, "Metropole_Key": "Métropole"},
-                                        title=f"Top 15 communes - {label_metric}", height=420)
-                                    fig_top.update_layout(yaxis={"categoryorder": "total ascending"})
-                                    st.plotly_chart(style(fig_top, 40), use_container_width=True)
+                                st.markdown(f"##### Classement des métropoles - {year_caf}",
+                                            help="Volume total pour l'indicateur sélectionné. Permet d'identifier rapidement les communes avec la plus forte concentration d'allocataires.")
+                                
+                                # Regroupement par agglomération
+                                top_metros = df_yr.groupby("Agglomeration", as_index=False)[metric].sum().sort_values(by=metric, ascending=False)
+                                top_metros["Metropole_Key"] = top_metros["Agglomeration"].apply(lambda x: next((m for m in COULEURS.keys() if m in x), x))
+                                
+                                fig_top = px.bar(
+                                    top_metros, 
+                                    x=metric, 
+                                    y="Agglomeration", 
+                                    orientation="h",
+                                    color="Metropole_Key", 
+                                    color_discrete_map=COULEURS, 
+                                    text_auto=".3s",
+                                    labels={"Agglomeration": "", metric: label_metric}, 
+                                    height=420
+                                )
+                                fig_top.update_layout(
+                                    yaxis={"categoryorder": "total ascending"},
+                                    showlegend=False
+                                )
+                                st.plotly_chart(style(fig_top, 40), use_container_width=True)
                             st.markdown("---")
 
-                            st.markdown("##### 🕸️ Profil comparatif des aides - radar")
-                            aides_f = {"Foyers PAJE":"Nombre foyers NDURPAJE","Foyers aj. enf.":"Nombre foyers NDUREJ",
-                                "Foyers alloc. log.":"Nombre foyers NDURAL","Foyers insertion":"Nombre foyers NDURINS",
-                                "Foyers total":"Nombre foyers NDUR"}
+                            st.markdown("##### Profil comparatif des aides",
+                                        help="Comparaison directe des trois aides principales (Insertion, Logement, Petite enfance). Utile pour comprendre la nature dominante des besoins (précarité vs famille) de chaque territoire.")
+                            
+                            # Conservation des 3 aides principales pour plus de lisibilité
+                            aides_f = {
+                                "Foyers insertion": "Nombre foyers NDURINS",
+                                "Foyers alloc. log.": "Nombre foyers NDURAL",
+                                "Foyers PAJE": "Nombre foyers NDURPAJE"
+                            }
+                            
                             aides_d = {k: v for k, v in aides_f.items() if v in df_yr.columns}
-                            if len(aides_d) >= 3:
-                                rdata = df_yr.groupby("Agglomeration")[list(aides_d.values())].sum().reset_index()
-                                rdata.columns = ["Agglomeration"] + list(aides_d.keys())
-                                rdata["Metropole_Key"] = rdata["Agglomeration"].apply(lambda x: next((m for m in COULEURS.keys() if m in x), x))
-                                fig_radar = go.Figure()
-                                cats_r = list(aides_d.keys())
-                                for _, rr in rdata.iterrows():
-                                    vv = [rr[c] for c in cats_r] + [rr[cats_r[0]]]
-                                    fig_radar.add_trace(go.Scatterpolar(r=vv, theta=cats_r+[cats_r[0]],
-                                        fill="toself", name=rr["Metropole_Key"],
-                                        line_color=COULEURS.get(rr["Metropole_Key"], "#999")))
-                                fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True)), height=420,
-                                    title=f"Profil des aides - {year_caf}", font_family="Sora",
-                                    paper_bgcolor="rgba(0,0,0,0)")
-                                st.plotly_chart(fig_radar, use_container_width=True)
+                            
+                            if aides_d:
+                                # 1. Grouper les colonnes
+                                bdata = df_yr.groupby("Agglomeration", as_index=False)[list(aides_d.values())].sum()
+                                bdata["Metropole_Key"] = bdata["Agglomeration"].apply(lambda x: next((m for m in COULEURS.keys() if m in x), x))
+                                
+                                # Inversion du dictionnaire pour bien renommer (Technique -> Lisible)
+                                rename_dict = {v: k for k, v in aides_d.items()}
+                                bdata = bdata.rename(columns=rename_dict)
+                                
+                                # 2. Passer au format long pour Plotly
+                                bdata_long = bdata.melt(
+                                    id_vars=["Agglomeration", "Metropole_Key"],
+                                    value_vars=list(aides_d.keys()),
+                                    var_name="Type d'aide",
+                                    value_name="Nombre de foyers"
+                                )
+                                
+                                # 3. Créer le graphique
+                                fig_bar_comp = px.bar(
+                                    bdata_long,
+                                    x="Nombre de foyers",
+                                    y="Type d'aide",
+                                    color="Metropole_Key",
+                                    color_discrete_map=COULEURS,
+                                    barmode="group",
+                                    orientation="h",
+                                    text_auto=".3s",
+                                    labels={"Metropole_Key": "Métropole", "Nombre de foyers": "Foyers", "Type d'aide": ""},
+                                    height=400  # Légèrement rehaussé pour la légende
+                                )
+                                
+                                # 4. Mise en page avec la légende horizontale au-dessus
+                                fig_bar_comp.update_layout(
+                                    legend=dict(
+                                        orientation="h",     # Légende à l'horizontale
+                                        yanchor="bottom",    # Point d'ancrage en bas
+                                        y=1.05,              # Placement au-dessus du graph (1.0 = limite haute)
+                                        xanchor="left",
+                                        x=0,                 # Alignement à gauche
+                                        title=""             # Masque le titre de la légende pour l'épurer
+                                    ),
+                                    margin=dict(t=80, b=40, l=100), # t=80 augmente la marge haute pour la légende
+                                    xaxis_title="Nombre de foyers",
+                                    yaxis={"categoryorder": "total ascending"}
+                                )
+                                
+                                st.plotly_chart(style(fig_bar_comp, 40), use_container_width=True)
+
+
                             st.markdown("---")
-                            with st.expander("📄 Données détaillées"):
-                                st.dataframe(df_yr.groupby(
-                                    ["Agglomeration","Quotient familial"] if "Quotient familial" in df_yr.columns else ["Agglomeration"],
-                                    as_index=False)[list(available_metrics.keys())].sum(), use_container_width=True)
-                            with st.expander("📖 Note méthodologique"):
-                                st.write("**Sources** : CAF - données communales 2020–2023.\n\n"
-                                    "**NDUR** : dossiers unifiés réels. **NDURPAJE** : prestation jeune enfant. "
-                                    "**NDURAL** : allocation logement. **NDURINS** : insertion sociale (RSA...).")
+                            with st.expander(" Note méthodologique"):
+                                st.markdown("""
+                               **Comprendre les indicateurs généraux :**
+                                * **Foyers (NDUR - Nombre de Dossiers Unifiés Réels) :** Un dossier correspond à un foyer allocataire unique percevant au moins une aide de la CAF.
+                                * **Personnes couvertes :** Il s'agit du nombre total de personnes vivant dans ces foyers (l'allocataire, son conjoint éventuel et les personnes à charge, comme les enfants).
+                                * **Quotient Familial :** Indicateur de niveau de vie calculé par la CAF (revenus divisés par le nombre de parts du foyer). Il détermine l'éligibilité et le montant de nombreuses aides.
+                                
+                                **Les grandes familles d'aides analysées :**
+                                * **Toutes aides confondues (Global) :** Englobe l'ensemble des prestations légales versées par la CAF sur le territoire.
+                                * **Allocation logement (NDURAL) :** Aides destinées à réduire la dépense de loyer ou de mensualité d'emprunt (APL, ALF, ALS).
+                                * **Insertion sociale (NDURINS) :** Prestations visant à garantir un revenu minimum et à encourager l'activité (principalement le RSA, la Prime d'activité et l'AAH - Allocation aux Adultes Handicapés).
+                                * **PAJE (NDURPAJE) :** Prestation d'Accueil du Jeune Enfant. Regroupe les aides versées à la naissance ou l'adoption, ainsi que pour l'entretien et la garde des enfants en bas âge.
+                                * **Aide jeunes enfants (NDUREJ) :** Prestations liées à l'enfance et la jeunesse au sens plus large (Allocations familiales, allocation de rentrée scolaire, etc.).
+                                """)
 
                     else:
                         if not sel_communes_caf:
@@ -2598,45 +2943,118 @@ if vue == "Solidarité et citoyenneté":
                             metric = metric_key
                             label_metric = available_metrics[metric]
                             gre_agglo = next((a for a in agglos_caf if "Grenoble" in a), "Grenoble Alpes Métropole")
+                            
+                            # Filtrage des données
                             df_fil = df_caf[(df_caf["Agglomeration"] == gre_agglo) & (df_caf["Nom_Commune"].isin(sel_communes_caf))]
                             df_yr  = df_fil[df_fil["Annee"] == year_caf]
 
                             st.markdown("---")
-                            kpi_cols = st.columns(len(sel_communes_caf))
-                            for i, comm in enumerate(sel_communes_caf):
-                                val = df_yr[df_yr["Nom_Commune"] == comm][metric].sum() if not df_yr.empty else 0
-                                with kpi_cols[i]:
-                                    st.metric(label=f" {comm}", value=fmt(val))
+                            
+                            # 1. KPIs au nouveau format
+                            total_val = df_yr[metric].sum()
+                            nb_com    = int(df_yr["Nom_Commune"].nunique())
+                            max_com   = df_yr.groupby("Nom_Commune")[metric].sum().idxmax() if not df_yr.empty else "-"
+
+                            k1, k2, k3 = st.columns(3)
+                            caf_cards_com = [
+                                (k1, f"Total {year_caf}", fmt(total_val), label_metric),
+                                (k2, "Communes", nb_com, "Sélectionnées"),
+                                (k3, "Top Commune", max_com, "Volume le plus élevé")
+                            ]
+
+                            for col, title, value, subtitle in caf_cards_com:
+                                with col:
+                                    st.markdown(f"""
+                                    <div style='display: flex; flex-direction: row; align-items: stretch; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #fff; min-height: 80px; border-left: 6px solid #1e5631;'>
+                                        <div style='padding: 10px 16px; display: flex; flex-direction: column; justify-content: center;'>
+                                            <div style='font-size:11px; font-weight:700; letter-spacing:0.08em; color:#666; text-transform:uppercase;'>{title}</div>
+                                            <div style='font-size:24px; font-weight:bold; color:#111; margin: 2px 0;'>{value}</div>
+                                            <div style='color:#888; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;'>{subtitle}</div>
+                                        </div>
+                                    </div>
+                                    """, unsafe_allow_html=True)
 
                             st.markdown("---")
+
+                            # 2. GRAPHIQUES : Quotient Familial et Classement
                             c1, c2 = st.columns(2)
+                            
                             with c1:
-                                st.markdown(f"##### {label_metric} par commune")
-                                fig_ccb = px.bar(df_yr, x="Nom_Commune", y=metric, color="Nom_Commune",
-                                                 color_discrete_sequence=px.colors.sequential.Greens_r,
-                                                 labels={"Nom_Commune": "", metric: label_metric},
-                                                 title=f"Comparaison - {year_caf}", height=400)
-                                st.plotly_chart(style(fig_ccb, 40), use_container_width=True)
+                                # AIDE AJOUTÉE ICI 👇
+                                st.markdown(
+                                    f"##### Quotient familial ({year_caf})", 
+                                    help="Répartition des foyers selon leur tranche de revenus. Permet d'identifier la proportion de foyers les plus précaires (tranches basses) dans chaque commune."
+                                )
+                                if "Quotient familial" in df_yr.columns:
+                                    qf_order = ["Moins de 400 euros","Entre 400 et 799 euros","Entre 800 et 1199 euros","Entre 1200 et 1599 euros","Entre 1600 et 1999 euros","Entre 2000 et 3999 euros","4000 euros ou plus","Inconnu"]
+                                    qf_data = df_yr.groupby(["Nom_Commune","Quotient familial"], as_index=False)[metric].sum()
+                                    qf_data["QF_ord"] = pd.Categorical(qf_data["Quotient familial"], categories=qf_order, ordered=True)
+                                    
+                                    fig_qf = px.bar(qf_data.sort_values("QF_ord"), x="Nom_Commune", y=metric,
+                                        color="Quotient familial", barmode="stack",
+                                        color_discrete_sequence=px.colors.sequential.Greens_r,
+                                        labels={"Nom_Commune": "", metric: label_metric}, height=400)
+                                    st.plotly_chart(style(fig_qf, 40), use_container_width=True)
+
                             with c2:
-                                st.markdown(f"##### 📈 Évolution - {label_metric}")
-                                df_evo = df_fil.groupby(["Annee", "Nom_Commune"], as_index=False)[metric].sum()
-                                fig_ecc = px.line(df_evo, x="Annee", y=metric, color="Nom_Commune",
-                                                  color_discrete_sequence=px.colors.sequential.Greens_r,
-                                                  markers=True, title=f"Évolution des aides", height=400)
-                                st.plotly_chart(style(fig_ecc, 40), use_container_width=True)
+                                # AIDE AJOUTÉE ICI 👇
+                                st.markdown(
+                                    f"##### Classement des communes - {year_caf}",
+                                    help="Volume total pour l'indicateur sélectionné. Permet d'identifier rapidement les communes avec la plus forte concentration d'allocataires."
+                                )
+                                top_coms = df_yr.groupby("Nom_Commune", as_index=False)[metric].sum().sort_values(by=metric, ascending=True)
+                                fig_top = px.bar(top_coms, x=metric, y="Nom_Commune", orientation="h",
+                                    color_discrete_sequence=["#1e5631"], text_auto=".3s",
+                                    labels={"Nom_Commune": "", metric: label_metric}, height=400)
+                                st.plotly_chart(style(fig_top, 40), use_container_width=True)
 
-                            if "Quotient familial" in df_caf.columns:
+                            st.markdown("---")
+
+                            # 3. GRAPHIQUE : Profil comparatif des aides (Barres groupées)
+                            # AIDE AJOUTÉE ICI 👇
+                            st.markdown(
+                                "##### Profil comparatif des aides",
+                                help="Comparaison directe des trois aides principales (Insertion, Logement, Petite enfance). Utile pour comprendre la nature dominante des besoins (précarité vs famille) de chaque territoire."
+                            )
+                            aides_f = {"Foyers insertion": "Nombre foyers NDURINS", "Foyers alloc. log.": "Nombre foyers NDURAL", "Foyers PAJE": "Nombre foyers NDURPAJE"}
+                            aides_d = {k: v for k, v in aides_f.items() if v in df_yr.columns}
+
+                            if aides_d:
+                                bdata = df_yr.groupby("Nom_Commune", as_index=False)[list(aides_d.values())].sum()
+                                rename_dict = {v: k for k, v in aides_d.items()}
+                                bdata = bdata.rename(columns=rename_dict)
+                                
+                                bdata_long = bdata.melt(id_vars=["Nom_Commune"], value_vars=list(aides_d.keys()), var_name="Type d'aide", value_name="Nombre de foyers")
+                                
+                                fig_bar_comp = px.bar(bdata_long, x="Nombre de foyers", y="Type d'aide", color="Nom_Commune",
+                                    barmode="group", orientation="h", text_auto=".3s",
+                                    color_discrete_sequence=px.colors.sequential.Greens_r,
+                                    labels={"Nombre de foyers": "Foyers", "Type d'aide": ""}, height=400)
+                                
+                                fig_bar_comp.update_layout(
+                                    legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="left", x=0, title=""),
+                                    margin=dict(t=80, b=40, l=100),
+                                    yaxis={"categoryorder": "total ascending"}
+                                )
+                                st.plotly_chart(style(fig_bar_comp, 40), use_container_width=True)
+
                                 st.markdown("---")
-                                st.markdown("##### 👨‍👩‍👧 Structure par quotient familial")
-                                qf_data = df_yr.groupby(["Nom_Commune", "Quotient familial"], as_index=False)[metric].sum()
-                                if not qf_data.empty:
-                                    fig_qfcc = px.bar(qf_data, x="Quotient familial", y=metric, color="Nom_Commune", barmode="group",
-                                                      color_discrete_sequence=px.colors.sequential.Greens_r,
-                                                      labels={"Nom_Commune": "", metric: "Foyers / Montant"},
-                                                      title="Répartition par quotient familial", height=380)
-                                    fig_qfcc.update_layout(xaxis_tickangle=-30)
-                                    st.plotly_chart(style(fig_qfcc, 40), use_container_width=True)
+                            with st.expander(" Note méthodologique"):
+                                st.markdown("""
+                               **Comprendre les indicateurs généraux :**
+                                * **Foyers (NDUR - Nombre de Dossiers Unifiés Réels) :** Un dossier correspond à un foyer allocataire unique percevant au moins une aide de la CAF.
+                                * **Personnes couvertes :** Il s'agit du nombre total de personnes vivant dans ces foyers (l'allocataire, son conjoint éventuel et les personnes à charge, comme les enfants).
+                                * **Quotient Familial :** Indicateur de niveau de vie calculé par la CAF (revenus divisés par le nombre de parts du foyer). Il détermine l'éligibilité et le montant de nombreuses aides.
+                                
+                                **Les grandes familles d'aides analysées :**
+                                * **Toutes aides confondues (Global) :** Englobe l'ensemble des prestations légales versées par la CAF sur le territoire.
+                                * **Allocation logement (NDURAL) :** Aides destinées à réduire la dépense de loyer ou de mensualité d'emprunt (APL, ALF, ALS).
+                                * **Insertion sociale (NDURINS) :** Prestations visant à garantir un revenu minimum et à encourager l'activité (principalement le RSA, la Prime d'activité et l'AAH - Allocation aux Adultes Handicapés).
+                                * **PAJE (NDURPAJE) :** Prestation d'Accueil du Jeune Enfant. Regroupe les aides versées à la naissance ou l'adoption, ainsi que pour l'entretien et la garde des enfants en bas âge.
+                                * **Aide jeunes enfants (NDUREJ) :** Prestations liées à l'enfance et la jeunesse au sens plus large (Allocations familiales, allocation de rentrée scolaire, etc.).
+                                """)
 
+                                
     # ──────────────────────────────────────────────────────────────────────────
     # ONGLET ÉDUCATION - Effectifs étudiants
     # ──────────────────────────────────────────────────────────────────────────
@@ -3243,7 +3661,7 @@ if vue == "Solidarité et citoyenneté":
 
             if mode_sante == "Détail Communal" and not df_sf.empty:
                 st.markdown("---")
-                st.markdown("######  Classement des communes sélectionnées par nombre d'établissements")
+                st.markdown("###### 🏘️ Classement des communes sélectionnées par nombre d'établissements")
                 df_top_comm = (
                     df_sf.groupby("commune")
                         .size()
