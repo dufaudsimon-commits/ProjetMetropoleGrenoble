@@ -524,9 +524,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ──────────────────────────────────────────────────────────────────────────────
-# 6. PAGE D'ACCUEIL (nouvelle version)
-# ──────────────────────────────────────────────────────────────────────────────
+
 # ──────────────────────────────────────────────────────────────────────────────
 # 6. PAGE D'ACCUEIL (Version avec Objectif agrandi)
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1561,6 +1559,9 @@ if vue == "Démographie":
 # ==============================================================================
 # ONGLET 3 - MOBILITÉS
 # ==============================================================================
+# ==============================================================================
+# ONGLET 3 - MOBILITÉS
+# ==============================================================================
 if vue == "Démographie":
     with tab3:
         
@@ -2024,7 +2025,6 @@ if vue == "Démographie":
                     with st.expander("💡 Comment interpréter ce graphique ?"):
                         st.write("Chaque barre vaut 100% : compare la composition des CSP entre métropoles, indépendamment de leur taille.")
                     
-
 # ==============================================================================
 # ONGLET 5 - Population active 25-54 ans
 # ==============================================================================
@@ -2187,7 +2187,7 @@ if vue == "Démographie":
                                 f"{entities_csp[1]['name']} (Eff.)": [int(v2[c]) for c in sel_cats],
                                 "Indice spécialisation": [round(spec[c], 1) for c in sel_cats],
                             })
-                            st.dataframe(table_df, use_container_width=True)
+                            st.dataframe(table_df, use_container_width=True) 
 # ==============================================================================
 # SOLIDARITÉ & CITOYENNETÉ
 # ==============================================================================
@@ -3491,3 +3491,4 @@ if vue == "Solidarité et citoyenneté":
                                               title="Profil normalisé (0–100 dans la métropole)", paper_bgcolor="rgba(0,0,0,0)",
                                               legend=dict(orientation="h", y=-0.1))
                         st.plotly_chart(fig_rad, use_container_width=True)
+ 
