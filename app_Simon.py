@@ -2027,11 +2027,11 @@ if vue == "Démographie":
             }
 
             TAILLES = {
-                "1 pers.":     (1, "1pers"),
-                "2 pers.":     (2, "2pers"),
-                "3 pers.":     (3, "3pers"),
-                "4 pers.":     (4, "4pers"),
-                "5 pers.":     (5, "5pers"),
+                "1 pers.":      (1, "1pers"),
+                "2 pers.":      (2, "2pers"),
+                "3 pers.":      (3, "3pers"),
+                "4 pers.":      (4, "4pers"),
+                "5 pers.":      (5, "5pers"),
                 "6 pers. et +": (6, "6pers_ouplus"),
             }
 
@@ -2040,43 +2040,56 @@ if vue == "Démographie":
                 cols = [c for c in df_ent.columns if any(k in c for k in mots_cles)]
                 return df_ent[cols].sum().sum() if cols else 0
 
-            def nb_menages_total(df_ent_csp):
+            def nb_menages_depuis_age(df_ent_age):
                 """
-                Nombre total de ménages depuis le fichier CSP×taille.
-                On somme toutes les colonnes Menages_Npers_* pour obtenir
-                le nombre de ménages recensés (chaque ménage est compté une fois).
+                Nombre total de ménages depuis le fichier Menage_age_situation.
+                On somme toutes les colonnes Menages_* en excluant CODGEO et LIBGEO.
+                Chaque cellule représente un nombre de ménages d'un type donné :
+                la somme donne le total des ménages du territoire.
                 """
-                total = 0
-                for label, (nb_pers, slug) in TAILLES.items():
-                    cols = [c for c in df_ent_csp.columns if slug in c]
-                    total += df_ent_csp[cols].sum().sum() if cols else 0
-                return int(total)
+                cols_men = [
+                    c for c in df_ent_age.columns
+                    if c.startswith("Menages_") and c not in ("CODGEO", "LIBGEO")
+                ]
+                return int(df_ent_age[cols_men].sum().sum()) if cols_men else 0
 
-            def nb_personnes_total(df_ent_csp):
+            def get_population_menages(ent):
                 """
-                Nombre total de personnes dans les ménages depuis le fichier CSP×taille.
-                Formule : Σ(nb_ménages_Npers × N).
-                Pour 6 pers. et +, on utilise 6 comme valeur plancher (borne inférieure).
-                """
-                total = 0
-                for label, (nb_pers, slug) in TAILLES.items():
-                    cols = [c for c in df_ent_csp.columns if slug in c]
-                    nb = df_ent_csp[cols].sum().sum() if cols else 0
-                    total += nb * nb_pers
-                return int(total)
+                Retourne la population municipale 2022 depuis df_gen
+                (Donnees_generales_comparatives.csv) pour calculer le ratio
+                personnes/ménage.
 
-            def taille_moyenne_menage(df_ent_csp):
+                - Métropoles  : epci_val() → ligne EPCI du df_gen
+                - Communes    : commune_val() → ligne commune du df_gen
+                  (disponible uniquement pour les communes de Grenoble)
+
+                On utilise df_gen comme source unique de population car c'est
+                le fichier de référence cohérent avec le fichier ménages.
                 """
-                Taille moyenne = nb_personnes_total / nb_menages_total.
-                Retourne (taille_moyenne, nb_menages).
-                """
-                nb_men = nb_menages_total(df_ent_csp)
-                nb_pers = nb_personnes_total(df_ent_csp)
-                if nb_men == 0:
-                    return np.nan, 0
-                return nb_pers / nb_men, nb_men
+                if mode_men == "Comparaison Métropoles":
+                    return epci_val(ent, "population_2022")
+                else:
+                    # commune_val est définie dans l'onglet 1 mais accessible
+                    # car les fonctions Python sont dans le même scope d'exécution
+                    if df_gen is None:
+                        return np.nan
+                    comm_norm = normalize_name(ent)
+                    geo = df_gen["territoire"].astype(str).str.extract(
+                        r"^(Commune|EPCI)\s*:\s*(.*?)\s*\(\d+\)\s*$"
+                    )
+                    mask = (geo[0] == "Commune") & (geo[1].apply(normalize_name) == comm_norm)
+                    rows_g = df_gen[mask]
+                    if rows_g.empty:
+                        return np.nan
+                    v = rows_g.iloc[0].get("population_2022", np.nan)
+                    return float(v) if pd.notna(v) else np.nan
 
             def distrib_taille(df_ent_csp):
+                """
+                Distribution par taille de ménage depuis le fichier CSP×taille.
+                Les colonnes Menages_Npers_* donnent le nombre de ménages
+                de taille N pour chaque CSP. On les somme toutes par taille.
+                """
                 rows = []
                 for label, (nb_pers, slug) in TAILLES.items():
                     cols = [c for c in df_ent_csp.columns if slug in c]
@@ -2106,7 +2119,6 @@ if vue == "Démographie":
             with st.container():
                 filter_bar("Filtres - Ménages")
 
-                # Ligne 1 : Niveau géographique
                 col_geo_label, col_geo_options = st.columns([1, 3])
                 with col_geo_label:
                     st.markdown(
@@ -2120,7 +2132,6 @@ if vue == "Démographie":
                         help="Comparez les métropoles entre elles, ou analysez les communes de Grenoble.",
                     )
 
-                # Ligne 2 : Sélection territoire (pleine largeur)
                 if mode_men == "Détail Communal (Grenoble)":
                     sel_communes_men = st.multiselect(
                         "Communes de Grenoble",
@@ -2138,7 +2149,6 @@ if vue == "Démographie":
                     )
                     selection_men = sel_metros_men
 
-                # Ligne 3 : Thématique
                 theme_men = st.selectbox(
                     "Thématique d'analyse",
                     ["👨‍👩‍👧 Type & taille de ménage", "🧑‍💼 CSP du chef de ménage"],
@@ -2168,23 +2178,6 @@ if vue == "Démographie":
                     return df_men_csp[df_men_csp["metropole"] == ent]
                 return df_men_csp[df_men_csp["LIBGEO"] == ent]
 
-            # ── Population par territoire (pour ratio pers/ménage) ────────────
-            def get_population(ent):
-                """
-                Retourne la population municipale pour calculer le ratio
-                personnes/ménage. Pour les métropoles on utilise epci_val,
-                pour les communes on utilise df_pop (tranche d'âge).
-                """
-                if mode_men == "Comparaison Métropoles":
-                    return epci_val(ent, "population_2022")
-                else:
-                    if df_pop is not None:
-                        df_c = df_pop[(df_pop["LIBELLE"] == ent) & (df_pop["annee"] == 2022)]
-                        age_cols = [c for c in df_pop.columns if "ageq_rec" in c]
-                        if not df_c.empty:
-                            return float(df_c[age_cols].sum().sum())
-                    return np.nan
-
             PALETTE_TYPE = ["#1B4332", "#2D6A4F", "#40916C", "#74C69D", "#D8F3DC"]
             PALETTE_CSP  = ["#081C15", "#1B4332", "#2D6A4F", "#40916C",
                             "#52B788", "#74C69D", "#B7E4C7"]
@@ -2205,17 +2198,20 @@ if vue == "Démographie":
                 st.markdown(
                     "#### Aperçu global des ménages",
                     help=(
-                        "**Nombre de ménages** : total des foyers ordinaires recensés (RP 2022), "
-                        "calculé en sommant toutes les colonnes du fichier CSP × taille.\n\n"
-                        "**Personnes par ménage** : ratio Population 2022 / Nombre de ménages. "
-                        "La valeur nationale est d'environ 2,2 personnes par ménage en France."
+                        "**Nombre de ménages** : somme de toutes les colonnes Menages_* "
+                        "du fichier Menage_age_situation (RP 2022). Chaque colonne représente "
+                        "un type de ménage dans une tranche d'âge donnée.\n\n"
+                        "**Personnes par ménage** : Population 2022 (source : "
+                        "Donnees_generales_comparatives.csv) divisée par le nombre de ménages. "
+                        "Pour une métropole, c'est la population EPCI / total des ménages des "
+                        "communes de la métropole. La valeur nationale est d'environ 2,2 pers./ménage."
                     ),
                 )
                 kpi_cols = st.columns(len(selection_men))
                 for i, ent in enumerate(selection_men):
-                    df_csp_ent = get_df_csp(ent)
-                    nb_men = nb_menages_total(df_csp_ent)
-                    pop = get_population(ent)
+                    df_age_ent = get_df_age(ent)
+                    nb_men = nb_menages_depuis_age(df_age_ent)
+                    pop = get_population_menages(ent)
                     if nb_men > 0 and not np.isnan(pop):
                         ratio = pop / nb_men
                         ratio_str = f"{ratio:.2f} pers./ménage"
@@ -2238,7 +2234,8 @@ if vue == "Démographie":
                 st.markdown(
                     "##### Distribution par taille de ménage (%)",
                     help=(
-                        "Répartition des ménages selon leur nombre de personnes. "
+                        "Répartition des ménages selon leur nombre de personnes, "
+                        "calculée depuis le fichier CSP×taille (colonnes Menages_Npers_*). "
                         "En France, environ 37% des ménages sont des personnes seules (1 pers.), "
                         "et 33% sont des couples sans enfant (2 pers.). "
                         "Une forte part de grands ménages (4+ pers.) indique un profil familial."
@@ -2356,10 +2353,11 @@ if vue == "Démographie":
                 rows_csp = []
                 kpi_csp = []
                 for ent in selection_men:
-                    df_csp_ent = get_df_csp(ent)
+                    df_age_ent  = get_df_age(ent)
+                    df_csp_ent  = get_df_csp(ent)
                     nb_total_csp = df_csp_ent[cols_csp].sum().sum()
-                    nb_men = nb_menages_total(df_csp_ent)
-                    pop = get_population(ent)
+                    nb_men = nb_menages_depuis_age(df_age_ent)
+                    pop = get_population_menages(ent)
                     ratio_str = (
                         f"{pop / nb_men:.2f} pers./ménage"
                         if nb_men > 0 and not np.isnan(pop)
@@ -2393,10 +2391,11 @@ if vue == "Démographie":
                     help=(
                         "La **CSP du chef de ménage** est celle de la personne de référence "
                         "du foyer. Source : INSEE RP 2022.\n\n"
-                        "**Nombre de ménages** : total des foyers recensés.\n\n"
+                        "**Nombre de ménages** : total des foyers du fichier Menage_age_situation.\n\n"
                         "**CSP dominante** : la catégorie qui rassemble le plus grand nombre "
                         "de ménages dans le territoire sélectionné.\n\n"
-                        "**Personnes par ménage** : ratio Population 2022 / Nombre de ménages."
+                        "**Personnes par ménage** : Population 2022 (Donnees_generales_comparatives) "
+                        "/ Nombre de ménages (Menage_age_situation)."
                     ),
                 )
                 kpi_cols = st.columns(len(kpi_csp))
@@ -2479,9 +2478,10 @@ if vue == "Démographie":
                         "##### Taille moyenne des ménages par CSP",
                         help=(
                             "Compare la taille moyenne des ménages selon la CSP du chef de ménage. "
-                            "Calcul : pour chaque CSP, Σ(nb_ménages_Npers × N) / Σ(nb_ménages_Npers). "
-                            "Les ménages de cadres et professions intermédiaires ont souvent plus d'enfants "
-                            "que les ménages d'employés, qui vivent davantage seuls."
+                            "Calcul depuis le fichier CSP×taille : "
+                            "pour chaque CSP, Σ(nb_ménages_Npers × N) / Σ(nb_ménages_Npers). "
+                            "Les ménages de cadres et professions intermédiaires ont souvent plus "
+                            "d'enfants que les ménages d'employés, qui vivent davantage seuls."
                         ),
                     )
                     rows_taille_csp = []

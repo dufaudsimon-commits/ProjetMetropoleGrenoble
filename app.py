@@ -2013,229 +2013,564 @@ if vue == "Démographie":
                     """)
                     
 # ==============================================================================
-# ONGLET 4 - MÉNAGES
+# ONGLET 4 — MÉNAGES
 # ==============================================================================
 if vue == "Démographie":
     with tab4:
-        sous1, sous2 = st.tabs(["👨‍👩‍👧 Type & taille de ménage", "🧑‍💼 CSP des ménages"])
 
-        with sous1:
-            if df_men_age is None:
-                st.info("📂 Fichier `Menage_age_situation_clean.csv` introuvable.")
-            else:
-                # ── Bandeau filtres ──────────────────────────────────────────
-                with st.container():
-                    
-                    filter_bar("Filtres - Type & taille de ménage")
-                    fm1, fm2 = st.columns([1, 3])
-                    with fm1:
-                        filter_row_label("Niveau géographique")
-                    with fm2:
-                        mode_men = st.radio(
-                            "",
-                            ["Comparaison Métropoles", "Détail Communal"],
-                            key="men_mode", horizontal=True,
-                            help="Choisissez une vue globale métropole ou un détail communal.",
-                        )
-                    metro_men = st.selectbox("Métropole parente", TOUTES, key="m_men",
-                                             help="Métropole de référence pour les données ménages.")
-                    if mode_men == "Détail Communal":
-                        cmns_men = sorted(COMMUNES.get(metro_men, []))
-                        sel_communes_men = st.multiselect(
-                            "Communes", cmns_men, default=cmns_men[:2], key="men_communes",
-                            help="Communes sélectionnées pour la vue détail.",
-                        )
-                    st.markdown('</div>', unsafe_allow_html=True)
+        data_men_ok = (df_men_age is not None) and (df_men_csp is not None)
+        if not data_men_ok:
+            st.info("📂 Fichiers de données sur les ménages introuvables.")
+        else:
+            # ── Définition des regroupements ──────────────────────────────────
+            TYPE_GROUPES = {
+                "Personne seule":        lambda cols: [c for c in cols if "pers_seule" in c],
+                "Couple sans enfant":    lambda cols: [c for c in cols if "cpl_sans_enf" in c],
+                "Couple avec enfant(s)": lambda cols: [c for c in cols if "cpl_avec_enfant" in c or "cpl_1enf" in c],
+                "Famille monoparentale": lambda cols: [c for c in cols if "fam_monoparentale" in c],
+                "Autre ménage":          lambda cols: [c for c in cols if "autre_menage" in c],
+            }
 
-                st.markdown("---")
+            CSP_GROUPES = {
+                "Agriculteurs":              ["agriculteurs"],
+                "Artisans / Commerçants /\nChefs d'entreprise": ["artisans", "commercants", "chef_entreprise"],
+                "Cadres & Prof.\nintellectuelles sup.": [
+                    "professions_liberales", "cadre_admin_fonction_pub",
+                    "prof_scientifique_sup", "info_art_spectacle",
+                    "cadre_commercial", "ingenieur_cadre_tech",
+                ],
+                "Professions\nintermédiaires": [
+                    "prof_enseignement", "prof_inter_sante_social",
+                    "prof_inter_fonction_pub", "prof_inter_admin_com",
+                    "technicien", "agent_maitrise",
+                ],
+                "Employés": [
+                    "emp_fonction_pub", "securite_defense",
+                    "emp_admin_entreprise", "emp_commerce", "service_particulier",
+                ],
+                "Ouvriers": [
+                    "ouvrier_qualif_indus", "ouvrier_qualif_artisanal",
+                    "conducteur_transport", "cariste_magasinier",
+                    "ouvrier_peu_qualif_indus", "ouvrier_peu_qualif_artisanal",
+                    "ouvrier_agricole",
+                ],
+                "Retraités /\nInactifs": ["retraites_inactifs", "chomeur_jamais_travaille"],
+            }
 
-                cols_m = [c for c in df_men_age.columns if c.startswith("Menages_")]
-                TYPE_GROUPES = {
-                    "Personne seule":     [c for c in cols_m if "pers_seule" in c],
-                    "Couple sans enfant": [c for c in cols_m if "cpl_sans_enf" in c],
-                    "Couple avec enfant": [c for c in cols_m if "cpl_avec_enfant" in c or "cpl_1enf" in c],
-                    "Fam. mono. (mère)":  [c for c in cols_m if "mere_enf" in c],
-                    "Fam. mono. (père)":  [c for c in cols_m if "pere_enf" in c],
-                    "Autre ménage":       [c for c in cols_m if "autre_menage" in c],
-                }
-                AGE_LABELS = {
-                    "< 20 ans": "moins20ans", "20–24 ans": "20_24ans", "25–39 ans": "25_39ans",
-                    "40–54 ans": "40_54ans", "55–64 ans": "55_64ans",
-                    "65–79 ans": "65_79ans", "80 ans +": "plus80ans",
-                }
+            TAILLES = {
+                "1 pers.":      (1, "1pers"),
+                "2 pers.":      (2, "2pers"),
+                "3 pers.":      (3, "3pers"),
+                "4 pers.":      (4, "4pers"),
+                "5 pers.":      (5, "5pers"),
+                "6 pers. et +": (6, "6pers_ouplus"),
+            }
 
+            # ── Fonctions utilitaires ────────────────────────────────────────
+            def somme_colonnes(df_ent, mots_cles):
+                cols = [c for c in df_ent.columns if any(k in c for k in mots_cles)]
+                return df_ent[cols].sum().sum() if cols else 0
+
+            def nb_menages_depuis_age(df_ent_age):
+                """
+                Nombre total de ménages depuis le fichier Menage_age_situation.
+                On somme toutes les colonnes Menages_* en excluant CODGEO et LIBGEO.
+                Chaque cellule représente un nombre de ménages d'un type donné :
+                la somme donne le total des ménages du territoire.
+                """
+                cols_men = [
+                    c for c in df_ent_age.columns
+                    if c.startswith("Menages_") and c not in ("CODGEO", "LIBGEO")
+                ]
+                return int(df_ent_age[cols_men].sum().sum()) if cols_men else 0
+
+            def get_population_menages(ent):
+                """
+                Retourne la population municipale 2022 depuis df_gen
+                (Donnees_generales_comparatives.csv) pour calculer le ratio
+                personnes/ménage.
+
+                - Métropoles  : epci_val() → ligne EPCI du df_gen
+                - Communes    : commune_val() → ligne commune du df_gen
+                  (disponible uniquement pour les communes de Grenoble)
+
+                On utilise df_gen comme source unique de population car c'est
+                le fichier de référence cohérent avec le fichier ménages.
+                """
                 if mode_men == "Comparaison Métropoles":
-                    df_men_m = df_men_age[df_men_age["metropole"] == metro_men]
-                    nb_men = df_men_m[cols_m].sum().sum() if not df_men_m.empty else np.nan
-                    pop_m  = np.nan
-                    if df_pop is not None:
-                        dm2 = df_pop[(df_pop["metropole"] == metro_men) & (df_pop["annee"] == 2022)]
-                        if not dm2.empty:
-                            pop_m = dm2[[c for c in dm2.columns if "ageq_rec" in c]].sum().sum()
-                    taille = (pop_m / nb_men) if (not np.isnan(nb_men) and nb_men > 0) else np.nan
-                    st.subheader("📌 Indicateurs clés des ménages", help="Volume total de ménages et taille moyenne.")
-                    k1, k2 = st.columns(2)
-                    k1.metric(f"Nombre de ménages - {metro_men}", fmt(nb_men))
-                    k2.metric("Taille moyenne du ménage", f"{taille:.2f} pers." if not np.isnan(taille) else "N/D")
-                    st.markdown("---")
-                    totaux = {lbl: df_men_m[[c for c in cols if c in df_men_m.columns]].sum().sum()
-                              for lbl, cols in TYPE_GROUPES.items()}
-                    df_t = pd.DataFrame(list(totaux.items()), columns=["Type", "Ménages"])
-                    df_t = df_t[df_t["Ménages"] > 0].sort_values("Ménages", ascending=False)
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        st.markdown(f"##### Types de ménages - {metro_men}")
-                        fig_t = px.bar(df_t, x="Ménages", y="Type", orientation="h",
-                                       color_discrete_sequence=[COULEURS[metro_men]], text_auto=".0f")
-                        fig_t.update_layout(yaxis={"autorange": "reversed"}, yaxis_title="",
-                                            xaxis_title="Ménages")
-                        st.plotly_chart(style(fig_t), use_container_width=True)
-                    with c2:
-                        st.markdown("##### Répartition")
-                        fig_pie = px.pie(df_t, names="Type", values="Ménages", hole=0.42,
-                                         color_discrete_sequence=px.colors.sequential.Greens_r)
-                        st.plotly_chart(style(fig_pie), use_container_width=True)
-                    with st.expander("💡 Comment interpréter ces deux graphiques ?"):
-                        st.write("Le bar chart classe les types en volume ; le camembert indique leur poids relatif dans l'ensemble des ménages.")
-                    st.markdown("---")
-                    st.markdown("##### Composition par âge du référent du ménage")
-                    rows_a = []
-                    for age_l, age_k in AGE_LABELS.items():
-                        for type_l, tcols in TYPE_GROUPES.items():
-                            inter = [c for c in tcols if age_k in c and c in df_men_m.columns]
-                            val = df_men_m[inter].sum().sum() if inter else 0
-                            if val > 0:
-                                rows_a.append({"Âge référent": age_l, "Type": type_l, "Ménages": val})
-                    if rows_a:
-                        fig_a = px.bar(pd.DataFrame(rows_a), x="Âge référent", y="Ménages",
-                                       color="Type", barmode="stack",
-                                       color_discrete_sequence=px.colors.sequential.Greens_r)
-                        fig_a.update_layout(legend=dict(orientation="h", y=1.1, font_size=10))
-                        st.plotly_chart(style(fig_a, 50), use_container_width=True)
-                        with st.expander("💡 Comment interpréter ce graphique ?"):
-                            st.write("Chaque barre représente un âge du référent ; les couleurs montrent quels types de ménages dominent selon l'âge.")
-
+                    return epci_val(ent, "population_2022")
                 else:
-                    # ── Vue Détail Communal ──────────────────────────────────
-                    communes_men = sel_communes_men if sel_communes_men else []
-                    if not communes_men:
-                        st.info("Sélectionnez au moins une commune.")
-                    else:
-                        rows_cc = []
-                        for comm in communes_men:
-                            df_cc = df_men_age[df_men_age["LIBGEO"] == comm]
-                            for lbl, cols in TYPE_GROUPES.items():
-                                valid = [c for c in cols if c in df_cc.columns]
-                                rows_cc.append({"Commune": comm, "Type": lbl,
-                                                "Ménages": df_cc[valid].sum().sum() if valid else 0})
-                        df_ccp = pd.DataFrame(rows_cc)
-                        if len(communes_men) == 1:
-                            comm = communes_men[0]
-                            df_single = df_ccp[df_ccp["Ménages"] > 0].sort_values("Ménages", ascending=False)
-                            c1, c2 = st.columns(2)
-                            with c1:
-                                st.markdown(f"##### Types de ménages - {comm}")
-                                fig_t = px.bar(df_single, x="Ménages", y="Type", orientation="h",
-                                               color_discrete_sequence=[COULEURS.get(metro_men, "#2D6A4F")],
-                                               text_auto=".0f")
-                                fig_t.update_layout(yaxis={"autorange": "reversed"}, yaxis_title="")
-                                st.plotly_chart(style(fig_t), use_container_width=True)
-                            with c2:
-                                st.markdown("##### Répartition")
-                                fig_pie = px.pie(df_single, names="Type", values="Ménages", hole=0.42,
-                                                 color_discrete_sequence=px.colors.sequential.Greens_r)
-                                st.plotly_chart(style(fig_pie), use_container_width=True)
-                        elif df_ccp["Ménages"].sum() > 0:
-                            st.markdown(f"##### Comparaison - {' · '.join(communes_men)}")
-                            fig_ccp = px.bar(df_ccp, x="Type", y="Ménages", color="Commune",
-                                             barmode="group",
-                                             color_discrete_sequence=["#2D6A4F", "#95D5B2", "#1A6FA3",
-                                                                       "#C45B2A", "#D4A017"])
-                            fig_ccp.update_layout(xaxis_tickangle=-20, legend=dict(orientation="h"))
-                            st.plotly_chart(style(fig_ccp), use_container_width=True)
-                            with st.expander("💡 Comment interpréter ce graphique ?"):
-                                st.write("Pour chaque type de ménage, compare la hauteur des barres pour voir les écarts entre communes.")
-                        else:
-                            st.info("Données non disponibles pour ces communes.")
+                    # commune_val est définie dans l'onglet 1 mais accessible
+                    # car les fonctions Python sont dans le même scope d'exécution
+                    if df_gen is None:
+                        return np.nan
+                    comm_norm = normalize_name(ent)
+                    geo = df_gen["territoire"].astype(str).str.extract(
+                        r"^(Commune|EPCI)\s*:\s*(.*?)\s*\(\d+\)\s*$"
+                    )
+                    mask = (geo[0] == "Commune") & (geo[1].apply(normalize_name) == comm_norm)
+                    rows_g = df_gen[mask]
+                    if rows_g.empty:
+                        return np.nan
+                    v = rows_g.iloc[0].get("population_2022", np.nan)
+                    return float(v) if pd.notna(v) else np.nan
 
-        with sous2:
-            if df_men_csp is None:
-                st.info("📂 Fichier `Menages_csp_nbpers_clean.csv` introuvable.")
-            else:
-                # ── Bandeau filtres ──────────────────────────────────────────
-                with st.container():
-                    
-                    filter_bar("Filtres - CSP des ménages")
-                    fc1, fc2 = st.columns([2, 2])
-                    with fc1:
-                        metro_csp_m = st.selectbox("Métropole", TOUTES, key="m_csp",
-                                                   help="Métropole analysée pour la répartition des ménages par CSP.")
-                    with fc2:
-                        comp_csp = st.checkbox("Comparer toutes les métropoles (%)", key="comp_csp",
-                                               help="Active une vue en pourcentage pour comparer les structures entre métropoles.")
-                    st.markdown('</div>', unsafe_allow_html=True)
+            def distrib_taille(df_ent_csp):
+                """
+                Distribution par taille de ménage depuis le fichier CSP×taille.
+                Les colonnes Menages_Npers_* donnent le nombre de ménages
+                de taille N pour chaque CSP. On les somme toutes par taille.
+                """
+                rows = []
+                for label, (nb_pers, slug) in TAILLES.items():
+                    cols = [c for c in df_ent_csp.columns if slug in c]
+                    nb = df_ent_csp[cols].sum().sum() if cols else 0
+                    rows.append({"Taille": label, "Ménages": int(nb)})
+                df_t = pd.DataFrame(rows)
+                total = df_t["Ménages"].sum()
+                df_t["Part (%)"] = df_t["Ménages"] / total * 100 if total > 0 else 0
+                return df_t
+
+            def render_kpi_card(title, value, subtitle, accent_color="#1a7a4a"):
+                return f"""
+                <div style='display:flex;flex-direction:row;align-items:stretch;border-radius:8px;
+                    overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.1);background:#fff;
+                    min-height:80px;border-left:6px solid {accent_color};margin-bottom:10px;'>
+                    <div style='padding:10px 16px;display:flex;flex-direction:column;
+                        justify-content:center;width:100%;'>
+                        <div style='font-size:11px;font-weight:700;letter-spacing:0.08em;
+                            color:#666;text-transform:uppercase;'>{title}</div>
+                        <div style='font-size:24px;font-weight:bold;color:#111;margin:4px 0;'>{value}</div>
+                        <div style='color:{accent_color};font-size:11px;font-weight:700;
+                            text-transform:uppercase;letter-spacing:0.05em;'>{subtitle}</div>
+                    </div>
+                </div>"""
+
+            # ── Bandeau filtres ──────────────────────────────────────────────
+            with st.container():
+                filter_bar("Filtres - Ménages")
+
+                col_geo_label, col_geo_options = st.columns([1, 3])
+                with col_geo_label:
+                    st.markdown(
+                        "<div style='padding-top:8px;font-weight:600;font-size:14px;'>"
+                        "Niveau géographique</div>", unsafe_allow_html=True,
+                    )
+                with col_geo_options:
+                    mode_men = st.radio(
+                        "", ["Comparaison Métropoles", "Détail Communal (Grenoble)"],
+                        key="men_mode", horizontal=True,
+                        help="Comparez les métropoles entre elles, ou analysez les communes de Grenoble.",
+                    )
+
+                if mode_men == "Détail Communal (Grenoble)":
+                    sel_communes_men = st.multiselect(
+                        "Communes de Grenoble",
+                        sorted(COMMUNES["Grenoble"]),
+                        default=sorted(COMMUNES["Grenoble"])[:3],
+                        key="men_communes",
+                        help="Communes de la métropole grenobloise à comparer.",
+                    )
+                    selection_men = sel_communes_men
+                else:
+                    sel_metros_men = st.multiselect(
+                        "Métropoles à comparer", TOUTES, default=TOUTES[:3],
+                        key="men_metros",
+                        help="Sélectionnez les métropoles à comparer.",
+                    )
+                    selection_men = sel_metros_men
+
+                theme_men = st.selectbox(
+                    "Thématique d'analyse",
+                    ["👨‍👩‍👧 Type & taille de ménage", "🧑‍💼 CSP du chef de ménage"],
+                    key="theme_men",
+                    help=(
+                        "**Type & taille** : Composition familiale (personne seule, couple, "
+                        "famille monoparentale…) et taille moyenne du ménage.\n\n"
+                        "**CSP** : Catégorie socio-professionnelle de la personne de référence "
+                        "du foyer, croisée avec la taille du ménage."
+                    ),
+                )
+
+            st.markdown("---")
+
+            if not selection_men:
+                st.warning("⚠️ Sélectionnez au moins un territoire.")
+                st.stop()
+
+            # ── Extraction des données selon le mode ─────────────────────────
+            def get_df_age(ent):
+                if mode_men == "Comparaison Métropoles":
+                    return df_men_age[df_men_age["metropole"] == ent]
+                return df_men_age[df_men_age["LIBGEO"] == ent]
+
+            def get_df_csp(ent):
+                if mode_men == "Comparaison Métropoles":
+                    return df_men_csp[df_men_csp["metropole"] == ent]
+                return df_men_csp[df_men_csp["LIBGEO"] == ent]
+
+            PALETTE_TYPE = ["#1B4332", "#2D6A4F", "#40916C", "#74C69D", "#D8F3DC"]
+            PALETTE_CSP  = ["#081C15", "#1B4332", "#2D6A4F", "#40916C",
+                            "#52B788", "#74C69D", "#B7E4C7"]
+            COLOR_ENT = (
+                [COULEURS.get(e, "#333") for e in selection_men]
+                if mode_men == "Comparaison Métropoles"
+                else ["#081C15","#2D6A4F","#40916C","#74C69D","#95D5B2",
+                      "#B7E4C7","#1A6FA3","#C45B2A","#7B3FA0"]
+            )
+
+            # ════════════════════════════════════════════════════════════════
+            # THÈME 1 — TYPE & TAILLE DE MÉNAGE
+            # ════════════════════════════════════════════════════════════════
+            if "Type" in theme_men:
+                cols_age = [c for c in df_men_age.columns if c.startswith("Menages_")]
+
+                # ── KPIs ────────────────────────────────────────────────────
+                st.markdown(
+                    "#### Aperçu global des ménages",
+                    help=(
+                        "**Nombre de ménages** : somme de toutes les colonnes Menages_* "
+                        "du fichier Menage_age_situation (RP 2022). Chaque colonne représente "
+                        "un type de ménage dans une tranche d'âge donnée.\n\n"
+                        "**Personnes par ménage** : Population 2022 (source : "
+                        "Donnees_generales_comparatives.csv) divisée par le nombre de ménages. "
+                        "Pour une métropole, c'est la population EPCI / total des ménages des "
+                        "communes de la métropole. La valeur nationale est d'environ 2,2 pers./ménage."
+                    ),
+                )
+                kpi_cols = st.columns(len(selection_men))
+                for i, ent in enumerate(selection_men):
+                    df_age_ent = get_df_age(ent)
+                    nb_men = nb_menages_depuis_age(df_age_ent)
+                    pop = get_population_menages(ent)
+                    if nb_men > 0 and not np.isnan(pop):
+                        ratio = pop / nb_men
+                        ratio_str = f"{ratio:.2f} pers./ménage"
+                    else:
+                        ratio_str = "N/D"
+                    with kpi_cols[i]:
+                        st.markdown(
+                            render_kpi_card(
+                                ent,
+                                fmt(nb_men),
+                                ratio_str,
+                                COLOR_ENT[i % len(COLOR_ENT)],
+                            ),
+                            unsafe_allow_html=True,
+                        )
 
                 st.markdown("---")
 
-                cols_csp_m = [c for c in df_men_csp.columns if c.startswith("Menages_")]
-                CSP_GROUPES = {
-                    "Agriculteurs":           ["agriculteurs"],
-                    "Artisans / Commerçants": ["artisans", "commercants", "chef_entreprise"],
-                    "Cadres & Prof. sup.":    ["professions_liberales", "cadre_admin", "prof_scientifique",
-                                               "ingenieur", "info_art", "cadre_commercial"],
-                    "Prof. intermédiaires":   ["prof_enseignement", "prof_inter", "technicien", "agent_maitrise"],
-                    "Employés":               ["emp_fonction", "emp_admin", "emp_commerce",
-                                               "service_particulier", "securite"],
-                    "Ouvriers":               ["ouvrier", "conducteur", "cariste"],
-                    "Inactifs / Retraités":   ["retraites_inactifs", "chomeur"],
-                }
+                # ── Graphique 1 : Distribution par taille ────────────────────
+                st.markdown(
+                    "##### Distribution par taille de ménage (%)",
+                    help=(
+                        "Répartition des ménages selon leur nombre de personnes, "
+                        "calculée depuis le fichier CSP×taille (colonnes Menages_Npers_*). "
+                        "En France, environ 37% des ménages sont des personnes seules (1 pers.), "
+                        "et 33% sont des couples sans enfant (2 pers.). "
+                        "Une forte part de grands ménages (4+ pers.) indique un profil familial."
+                    ),
+                )
+                rows_taille = []
+                for ent in selection_men:
+                    df_csp_ent = get_df_csp(ent)
+                    df_t = distrib_taille(df_csp_ent)
+                    df_t["Territoire"] = ent
+                    rows_taille.append(df_t)
+                df_taille_all = pd.concat(rows_taille, ignore_index=True) if rows_taille else pd.DataFrame()
 
-                def agg_csp_men(df_src):
-                    return {grp: df_src[[c for c in cols_csp_m if any(kw in c for kw in kws) and c in df_src.columns]].sum().sum()
-                            for grp, kws in CSP_GROUPES.items()}
+                if not df_taille_all.empty:
+                    fig_taille = px.bar(
+                        df_taille_all, x="Taille", y="Part (%)", color="Territoire",
+                        barmode="group", text_auto=".1f",
+                        color_discrete_sequence=COLOR_ENT,
+                        category_orders={"Taille": list(TAILLES.keys())},
+                        height=380,
+                    )
+                    fig_taille.update_traces(textposition="outside", textfont_size=9)
+                    fig_taille.update_layout(
+                        legend=dict(orientation="h", y=1.12, title=""),
+                        xaxis_title="Taille du ménage",
+                        yaxis_title="Part des ménages (%)",
+                        margin=dict(t=20),
+                    )
+                    st.plotly_chart(style(fig_taille), use_container_width=True)
 
-                if not comp_csp:
-                    df_csp_men = df_men_csp[df_men_csp["metropole"] == metro_csp_m]
-                    if df_csp_men.empty:
-                        st.warning(f"Aucune donnée CSP pour {metro_csp_m}.")
-                    else:
-                        tot_csp = agg_csp_men(df_csp_men)
-                        df_cp = pd.DataFrame(list(tot_csp.items()), columns=["CSP", "Ménages"])
-                        df_cp = df_cp[df_cp["Ménages"] > 0].sort_values("Ménages", ascending=False)
-                        c1, c2 = st.columns(2)
-                        with c1:
-                            st.markdown(f"##### Ménages par CSP - {metro_csp_m}")
-                            fig_cp = px.bar(df_cp, x="Ménages", y="CSP", orientation="h",
-                                            color="Ménages", color_continuous_scale="Greens", text_auto=".0f")
-                            fig_cp.update_layout(yaxis={"autorange": "reversed"},
-                                                 coloraxis_showscale=False, yaxis_title="")
-                            st.plotly_chart(style(fig_cp), use_container_width=True)
-                        with c2:
-                            st.markdown("##### Répartition")
-                            fig_cp2 = px.pie(df_cp, names="CSP", values="Ménages", hole=0.42,
-                                              color_discrete_sequence=px.colors.sequential.Greens_r)
-                            st.plotly_chart(style(fig_cp2), use_container_width=True)
-                        with st.expander("💡 Comment interpréter ces deux graphiques ?"):
-                            st.write("Le graphique en barres donne les volumes par CSP ; le camembert montre la structure relative des ménages.")
-                else:
-                    st.markdown("##### Part des grandes CSP - toutes métropoles (%)")
-                    rows_c = []
-                    for m in TOUTES:
-                        df_m_csp = df_men_csp[df_men_csp["metropole"] == m]
-                        tot = agg_csp_men(df_m_csp)
-                        total_m = sum(tot.values())
-                        for grp, val in tot.items():
-                            rows_c.append({"Métropole": m, "CSP": grp,
-                                           "Part (%)": (val / total_m * 100) if total_m > 0 else 0})
-                    fig_comp_csp = px.bar(pd.DataFrame(rows_c), x="Métropole", y="Part (%)",
-                                          color="CSP", barmode="stack",
-                                          color_discrete_sequence=px.colors.sequential.Greens_r)
-                    fig_comp_csp.update_layout(yaxis_title="Part des ménages (%)",
-                                               legend=dict(orientation="h", y=1.1, font_size=10))
-                    st.plotly_chart(style(fig_comp_csp, 50), use_container_width=True)
-                    with st.expander("💡 Comment interpréter ce graphique ?"):
-                        st.write("Chaque barre vaut 100% : compare la composition des CSP entre métropoles, indépendamment de leur taille.")
-                    
+                st.markdown("---")
+
+                # ── Graphiques 2 & 3 : Type de ménage ────────────────────────
+                c1, c2 = st.columns(2)
+                rows_type = []
+                for ent in selection_men:
+                    df_age_ent = get_df_age(ent)
+                    nb_total = df_age_ent[cols_age].sum().sum()
+                    for nom, fn in TYPE_GROUPES.items():
+                        cols_grp = fn(cols_age)
+                        val = df_age_ent[cols_grp].sum().sum() if cols_grp else 0
+                        rows_type.append({
+                            "Territoire": ent,
+                            "Type de ménage": nom,
+                            "Nombre": int(val),
+                            "Part (%)": val / nb_total * 100 if nb_total > 0 else 0,
+                        })
+                df_type = pd.DataFrame(rows_type)
+
+                with c1:
+                    st.markdown(
+                        "##### Composition des ménages — volume",
+                        help=(
+                            "Nombre absolu de foyers par type de composition familiale. "
+                            "Permet de dimensionner les besoins réels en logements adaptés "
+                            "(studios pour personnes seules, grands logements pour familles…)."
+                        ),
+                    )
+                    if not df_type.empty:
+                        fig_vol = px.bar(
+                            df_type, x="Type de ménage", y="Nombre", color="Territoire",
+                            barmode="group", color_discrete_sequence=COLOR_ENT, height=400,
+                        )
+                        fig_vol.update_layout(
+                            legend=dict(orientation="h", y=1.12, title=""),
+                            xaxis_title="", yaxis_title="Nombre de ménages",
+                            xaxis_tickangle=-15, margin=dict(t=20),
+                        )
+                        st.plotly_chart(style(fig_vol), use_container_width=True)
+
+                with c2:
+                    st.markdown(
+                        "##### Composition des ménages — structure (%)",
+                        help=(
+                            "Répartition en % pour chaque territoire (base 100%). "
+                            "Permet de comparer la 'sociologie' des territoires indépendamment "
+                            "de leur taille. Une forte part de *Personnes seules* caractérise "
+                            "souvent les centres-villes ; une forte part de *Couples avec enfants* "
+                            "indique un profil périurbain ou résidentiel familial."
+                        ),
+                    )
+                    if not df_type.empty:
+                        fig_pct = px.bar(
+                            df_type, x="Part (%)", y="Territoire", color="Type de ménage",
+                            orientation="h", barmode="stack", text_auto=".1f",
+                            color_discrete_sequence=PALETTE_TYPE, height=400,
+                        )
+                        fig_pct.update_traces(textposition="inside", textfont_size=9)
+                        fig_pct.update_layout(
+                            legend=dict(orientation="h", y=1.12, title=""),
+                            xaxis_title="Part des ménages (%)", yaxis_title="",
+                            margin=dict(t=20),
+                        )
+                        st.plotly_chart(style(fig_pct), use_container_width=True)
+
+                with st.expander("💡 Comment interpréter ces graphiques ?"):
+                    st.write(
+                        "**Distribution par taille (en haut)** : révèle si le territoire est "
+                        "plutôt composé de petits foyers (urbain, vieillissant) ou de grandes "
+                        "familles (périurbain). La moyenne nationale est d'environ **2,2 personnes "
+                        "par ménage**.\n\n"
+                        "**Volume (gauche)** : montre les besoins absolus en logements. "
+                        "Utile pour les politiques d'urbanisme.\n\n"
+                        "**Structure % (droite)** : neutralise l'effet taille pour comparer "
+                        "deux communes de populations très différentes sur un pied d'égalité."
+                    )
+
+            # ════════════════════════════════════════════════════════════════
+            # THÈME 2 — CSP DU CHEF DE MÉNAGE
+            # ════════════════════════════════════════════════════════════════
+            else:
+                cols_csp = [c for c in df_men_csp.columns if c.startswith("Menages_")]
+
+                # ── Agrégation CSP par territoire ────────────────────────────
+                rows_csp = []
+                kpi_csp = []
+                for ent in selection_men:
+                    df_age_ent  = get_df_age(ent)
+                    df_csp_ent  = get_df_csp(ent)
+                    nb_total_csp = df_csp_ent[cols_csp].sum().sum()
+                    nb_men = nb_menages_depuis_age(df_age_ent)
+                    pop = get_population_menages(ent)
+                    ratio_str = (
+                        f"{pop / nb_men:.2f} pers./ménage"
+                        if nb_men > 0 and not np.isnan(pop)
+                        else "N/D"
+                    )
+                    best_grp, best_val = "N/D", 0
+                    for nom_grp, mots in CSP_GROUPES.items():
+                        val = somme_colonnes(df_csp_ent, mots)
+                        pct = val / nb_total_csp * 100 if nb_total_csp > 0 else 0
+                        rows_csp.append({
+                            "Territoire": ent,
+                            "CSP": nom_grp,
+                            "Nombre": int(val),
+                            "Part (%)": round(pct, 1),
+                        })
+                        if val > best_val:
+                            best_val = val
+                            best_grp = nom_grp.replace("\n", " ")
+                    kpi_csp.append({
+                        "ent": ent,
+                        "total": nb_men,
+                        "dominante": best_grp,
+                        "ratio": ratio_str,
+                    })
+
+                df_csp_all = pd.DataFrame(rows_csp)
+
+                # ── KPIs ────────────────────────────────────────────────────
+                st.markdown(
+                    "#### Profil socio-professionnel des ménages",
+                    help=(
+                        "La **CSP du chef de ménage** est celle de la personne de référence "
+                        "du foyer. Source : INSEE RP 2022.\n\n"
+                        "**Nombre de ménages** : total des foyers du fichier Menage_age_situation.\n\n"
+                        "**CSP dominante** : la catégorie qui rassemble le plus grand nombre "
+                        "de ménages dans le territoire sélectionné.\n\n"
+                        "**Personnes par ménage** : Population 2022 (Donnees_generales_comparatives) "
+                        "/ Nombre de ménages (Menage_age_situation)."
+                    ),
+                )
+                kpi_cols = st.columns(len(kpi_csp))
+                for i, d in enumerate(kpi_csp):
+                    with kpi_cols[i]:
+                        st.markdown(
+                            render_kpi_card(
+                                d["ent"],
+                                fmt(d["total"]),
+                                f"Majorité : {d['dominante']}",
+                                COLOR_ENT[i % len(COLOR_ENT)],
+                            ),
+                            unsafe_allow_html=True,
+                        )
+
+                st.markdown("---")
+
+                # ── Graphique 1 : Structure CSP empilée ──────────────────────
+                st.markdown(
+                    "##### Structure socio-professionnelle des ménages (%)",
+                    help=(
+                        "Répartition des ménages par grande catégorie socio-professionnelle "
+                        "(base 100% par territoire). Permet de comparer le profil social "
+                        "de territoires de tailles très différentes.\n\n"
+                        "**Cadres & Prof. sup.** : ingénieurs, médecins, enseignants du supérieur, "
+                        "cadres admin. et commerciaux.\n"
+                        "**Prof. intermédiaires** : infirmiers, techniciens, enseignants du 1er/2nd degré.\n"
+                        "**Employés** : agents de la fonction publique, employés de commerce, "
+                        "agents de sécurité.\n"
+                        "**Retraités/Inactifs** : inclut les chômeurs n'ayant jamais travaillé."
+                    ),
+                )
+                if not df_csp_all.empty:
+                    ordre_csp = list(CSP_GROUPES.keys())
+                    fig_pct_csp = px.bar(
+                        df_csp_all, x="Territoire", y="Part (%)", color="CSP",
+                        barmode="stack", text_auto=".1f",
+                        color_discrete_sequence=PALETTE_CSP,
+                        category_orders={"CSP": ordre_csp},
+                        height=420,
+                    )
+                    fig_pct_csp.update_traces(textposition="inside", textfont_size=9)
+                    fig_pct_csp.update_layout(
+                        legend=dict(orientation="h", y=1.15, title=""),
+                        yaxis_title="Part des ménages (%)",
+                        xaxis_title="", margin=dict(t=20),
+                    )
+                    st.plotly_chart(style(fig_pct_csp), use_container_width=True)
+
+                st.markdown("---")
+
+                # ── Graphiques 2 & 3 ────────────────────────────────────────
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.markdown(
+                        "##### Volume par CSP (nombre de ménages)",
+                        help=(
+                            "Nombre absolu de ménages par catégorie. "
+                            "Utile pour estimer les besoins en services (ex : nombre de "
+                            "ménages de retraités → besoins en Ehpad, transports adaptés)."
+                        ),
+                    )
+                    if not df_csp_all.empty:
+                        fig_vol_csp = px.bar(
+                            df_csp_all, x="Nombre", y="CSP", color="Territoire",
+                            orientation="h", barmode="group",
+                            color_discrete_sequence=COLOR_ENT,
+                            category_orders={"CSP": list(CSP_GROUPES.keys())},
+                            height=420,
+                        )
+                        fig_vol_csp.update_layout(
+                            legend=dict(orientation="h", y=1.12, title=""),
+                            xaxis_title="Nombre de ménages", yaxis_title="",
+                            margin=dict(t=20),
+                        )
+                        st.plotly_chart(style(fig_vol_csp), use_container_width=True)
+
+                with c2:
+                    st.markdown(
+                        "##### Taille moyenne des ménages par CSP",
+                        help=(
+                            "Compare la taille moyenne des ménages selon la CSP du chef de ménage. "
+                            "Calcul depuis le fichier CSP×taille : "
+                            "pour chaque CSP, Σ(nb_ménages_Npers × N) / Σ(nb_ménages_Npers). "
+                            "Les ménages de cadres et professions intermédiaires ont souvent plus "
+                            "d'enfants que les ménages d'employés, qui vivent davantage seuls."
+                        ),
+                    )
+                    rows_taille_csp = []
+                    for ent in selection_men:
+                        df_csp_ent = get_df_csp(ent)
+                        for nom_grp, mots in CSP_GROUPES.items():
+                            total_m, total_p = 0, 0
+                            for label, (nb_pers, slug) in TAILLES.items():
+                                cols_filtre = [
+                                    c for c in df_csp_ent.columns
+                                    if slug in c and any(k in c for k in mots)
+                                ]
+                                nb = df_csp_ent[cols_filtre].sum().sum() if cols_filtre else 0
+                                total_m += nb
+                                total_p += nb * nb_pers
+                            taille_grp = total_p / total_m if total_m > 0 else np.nan
+                            if not np.isnan(taille_grp):
+                                rows_taille_csp.append({
+                                    "Territoire": ent,
+                                    "CSP": nom_grp.replace("\n", " "),
+                                    "Taille moyenne": round(taille_grp, 2),
+                                })
+                    df_taille_csp = pd.DataFrame(rows_taille_csp)
+                    if not df_taille_csp.empty:
+                        fig_taille_csp = px.bar(
+                            df_taille_csp, x="Taille moyenne", y="CSP", color="Territoire",
+                            orientation="h", barmode="group",
+                            color_discrete_sequence=COLOR_ENT,
+                            height=420, text_auto=".2f",
+                        )
+                        fig_taille_csp.update_traces(textposition="outside", textfont_size=9)
+                        fig_taille_csp.update_layout(
+                            legend=dict(orientation="h", y=1.12, title=""),
+                            xaxis_title="Personnes par ménage (moyenne)",
+                            yaxis_title="", margin=dict(t=20),
+                            xaxis=dict(range=[0, 5]),
+                        )
+                        st.plotly_chart(style(fig_taille_csp), use_container_width=True)
+
+                with st.expander("💡 Guide d'interprétation des CSP"):
+                    st.write(
+                        "La **CSP** est celle de la personne de référence du ménage (chef de ménage). "
+                        "Les 7 grandes catégories regroupent les 30+ sous-catégories de l'INSEE :\n\n"
+                        "- **Cadres & Prof. sup.** : ingénieurs, médecins, cadres admin./commerciaux, "
+                        "artistes. Fort pouvoir d'achat, ménages souvent bi-actifs.\n"
+                        "- **Prof. intermédiaires** : infirmiers, techniciens, enseignants du 1er/2nd degré, "
+                        "agents de maîtrise.\n"
+                        "- **Employés** : agents de la fonction publique, employés de commerce et "
+                        "de services, agents de sécurité.\n"
+                        "- **Ouvriers** : qualifiés et peu qualifiés, conducteurs, ouvriers agricoles.\n"
+                        "- **Retraités / Inactifs** : retraités de toutes catégories + chômeurs "
+                        "n'ayant jamais travaillé. Souvent la catégorie majoritaire dans les communes "
+                        "vieillissantes.\n\n"
+                        "**Taille moyenne par CSP** : les ménages ouvriers et agricoles ont "
+                        "historiquement plus d'enfants ; les cadres ont des ménages de taille intermédiaire ; "
+                        "les retraités et employés vivent plus souvent seuls ou en couple sans enfant."
+                    )
+                                  
 # ==============================================================================
 # ONGLET 5 - Population active 25-54 ans
 # ==============================================================================
