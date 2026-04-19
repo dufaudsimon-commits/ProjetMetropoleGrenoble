@@ -1385,17 +1385,19 @@ if vue == "Démographie":
                         id_vars="Métropole", var_name="Composante", value_name="Taux (%/an)"
                     ).dropna()
                     COLOR_COMP = {
-                        "Solde naturel": "#FFB3AE",
-                        "Solde migratoire": "#FF584D",
-                        "Variation totale": "#8B2E2E",
+                        "Solde naturel":    "#C8CACF",
+                        "Solde migratoire": "#7A7E87",
+                        "Variation totale": "#3A3D44",
                     }
                     fig_comp = px.bar(
                         df_comp, x="Métropole", y="Taux (%/an)", color="Composante",
                         barmode="group", color_discrete_map=COLOR_COMP, height=360,
                     )
-                    fig_comp.update_traces(
-                        hovertemplate="<b>Métropole : %{x}</b><br>%{fullData.name} : %{y:.2f} %/an<extra></extra>"
-                    )
+                    for trace in fig_comp.data:
+                        xs = list(trace.x) if trace.x is not None else []
+                        trace.marker.line.color = ["#FF584D" if str(x) == "Grenoble" else "rgba(0,0,0,0)" for x in xs]
+                        trace.marker.line.width = [2 if str(x) == "Grenoble" else 0 for x in xs]
+                        trace.hovertemplate = "<b>Métropole : %{x}</b><br>" + trace.name + " : %{y:.2f} %/an<extra></extra>"
                     fig_comp.add_hline(y=0, line_dash="dot", line_color="#AAAAAA")
                     fig_comp.update_layout(
                         xaxis_title="Métropole", yaxis_title="Taux (%/an)",
@@ -1406,7 +1408,7 @@ if vue == "Démographie":
             with r2c2:
                 st.subheader(
                     "Naissances & Décès 2024 (pour 1 000 habitants)",
-                    help="Compare le taux de natalité et de mortalité pour 1 000 habitants. L'accroissement naturel (point rouge) est la différence entre naissances et décès. Un accroissement positif indique que les naissances dépassent les décès.",
+                    help="Barres foncées = naissances, barres claires = décès. Le losange rouge = accroissement naturel. Bordures rouges = Grenoble.",
                 )
                 rows_vit = []
                 for m in sel:
@@ -1416,54 +1418,37 @@ if vue == "Démographie":
                     if not any(np.isnan(v) for v in [nais, decs, pop]):
                         rows_vit.append({
                             "Métropole": m,
-                            "Naissances/1 000 hab": round(nais / pop * 1000, 2),
-                            "Décès/1 000 hab": round(decs / pop * 1000, 2),
-                            "Accroissement naturel": round((nais - decs) / pop * 1000, 2),
+                            "Naissances": round(nais / pop * 1000, 2),
+                            "Décès":      round(decs / pop * 1000, 2),
+                            "Accroissement": round((nais - decs) / pop * 1000, 2),
                         })
                 df_vit = pd.DataFrame(rows_vit)
                 if not df_vit.empty:
+                    metros_vit = df_vit["Métropole"].tolist()
+                    border_col  = ["#FF584D" if m == "Grenoble" else "rgba(0,0,0,0)" for m in metros_vit]
+                    border_w    = [2 if m == "Grenoble" else 0 for m in metros_vit]
                     fig_vit = go.Figure()
-                    # Barres naissances
                     fig_vit.add_trace(go.Bar(
-                        x=df_vit["Métropole"],
-                        y=df_vit["Naissances/1 000 hab"],
-                        name="Naissances / 1 000 hab",
-                        marker_color=[COULEURS.get(m, "#888") for m in df_vit["Métropole"]],
+                        x=metros_vit, y=df_vit["Naissances"], name="Naissances / 1 000 hab",
+                        marker_color="#7A7E87", marker_line_color=border_col, marker_line_width=border_w,
                         hovertemplate="<b>Métropole : %{x}</b><br>Naissances : %{y:.2f} / 1 000 hab<extra></extra>",
                     ))
-                    # Barres décès (version plus claire de chaque couleur)
-                    COULEURS_LIGHT = {
-                        "Grenoble": "#FFBBB7", "Rennes": "#E2EBF2",
-                        "Rouen": "#F4F4F6", "Saint-Étienne": "#D2D4D8",
-                        "Montpellier": "#BCC0C5",
-                    }
                     fig_vit.add_trace(go.Bar(
-                        x=df_vit["Métropole"],
-                        y=df_vit["Décès/1 000 hab"],
-                        name="Décès / 1 000 hab",
-                        marker_color=[COULEURS_LIGHT.get(m, "#ccc") for m in df_vit["Métropole"]],
-                        marker_line_color=[COULEURS.get(m, "#888") for m in df_vit["Métropole"]],
-                        marker_line_width=1.5,
+                        x=metros_vit, y=df_vit["Décès"], name="Décès / 1 000 hab",
+                        marker_color="#C8CACF", marker_line_color=border_col, marker_line_width=border_w,
                         hovertemplate="<b>Métropole : %{x}</b><br>Décès : %{y:.2f} / 1 000 hab<extra></extra>",
                     ))
-                    # Points accroissement naturel
                     fig_vit.add_trace(go.Scatter(
-                        x=df_vit["Métropole"],
-                        y=df_vit["Accroissement naturel"],
-                        mode="markers+text",
+                        x=metros_vit, y=df_vit["Accroissement"], mode="markers+text",
                         name="Accroissement naturel",
-                        marker=dict(symbol="diamond", size=12, color="#8B2E2E",
-                                    line=dict(color="white", width=1.5)),
-                        text=[f"{v:+.2f}" for v in df_vit["Accroissement naturel"]],
-                        textposition="top center",
-                        textfont=dict(size=10, color="#8B2E2E"),
+                        marker=dict(symbol="diamond", size=12, color="#FF584D", line=dict(color="white", width=1.5)),
+                        text=[f"{v:+.2f}" for v in df_vit["Accroissement"]],
+                        textposition="top center", textfont=dict(size=9, color="#8B2E2E"),
                         hovertemplate="<b>Métropole : %{x}</b><br>Accroissement naturel : %{y:.2f} / 1 000 hab<extra></extra>",
                     ))
                     fig_vit.update_layout(
-                        barmode="group",
-                        legend=dict(orientation="h", y=1.12),
-                        yaxis_title="Pour 1 000 habitants",
-                        height=360,
+                        barmode="group", legend=dict(orientation="h", y=1.12),
+                        yaxis_title="Pour 1 000 habitants", height=360,
                     )
                     st.plotly_chart(style(fig_vit), use_container_width=True)
 
@@ -1854,9 +1839,6 @@ if vue == "Démographie":
 # ==============================================================================
 # ONGLET 3 - MOBILITÉS
 # ==============================================================================
-# ==============================================================================
-# ONGLET 3 - MOBILITÉS
-# ==============================================================================
 if vue == "Démographie":
     with tab3:
         
@@ -2018,28 +2000,47 @@ if vue == "Démographie":
 
                 st.markdown("---")
 
+                noms_mob = df_plot_mob["name"].tolist()
+                border_mob   = ["#FF584D" if n == "Grenoble" else "rgba(0,0,0,0)" for n in noms_mob]
+                border_w_mob = [2.5 if n == "Grenoble" else 0 for n in noms_mob]
+
                 c1, c2 = st.columns(2)
                 with c1:
-                    st.markdown(
-                        "##### 📊 Volume des échanges",
-                        help="Compare les entrées (foncé) et les sorties (clair). Si les deux barres sont hautes, la commune est un pôle d'échange majeur."
-                    )
+                    st.markdown("##### 📊 Volume des échanges",
+                        help="Barres foncées = entrées, barres claires = sorties. Bordures rouges = Grenoble.")
                     fig_vol = go.Figure()
-                    fig_vol.add_trace(go.Bar(x=df_plot_mob["name"], y=df_plot_mob["in"], name=label_in, marker_color=color_in))
-                    fig_vol.add_trace(go.Bar(x=df_plot_mob["name"], y=df_plot_mob["out"], name=label_out, marker_color=color_out))
-                    fig_vol.update_layout(barmode="group", height=350, margin=dict(t=20, b=60), legend=dict(orientation="h", y=1.2),
-                                          xaxis=dict(title="Territoire", showgrid=False), yaxis=dict(title="Nombre de flux", showgrid=True, gridcolor="#eeeeee"))
+                    fig_vol.add_trace(go.Bar(
+                        x=noms_mob, y=df_plot_mob["in"], name=label_in,
+                        marker_color="#7A7E87",
+                        marker_line_color=border_mob, marker_line_width=border_w_mob,
+                        hovertemplate="<b>Territoire : %{x}</b><br>" + label_in + " : %{y:.2s}<extra></extra>",
+                    ))
+                    fig_vol.add_trace(go.Bar(
+                        x=noms_mob, y=df_plot_mob["out"], name=label_out,
+                        marker_color="#C8CACF",
+                        marker_line_color=border_mob, marker_line_width=border_w_mob,
+                        hovertemplate="<b>Territoire : %{x}</b><br>" + label_out + " : %{y:.2s}<extra></extra>",
+                    ))
+                    fig_vol.update_layout(barmode="group", height=350, margin=dict(t=20, b=60),
+                        legend=dict(orientation="h", y=1.2),
+                        xaxis=dict(title="Territoire", showgrid=False),
+                        yaxis=dict(title="Nombre de flux", showgrid=True, gridcolor="#eeeeee"))
                     st.plotly_chart(fig_vol, use_container_width=True)
 
                 with c2:
-                    st.markdown(
-                        "##### 📈 Performance nette",
-                        help="Visualisation directe du gain ou de la perte. Utile pour classer les territoires du plus attractif au moins attractif."
-                    )
-                    fig_net = px.bar(df_plot_mob, x="name", y="solde", color="solde", color_continuous_scale="RdYlGn")
-                    fig_net.add_hline(y=0, line_dash="dash", line_color="black")
-                    fig_net.update_layout(coloraxis_showscale=False, height=350, margin=dict(t=20, b=60),
-                                          xaxis=dict(title="Territoire", showgrid=False), yaxis=dict(title="Solde (entrées - sorties)", showgrid=True, gridcolor="#eeeeee"))
+                    st.markdown("##### 📈 Performance nette",
+                        help="Solde = entrées − sorties. Gris foncé = positif, gris clair = négatif. Bordures rouges = Grenoble.")
+                    colors_net = ["#7A7E87" if s >= 0 else "#3A3D44" for s in df_plot_mob["solde"]]
+                    fig_net = go.Figure(go.Bar(
+                        x=noms_mob, y=df_plot_mob["solde"],
+                        marker_color=colors_net,
+                        marker_line_color=border_mob, marker_line_width=border_w_mob,
+                        hovertemplate="<b>Territoire : %{x}</b><br>Solde net : %{y:.2s}<extra></extra>",
+                    ))
+                    fig_net.add_hline(y=0, line_dash="dash", line_color="#888")
+                    fig_net.update_layout(height=350, margin=dict(t=20, b=60),
+                        xaxis=dict(title="Territoire", showgrid=False),
+                        yaxis=dict(title="Solde (entrées − sorties)", showgrid=True, gridcolor="#eeeeee"))
                     st.plotly_chart(fig_net, use_container_width=True)
 
                 with st.expander("❓ Comment interpréter ces deux graphiques ?"):
@@ -2420,27 +2421,24 @@ if vue == "Démographie":
                         st.plotly_chart(style(fig_vol), use_container_width=True)
 
                 with c2:
-                    st.markdown(
-                        "##### Composition des ménages — structure (%)",
-                        help=(
-                            "Répartition en % pour chaque territoire (base 100%). "
-                            "Permet de comparer la 'sociologie' des territoires indépendamment "
-                            "de leur taille. Une forte part de *Personnes seules* caractérise "
-                            "souvent les centres-villes ; une forte part de *Couples avec enfants* "
-                            "indique un profil périurbain ou résidentiel familial."
-                        ),
-                    )
+                    st.markdown("##### Composition des ménages — structure (%)", help="...")
                     if not df_type.empty:
+                        # Palette grise pour les 5 types
+                        grey_types = ["#3A3D44", "#7A7E87", "#A2A6AE", "#C8CACF", "#E8E8EB"]
                         fig_pct = px.bar(
                             df_type, x="Part (%)", y="Territoire", color="Type de ménage",
                             orientation="h", barmode="stack", text_auto=".1f",
-                            color_discrete_sequence=PALETTE_TYPE, height=400,
+                            color_discrete_sequence=grey_types, height=400,
                         )
                         fig_pct.update_traces(textposition="inside", textfont_size=9)
+                        # Bordure rouge pour Grenoble
+                        for trace in fig_pct.data:
+                            ys = list(trace.y) if trace.y is not None else []
+                            trace.marker.line.color = ["#FF584D" if str(y) == "Grenoble" else "rgba(0,0,0,0)" for y in ys]
+                            trace.marker.line.width = [2 if str(y) == "Grenoble" else 0 for y in ys]
                         fig_pct.update_layout(
                             legend=dict(orientation="h", y=1.12, title=""),
-                            xaxis_title="Part des ménages (%)", yaxis_title="",
-                            margin=dict(t=20),
+                            xaxis_title="Part des ménages (%)", yaxis_title="", margin=dict(t=20),
                         )
                         st.plotly_chart(style(fig_pct), use_container_width=True)
 
@@ -2543,18 +2541,23 @@ if vue == "Démographie":
                 )
                 if not df_csp_all.empty:
                     ordre_csp = list(CSP_GROUPES.keys())
+                    n_csp = len(ordre_csp)
+                    grey_csp = [f"#{v:02x}{v:02x}{v:02x}" for v in
+                                [int(0x3A + (0xE8 - 0x3A) * i / (n_csp - 1)) for i in range(n_csp)]]
                     fig_pct_csp = px.bar(
                         df_csp_all, x="Territoire", y="Part (%)", color="CSP",
                         barmode="stack", text_auto=".1f",
-                        color_discrete_sequence=PALETTE_CSP,
-                        category_orders={"CSP": ordre_csp},
-                        height=420,
+                        color_discrete_sequence=grey_csp,
+                        category_orders={"CSP": ordre_csp}, height=420,
                     )
                     fig_pct_csp.update_traces(textposition="inside", textfont_size=9)
+                    for trace in fig_pct_csp.data:
+                        xs = list(trace.x) if trace.x is not None else []
+                        trace.marker.line.color = ["#FF584D" if str(x) == "Grenoble" else "rgba(0,0,0,0)" for x in xs]
+                        trace.marker.line.width = [2 if str(x) == "Grenoble" else 0 for x in xs]
                     fig_pct_csp.update_layout(
                         legend=dict(orientation="h", y=1.15, title=""),
-                        yaxis_title="Part des ménages (%)",
-                        xaxis_title="", margin=dict(t=20),
+                        yaxis_title="Part des ménages (%)", xaxis_title="", margin=dict(t=20),
                     )
                     st.plotly_chart(style(fig_pct_csp), use_container_width=True)
 
@@ -2762,17 +2765,32 @@ if vue == "Démographie":
                         st.subheader("Répartition en volume", help="Nombre réel de personnes par catégorie.")
                         fig_bar_csp = go.Figure()
                         for ent in entities_csp:
-                            fig_bar_csp.add_trace(go.Bar(x=sel_cats, y=ent["data"][sel_cats], name=ent["name"]))
+                            ent_color = COULEURS.get(ent["name"], "#888888")
+                            is_greno = ent["name"] == "Grenoble"
+                            fig_bar_csp.add_trace(go.Bar(
+                                x=sel_cats, y=ent["data"][sel_cats],
+                                name=ent["name"],
+                                marker_color=ent_color,
+                                marker_line_color="#FF584D" if is_greno else "rgba(0,0,0,0)",
+                                marker_line_width=2 if is_greno else 0,
+                                hovertemplate="<b>Territoire : " + ent["name"] + "</b><br>%{x} : %{y:.2s}<extra></extra>",
+                            ))
                         fig_bar_csp.update_layout(barmode="group", height=400, margin=dict(t=20, b=20))
                         st.plotly_chart(fig_bar_csp, use_container_width=True)
 
                     with c2:
-                        st.subheader("Profil structurel (%)", help="Part relative de chaque catégorie (indépendamment de la taille du territoire).")
+                        st.subheader("Profil structurel (%)", help="Part relative de chaque catégorie.")
                         fig_radar_csp = go.Figure()
                         for ent in entities_csp:
                             v = ent["data"][sel_cats]
                             pct = (v / v.sum() * 100).fillna(0)
-                            fig_radar_csp.add_trace(go.Scatterpolar(r=list(pct) + [pct.iloc[0]], theta=sel_cats + [sel_cats[0]], fill="toself", name=ent["name"]))
+                            fig_radar_csp.add_trace(go.Scatterpolar(
+                                r=list(pct) + [pct.iloc[0]],
+                                theta=sel_cats + [sel_cats[0]],
+                                fill="toself", name=ent["name"],
+                                line_color=COULEURS.get(ent["name"], "#888"),
+                                hovertemplate="<b>Territoire : " + ent["name"] + "</b><br>%{theta} : %{r:.2f}%<extra></extra>",
+                            ))
                         fig_radar_csp.update_layout(height=400, margin=dict(t=50, b=50))
                         st.plotly_chart(fig_radar_csp, use_container_width=True)
 
