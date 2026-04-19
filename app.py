@@ -1021,7 +1021,7 @@ if vue == "Démographie":
             with col_geo_options:
                 mode_pop = st.radio(
                     "",
-                    ["Comparaison Métropoles", "Détail Communal (Grenoble)"],
+                    ["Comparaison Métropoles", "Comparaison communes métropole de Grenoble"],
                     key="pop_mode", horizontal=True,
                     help="Choisissez une comparaison entre métropoles ou un détail des communes de Grenoble.",
                 )
@@ -1032,7 +1032,7 @@ if vue == "Démographie":
                 )
             else:
                 sel_communes_pop = st.multiselect(
-                    "Communes de Grenoble", sorted(COMMUNES["Grenoble"]),
+                    "Commune de la métropole de Grenoble", sorted(COMMUNES["Grenoble"]),
                     default=sorted(COMMUNES["Grenoble"])[:2], key="pop_communes",
                     help="Sélection des communes utilisées pour les comparaisons d'indicateurs 2022.",
                 )
@@ -1042,7 +1042,7 @@ if vue == "Démographie":
         # ════════════════════════════════════════════════════════════════════
         # VUE DÉTAIL COMMUNAL (Grenoble)
         # ════════════════════════════════════════════════════════════════════
-        if mode_pop == "Détail Communal (Grenoble)":
+        if mode_pop == "Comparaison communes métropole de Grenoble":
             if not sel_communes_pop:
                 st.warning("Sélectionnez au moins une commune.")
                 st.stop()
@@ -1130,7 +1130,10 @@ if vue == "Démographie":
                         size="Population", color="Commune", text="Commune",
                         color_discrete_sequence=COLORS_COMM, size_max=55, height=370,
                     )
-                    fig_dens_c.update_traces(textposition="top center", textfont_size=10)
+                    fig_dens_c.update_traces(
+                        textposition="top center", textfont_size=10,
+                        hovertemplate="<b>Commune : %{text}</b><br>Superficie : %{x:.2f} km²<br>Densité : %{y:.2f} hab/km²<br>Population : %{marker.size:,.0f}<extra></extra>",
+                    )
                     fig_dens_c.update_layout(
                         showlegend=False, xaxis_title="Superficie (km²)", yaxis_title="Densité (hab/km²)",
                     )
@@ -1163,13 +1166,16 @@ if vue == "Démographie":
                         id_vars="Commune", var_name="Composante", value_name="Taux (%/an)"
                     ).dropna()
                     COLOR_COMP = {
-                        "Solde naturel": "#74C69D",
-                        "Solde migratoire": "#2D6A4F",
-                        "Variation totale": "#1B4332",
+                        "Solde naturel": "#FFB3AE",
+                        "Solde migratoire": "#FF584D",
+                        "Variation totale": "#8B2E2E",
                     }
                     fig_comp_c = px.bar(
                         df_comp_c, x="Commune", y="Taux (%/an)", color="Composante",
                         barmode="group", color_discrete_map=COLOR_COMP, height=360,
+                    )
+                    fig_comp_c.update_traces(
+                        hovertemplate="<b>Commune : %{x}</b><br>%{fullData.name} : %{y:.2f} %/an<extra></extra>"
                     )
                     fig_comp_c.add_hline(y=0, line_dash="dot", line_color="#AAAAAA")
                     fig_comp_c.update_layout(
@@ -1183,8 +1189,8 @@ if vue == "Démographie":
 
             with r2c2:
                 st.subheader(
-                    "Naissances & Décès (radar comparatif)",
-                    help="Compare l'intensité des naissances et des décès pour 1 000 habitants. L'accroissement naturel est la différence naissances – décès.",
+                    "Naissances & Décès (pour 1 000 habitants)",
+                    help="Compare le taux de natalité et de mortalité pour 1 000 habitants. Le losange indique l'accroissement naturel (naissances – décès). Un accroissement positif signifie que les naissances dépassent les décès.",
                 )
                 rows_vit_c = []
                 for comm in sel_communes_pop:
@@ -1194,24 +1200,45 @@ if vue == "Démographie":
                     if not any(np.isnan(v) for v in [nais, decs, pop]) and pop > 0:
                         rows_vit_c.append({
                             "Commune": comm,
-                            "Naissances/1 000 hab": nais / pop * 1000,
-                            "Décès/1 000 hab": decs / pop * 1000,
-                            "Accroissement naturel": (nais - decs) / pop * 1000,
+                            "Naissances/1 000 hab": round(nais / pop * 1000, 2),
+                            "Décès/1 000 hab": round(decs / pop * 1000, 2),
+                            "Accroissement naturel": round((nais - decs) / pop * 1000, 2),
                         })
                 if rows_vit_c:
                     df_vit_c = pd.DataFrame(rows_vit_c)
                     fig_vit_c = go.Figure()
-                    categories = ["Naissances/1 000 hab", "Décès/1 000 hab", "Accroissement naturel"]
                     for idx_c, row_v in df_vit_c.iterrows():
-                        fig_vit_c.add_trace(go.Scatterpolar(
-                            r=[row_v[c] for c in categories] + [row_v[categories[0]]],
-                            theta=categories + [categories[0]],
-                            fill="toself", name=row_v["Commune"],
-                            line_color=COLORS_COMM[idx_c % len(COLORS_COMM)], opacity=0.75,
+                        c_h = COLORS_COMM[idx_c % len(COLORS_COMM)]
+                        fig_vit_c.add_trace(go.Bar(
+                            x=[row_v["Commune"]], y=[row_v["Naissances/1 000 hab"]],
+                            name=f"Naissances — {row_v['Commune']}",
+                            marker_color=c_h, showlegend=True,
+                            hovertemplate=f"<b>Commune : {row_v['Commune']}</b><br>Naissances : {row_v['Naissances/1 000 hab']:.2f} / 1 000 hab<extra></extra>",
+                        ))
+                        fig_vit_c.add_trace(go.Bar(
+                            x=[row_v["Commune"]], y=[row_v["Décès/1 000 hab"]],
+                            name=f"Décès — {row_v['Commune']}",
+                            marker_color=c_h, marker_opacity=0.4,
+                            marker_line_color=c_h, marker_line_width=1.5,
+                            showlegend=True,
+                            hovertemplate=f"<b>Commune : {row_v['Commune']}</b><br>Décès : {row_v['Décès/1 000 hab']:.2f} / 1 000 hab<extra></extra>",
+                        ))
+                        fig_vit_c.add_trace(go.Scatter(
+                            x=[row_v["Commune"]], y=[row_v["Accroissement naturel"]],
+                            mode="markers+text",
+                            name=f"Accroissement — {row_v['Commune']}",
+                            marker=dict(symbol="diamond", size=12, color="#8B2E2E",
+                                        line=dict(color="white", width=1.5)),
+                            text=[f"{row_v['Accroissement naturel']:+.2f}"],
+                            textposition="top center", textfont=dict(size=10, color="#8B2E2E"),
+                            showlegend=False,
+                            hovertemplate=f"<b>Commune : {row_v['Commune']}</b><br>Accroissement naturel : {row_v['Accroissement naturel']:.2f} / 1 000 hab<extra></extra>",
                         ))
                     fig_vit_c.update_layout(
-                        polar=dict(radialaxis=dict(visible=True)),
-                        legend=dict(orientation="h", y=-0.15), height=360,
+                        barmode="group",
+                        legend=dict(orientation="h", y=1.12, font_size=9),
+                        yaxis_title="Pour 1 000 habitants",
+                        height=360,
                     )
                     st.plotly_chart(style(fig_vit_c), use_container_width=True)
                 else:
@@ -1262,10 +1289,11 @@ if vue == "Démographie":
                 color_delta = "#2D6A4F" if not np.isnan(tx_var) and tx_var >= 0 else ("#C45B2A" if not np.isnan(tx_var) else "#888")
 
 
+                kpi_color = COULEURS.get(m, "#888888")
                 html_card = f"""
-                <div style='display: flex; flex-direction: column; justify-content: center; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #fff; min-height: 80px; border-left: 6px solid #2D6A4F; padding: 12px 16px; margin-bottom: 10px;'>
-                    <div style='font-size:11px; font-weight:700; letter-spacing:0.08em; color:#666; text-transform:uppercase;'> {m}</div>
-                    <div style='font-size:24px; font-weight:bold; color:#1C3A27; margin: 4px 0;'>{fmt(pop22)}</div>
+                <div style='display: flex; flex-direction: column; justify-content: center; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #fff; min-height: 80px; border-left: 6px solid {kpi_color}; padding: 12px 16px; margin-bottom: 10px;'>
+                    <div style='font-size:11px; font-weight:700; letter-spacing:0.08em; color:#666; text-transform:uppercase;'>{m}</div>
+                    <div style='font-size:24px; font-weight:bold; color:#111; margin: 4px 0;'>{fmt(pop22)}</div>
                     <div style='font-size:12px; font-weight:700;'>
                         <span style='color:{color_delta};'>Var: {delta_str}</span>
                     </div>
@@ -1321,7 +1349,10 @@ if vue == "Démographie":
                         color_discrete_map=COULEURS, text="Métropole",
                         size_max=55, height=370,
                     )
-                    fig_dens.update_traces(textposition="top center", textfont_size=11)
+                    fig_dens.update_traces(
+                        textposition="top center", textfont_size=11,
+                        hovertemplate="<b>Métropole : %{text}</b><br>Superficie : %{x:.2f} km²<br>Densité : %{y:.2f} hab/km²<br>Population : %{marker.size:,.0f}<extra></extra>",
+                    )
                     fig_dens.update_layout(
                         showlegend=False, xaxis_title="Superficie (km²)", yaxis_title="Densité (hab/km²)",
                     )
@@ -1354,13 +1385,16 @@ if vue == "Démographie":
                         id_vars="Métropole", var_name="Composante", value_name="Taux (%/an)"
                     ).dropna()
                     COLOR_COMP = {
-                        "Solde naturel": "#74C69D",
-                        "Solde migratoire": "#2D6A4F",
-                        "Variation totale": "#1B4332",
+                        "Solde naturel": "#FFB3AE",
+                        "Solde migratoire": "#FF584D",
+                        "Variation totale": "#8B2E2E",
                     }
                     fig_comp = px.bar(
                         df_comp, x="Métropole", y="Taux (%/an)", color="Composante",
                         barmode="group", color_discrete_map=COLOR_COMP, height=360,
+                    )
+                    fig_comp.update_traces(
+                        hovertemplate="<b>Métropole : %{x}</b><br>%{fullData.name} : %{y:.2f} %/an<extra></extra>"
                     )
                     fig_comp.add_hline(y=0, line_dash="dot", line_color="#AAAAAA")
                     fig_comp.update_layout(
@@ -1371,8 +1405,8 @@ if vue == "Démographie":
 
             with r2c2:
                 st.subheader(
-                    "Naissances & Décès 2024 (radar comparatif)",
-                    help="Compare l'intensité des naissances et des décès pour 1 000 habitants. L'accroissement naturel est la différence naissances – décès.",
+                    "Naissances & Décès 2024 (pour 1 000 habitants)",
+                    help="Compare le taux de natalité et de mortalité pour 1 000 habitants. L'accroissement naturel (point rouge) est la différence entre naissances et décès. Un accroissement positif indique que les naissances dépassent les décès.",
                 )
                 rows_vit = []
                 for m in sel:
@@ -1382,29 +1416,59 @@ if vue == "Démographie":
                     if not any(np.isnan(v) for v in [nais, decs, pop]):
                         rows_vit.append({
                             "Métropole": m,
-                            "Naissances/1 000 hab": nais / pop * 1000,
-                            "Décès/1 000 hab": decs / pop * 1000,
-                            "Accroissement naturel": (nais - decs) / pop * 1000,
+                            "Naissances/1 000 hab": round(nais / pop * 1000, 2),
+                            "Décès/1 000 hab": round(decs / pop * 1000, 2),
+                            "Accroissement naturel": round((nais - decs) / pop * 1000, 2),
                         })
                 df_vit = pd.DataFrame(rows_vit)
                 if not df_vit.empty:
                     fig_vit = go.Figure()
-                    categories = ["Naissances/1 000 hab", "Décès/1 000 hab", "Accroissement naturel"]
-                    for _, row_v in df_vit.iterrows():
-                        fig_vit.add_trace(go.Scatterpolar(
-                            r=[row_v[c] for c in categories] + [row_v[categories[0]]],
-                            theta=categories + [categories[0]],
-                            fill="toself", name=row_v["Métropole"],
-                            line_color=COULEURS.get(row_v["Métropole"], "#888"), opacity=0.75,
-                        ))
+                    # Barres naissances
+                    fig_vit.add_trace(go.Bar(
+                        x=df_vit["Métropole"],
+                        y=df_vit["Naissances/1 000 hab"],
+                        name="Naissances / 1 000 hab",
+                        marker_color=[COULEURS.get(m, "#888") for m in df_vit["Métropole"]],
+                        hovertemplate="<b>Métropole : %{x}</b><br>Naissances : %{y:.2f} / 1 000 hab<extra></extra>",
+                    ))
+                    # Barres décès (version plus claire de chaque couleur)
+                    COULEURS_LIGHT = {
+                        "Grenoble": "#FFBBB7", "Rennes": "#E2EBF2",
+                        "Rouen": "#F4F4F6", "Saint-Étienne": "#D2D4D8",
+                        "Montpellier": "#BCC0C5",
+                    }
+                    fig_vit.add_trace(go.Bar(
+                        x=df_vit["Métropole"],
+                        y=df_vit["Décès/1 000 hab"],
+                        name="Décès / 1 000 hab",
+                        marker_color=[COULEURS_LIGHT.get(m, "#ccc") for m in df_vit["Métropole"]],
+                        marker_line_color=[COULEURS.get(m, "#888") for m in df_vit["Métropole"]],
+                        marker_line_width=1.5,
+                        hovertemplate="<b>Métropole : %{x}</b><br>Décès : %{y:.2f} / 1 000 hab<extra></extra>",
+                    ))
+                    # Points accroissement naturel
+                    fig_vit.add_trace(go.Scatter(
+                        x=df_vit["Métropole"],
+                        y=df_vit["Accroissement naturel"],
+                        mode="markers+text",
+                        name="Accroissement naturel",
+                        marker=dict(symbol="diamond", size=12, color="#8B2E2E",
+                                    line=dict(color="white", width=1.5)),
+                        text=[f"{v:+.2f}" for v in df_vit["Accroissement naturel"]],
+                        textposition="top center",
+                        textfont=dict(size=10, color="#8B2E2E"),
+                        hovertemplate="<b>Métropole : %{x}</b><br>Accroissement naturel : %{y:.2f} / 1 000 hab<extra></extra>",
+                    ))
                     fig_vit.update_layout(
-                        polar=dict(radialaxis=dict(visible=True)),
-                        legend=dict(orientation="h", y=-0.15), height=360,
+                        barmode="group",
+                        legend=dict(orientation="h", y=1.12),
+                        yaxis_title="Pour 1 000 habitants",
+                        height=360,
                     )
                     st.plotly_chart(style(fig_vit), use_container_width=True)
 
             with st.expander("💡 Comment interpréter ces deux graphiques ?"):
-                st.write("Des soldes positifs traduisent une dynamique démographique favorable. Le radar permet de visualiser simultanément trois composantes et d'identifier les métropoles dont la croissance est portée par les naissances plutôt que par l'attractivité migratoire.")
+                st.write("Des soldes positifs traduisent une dynamique démographique favorable. Le graphique Naissances & Décès permet de comparer directement les taux vitaux de chaque métropole : les barres pleines représentent les naissances, les barres claires les décès, et le losange rouge l'accroissement naturel (différence).")
 
             st.markdown("---")
             st.markdown("#### Tableau récapitulatif - indicateurs clés")
@@ -1498,7 +1562,7 @@ if vue == "Démographie":
                 with fa2:
                     mode_age = st.radio(
                         "",
-                        ["Comparaison Métropoles", "Détail Communal (Grenoble)"],
+                        ["Comparaison Métropoles", "Comparaison communes métropole de Grenoble"],
                         key="age_mode", horizontal=True,
                         help="Choisissez la vue de comparaison entre métropoles ou le détail communal Grenoble.",
                     )
@@ -1511,7 +1575,7 @@ if vue == "Démographie":
                     )
                 else:
                     sel_communes_age = st.multiselect(
-                        "Communes de Grenoble",
+                        "Commune de la métropole de Grenoble",
                         sorted(COMMUNES["Grenoble"]),
                         default=sorted(COMMUNES["Grenoble"])[:2],
                         key="age_communes",
@@ -1558,6 +1622,7 @@ if vue == "Démographie":
                     with kpi_cols[i]:
                         st.markdown(f"**{m}**")
 
+                        kpi_color2 = COULEURS.get(m, "#888888")
                         for title, value in [
                             ("Moins de 25 ans", pct_m25),
                             ("65 ans et +", pct_sen),
@@ -1570,7 +1635,7 @@ if vue == "Démographie":
                                 border-radius:8px;
                                 box-shadow:0 2px 6px rgba(0,0,0,0.1);
                                 background:#fff;
-                                border-left:6px solid #1e5631;
+                                border-left:6px solid {kpi_color2};
                                 margin-bottom:10px;
                                 padding:10px 16px;
                             '>
@@ -1588,12 +1653,20 @@ if vue == "Démographie":
                 st.subheader("Pyramides des âges comparées",
                              help="Compare la répartition hommes/femmes par tranche d'âge.")
 
-                COLORS_METRO_H = {"Grenoble": "#2D6A4F", "Rennes": "#1A6FA3",
-                                  "Saint-Étienne": "#C45B2A", "Rouen": "#7B3FA0",
-                                  "Montpellier": "#D4A017"}
-                COLORS_METRO_F = {"Grenoble": "#95D5B2", "Rennes": "#AED4F0",
-                                  "Saint-Étienne": "#F2A07A", "Rouen": "#C9A5E0",
-                                  "Montpellier": "#F5D87A"}
+                COLORS_METRO_H = {
+                    "Grenoble":      "#FF584D",
+                    "Rennes":        "#C5C9CE",
+                    "Saint-Étienne": "#A2A6AE",
+                    "Rouen":         "#E8E8EB",
+                    "Montpellier":   "#77818C",
+                }
+                COLORS_METRO_F = {
+                    "Grenoble":      "#FFBBB7",
+                    "Rennes":        "#E2E4E7",
+                    "Saint-Étienne": "#C8CACF",
+                    "Rouen":         "#F4F4F6",
+                    "Montpellier":   "#A4ABB2",
+                }
 
                 ncols = min(len(sel_metros_age), 3)
                 rows = [sel_metros_age[i:i+ncols] for i in range(0, len(sel_metros_age), ncols)]
@@ -1631,8 +1704,12 @@ if vue == "Démographie":
                                 rows.append({"Métropole": m, "Année": an, "Part (%)": p/tot*100})
                     df_ev = pd.DataFrame(rows)
                     if not df_ev.empty:
-                        st.plotly_chart(style(px.line(df_ev, x="Année", y="Part (%)", color="Métropole",
-                                                      markers=True, color_discrete_map=COULEURS)))
+                        fig_ev_line = px.line(df_ev, x="Année", y="Part (%)", color="Métropole",
+                                              markers=True, color_discrete_map=COULEURS)
+                        fig_ev_line.update_traces(
+                            hovertemplate="<b>Métropole : %{fullData.name}</b><br>Année : %{x}<br>Part : %{y:.2f}%<extra></extra>"
+                        )
+                        st.plotly_chart(style(fig_ev_line))
 
                 with c2:
                     st.markdown("##### Part des 65 ans et + (%)")
@@ -1646,8 +1723,12 @@ if vue == "Démographie":
                                 rows.append({"Métropole": m, "Année": an, "Part (%)": p/tot*100})
                     df_ev = pd.DataFrame(rows)
                     if not df_ev.empty:
-                        st.plotly_chart(style(px.line(df_ev, x="Année", y="Part (%)", color="Métropole",
-                                                      markers=True, color_discrete_map=COULEURS)))
+                        fig_ev_line2 = px.line(df_ev, x="Année", y="Part (%)", color="Métropole",
+                                               markers=True, color_discrete_map=COULEURS)
+                        fig_ev_line2.update_traces(
+                            hovertemplate="<b>Métropole : %{fullData.name}</b><br>Année : %{x}<br>Part : %{y:.2f}%<extra></extra>"
+                        )
+                        st.plotly_chart(style(fig_ev_line2))
 
                 with st.expander("💡 Comment interpréter ces deux graphiques ?"):
                     st.write("Si la courbe monte, la part du groupe augmente dans la population ; compare les pentes pour identifier les territoires qui vieillissent ou rajeunissent le plus.")
@@ -1826,16 +1907,16 @@ if vue == "Démographie":
                 with col_geo_options:
                     mode_mob = st.radio(
                         "",
-                        ["Comparaison Métropoles", "Détail Communal"],
+                        ["Comparaison Métropoles", "Comparaison communes métropole de Grenoble"],
                         key="mob_mode",
                         horizontal=True,
                         help="Choisissez si vous voulez voir les communes de Grenoble ou comparer Grenoble aux autres métropoles."
                     )
 
                 # ── LIGNE 2 : Sélection des entités ──────────────────────────
-                if mode_mob == "Détail Communal":
+                if mode_mob == "Comparaison communes métropole de Grenoble":
                     met_choice = "Grenoble"
-                    st.markdown(f"**Communes de la métropole : {met_choice}**")
+                    st.markdown(f"**Communes de la métropole de Grenoble**")
                     sel_communes_mob = st.multiselect(
                         "Sélection des communes",
                         sorted(COMMUNES[met_choice]),
@@ -1891,10 +1972,10 @@ if vue == "Démographie":
             ]
             
             entities_mob = []
-            targets = sel_communes_mob if mode_mob == "Détail Communal" else sel_metros_mob
+            targets = sel_communes_mob if mode_mob == "Comparaison communes métropole de Grenoble" else sel_metros_mob
             
             for target in targets:
-                coms = [target] if mode_mob == "Détail Communal" else COMMUNES[target]
+                coms = [target] if mode_mob == "Comparaison communes métropole de Grenoble" else COMMUNES[target]
                 
                 f_in  = int(df_mob_filtered[df_mob_filtered[col_dest].isin(coms)]["flux"].sum())
                 f_out = int(df_mob_filtered[df_mob_filtered[col_orig].isin(coms)]["flux"].sum())
@@ -1923,9 +2004,10 @@ if vue == "Démographie":
                     # Formatage français : +20 157
                     val_formatee = f"{row['solde']:+,d}".replace(",", " ")
                     
+                    kpi_mob_color = COULEURS.get(row['name'], "#888888")
                     with kpi_cols[i]:
                         st.markdown(f"""
-                        <div style='display: flex; flex-direction: row; align-items: stretch; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #fff; min-height: 80px; border-left: 6px solid #1a7a4a;'>
+                        <div style='display: flex; flex-direction: row; align-items: stretch; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #fff; min-height: 80px; border-left: 6px solid {kpi_mob_color};'>
                             <div style='padding: 10px 16px; display: flex; flex-direction: column; justify-content: center;'>
                                 <div style='font-size:11px; font-weight:700; letter-spacing:0.08em; color:#666; text-transform:uppercase;'>{row['name']}</div>
                                 <div style='font-size:24px; font-weight:bold; color:#111;'>{val_formatee}</div>
@@ -1969,7 +2051,7 @@ if vue == "Démographie":
                 st.markdown("---")
                 st.markdown("#### 🌍 Analyse géographique des flux", help=txt_aide_geo)
 
-                if mode_mob == "Détail Communal" and len(sel_communes_mob) > 1:
+                if mode_mob == "Comparaison communes métropole de Grenoble" and len(sel_communes_mob) > 1:
                     st.info(f"**Analyse de groupe** : Les graphiques ci-dessous affichent les partenaires cumulés pour : {', '.join(sel_communes_mob)}.")
 
                 col_l, col_r = st.columns(2)
@@ -2158,14 +2240,14 @@ if vue == "Démographie":
                     )
                 with col_geo_options:
                     mode_men = st.radio(
-                        "", ["Comparaison Métropoles", "Détail Communal (Grenoble)"],
+                        "", ["Comparaison Métropoles", "Comparaison communes métropole de Grenoble"],
                         key="men_mode", horizontal=True,
                         help="Comparez les métropoles entre elles, ou analysez les communes de Grenoble.",
                     )
 
-                if mode_men == "Détail Communal (Grenoble)":
+                if mode_men == "Comparaison communes métropole de Grenoble":
                     sel_communes_men = st.multiselect(
-                        "Communes de Grenoble",
+                        "Commune de la métropole de Grenoble",
                         sorted(COMMUNES["Grenoble"]),
                         default=sorted(COMMUNES["Grenoble"])[:3],
                         key="men_communes",
@@ -2599,7 +2681,7 @@ if vue == "Démographie":
                     filter_row_label("Niveau géographique")
                 with csp_geo_r:
                     mode_analyse = st.radio("",
-                        ["Comparaison Métropoles", "Détail Communal"],
+                        ["Comparaison Métropoles", "Comparaison communes métropole de Grenoble"],
                         key="csp_mode", horizontal=True,
                         help="Choisissez de comparer les grandes métropoles entre elles ou de zoomer sur les communes de la métropole grenobloise.")
 
@@ -2620,9 +2702,9 @@ if vue == "Démographie":
                     sel_annee_csp = st.selectbox("Année", annees_csp, key="csp_annee", 
                                                  help="Sélectionnez l'année de référence du recensement.") if annees_csp else None
 
-                if mode_analyse == "Détail Communal":
+                if mode_analyse == "Comparaison communes métropole de Grenoble":
                     clist = sorted(COMMUNES["Grenoble"])
-                    sel_communes_csp = st.multiselect("Communes", clist, default=["Grenoble", "Meylan"], 
+                    sel_communes_csp = st.multiselect("Commune de la métropole de Grenoble", clist, default=["Grenoble", "Meylan"], 
                                                      key="csp_communes", help="Sélectionnez les communes à analyser.")
                     entities_names = sel_communes_csp
                 else:
@@ -2642,7 +2724,7 @@ if vue == "Démographie":
                 entities_csp = []
 
                 for name in entities_names:
-                    if mode_analyse == "Détail Communal":
+                    if mode_analyse == "Comparaison communes métropole de Grenoble":
                         subset = df_year_csp[(df_year_csp["LIB_NORM"] == normalize_name(name)) & (df_year_csp["DEP"] == "38")]
                         if not subset.empty:
                             entities_csp.append({"name": name, "data": subset.iloc[0]})
@@ -2662,13 +2744,14 @@ if vue == "Démographie":
                     for i, entity in enumerate(entities_csp):
                         total_actifs = entity["data"][sel_cats].sum()
                         val_formatee = f"{int(total_actifs):,d}".replace(",", " ")
+                        kpi_color5 = COULEURS.get(entity['name'], "#888888")
                         with kpi_cols_csp[i]:
                             st.markdown(f"""
-                            <div style='display: flex; flex-direction: row; align-items: stretch; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #fff; min-height: 80px; border-left: 6px solid #1a7a4a;'>
+                            <div style='display: flex; flex-direction: row; align-items: stretch; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #fff; min-height: 80px; border-left: 6px solid {kpi_color5};'>
                                 <div style='padding: 10px 16px; display: flex; flex-direction: column; justify-content: center;'>
                                     <div style='font-size:11px; font-weight:700; letter-spacing:0.08em; color:#666; text-transform:uppercase;'>{entity['name']}</div>
                                     <div style='font-size:24px; font-weight:bold; color:#111;'>{val_formatee}</div>
-                                    <div style='color:#1a7a4a; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;'>Actifs 25-54 ans</div>
+                                    <div style='color:{kpi_color5}; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;'>Actifs 25-54 ans</div>
                                 </div>
                             </div>
                             """, unsafe_allow_html=True)
