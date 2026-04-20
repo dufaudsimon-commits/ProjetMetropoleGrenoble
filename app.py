@@ -1516,7 +1516,7 @@ if vue == "Démographie":
                     df_ev = pd.DataFrame(rows_ev)
                     if not df_ev.empty:
                         fig_ev1 = px.line(df_ev, x="Année", y="Part (%)", color="Métropole",
-                                          markers=True, color_discrete_sequence=PALETTE_METRO)
+                                          markers=True, color_discrete_map=COULEURS)
                         fig_ev1.update_traces(
                             hovertemplate="<b>Métropole : %{fullData.name}</b><br>Année : %{x}<br>Part : %{y:.2f}%<extra></extra>")
                         st.plotly_chart(style(fig_ev1))
@@ -1533,7 +1533,7 @@ if vue == "Démographie":
                     df_ev2 = pd.DataFrame(rows_ev2)
                     if not df_ev2.empty:
                         fig_ev2 = px.line(df_ev2, x="Année", y="Part (%)", color="Métropole",
-                                          markers=True, color_discrete_sequence=PALETTE_METRO)
+                                          markers=True, color_discrete_map=COULEURS)
                         fig_ev2.update_traces(
                             hovertemplate="<b>Métropole : %{fullData.name}</b><br>Année : %{x}<br>Part : %{y:.2f}%<extra></extra>")
                         st.plotly_chart(style(fig_ev2))
@@ -2158,7 +2158,7 @@ if vue == "Démographie":
                                 [int(0x3A + (0xE8 - 0x3A) * i / (n_csp - 1)) for i in range(n_csp)]]
                     fig_pct_csp = px.bar(df_csp_all, x="Territoire", y="Part (%)", color="CSP",
                                          barmode="stack", text_auto=".1f",
-                                         color_discrete_sequence=PALETTE_COMMUNE,
+                                         color_discrete_sequence=grey_csp,
                                          category_orders={"CSP": ordre_csp}, height=420)
                     fig_pct_csp.update_traces(textposition="inside", textfont_size=9)
                     territoires_csp = list(dict.fromkeys(df_csp_all["Territoire"].tolist()))
