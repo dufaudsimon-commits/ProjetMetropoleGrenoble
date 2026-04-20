@@ -1045,9 +1045,8 @@ if vue == "Démographie":
                 st.warning("Sélectionnez au moins une commune.")
                 st.stop()
 
-            # Palette verte dégradée — communes uniquement
-            COLORS_COMM = ["#081C15", "#1B4332", "#2D6A4F", "#40916C", "#52B788",
-                           "#74C69D", "#95D5B2", "#B7E4C7", "#D8F3DC"]
+            # Palette verte dégradée — communes uniquement (même palette que Solidarité & Citoyenneté)
+            COLORS_COMM = px.colors.sequential.Greens_r
 
             st.markdown(
                 "##### Population en 2022",
@@ -2435,7 +2434,7 @@ if vue == "Solidarité et citoyenneté":
                             filter_row_label("Niveau géographique")
                         with f2:
                             mode_caf = st.radio(
-                                "", ["Comparaison Métropoles", "Détail Communal"],
+                                "", ["Comparaison Métropoles", "Comparaison communes métropole de Grenoble"],
                                 key="caf_mode", horizontal=True, label_visibility="collapsed"
                             )
                         if mode_caf == "Comparaison Métropoles":
@@ -2508,12 +2507,12 @@ if vue == "Solidarité et citoyenneté":
                                     fig_qf = px.bar(qf_data.sort_values("QF_ord"), x=geo_col, y=metric_key, color="Quotient familial", color_discrete_map=qf_color_map, barmode="stack", labels={geo_col: "", metric_key: label_metric}, height=380)
                                     grenoble_agglo = next((a for a in qf_data[geo_col].unique() if "Grenoble" in a), None)
                                     if grenoble_agglo:
-                                        for trace in fig_qf.data:
-                                            marker_colors = ["#FF584D" if str(agg) == str(grenoble_agglo) else "#000000" for agg in (trace.x if trace.x is not None else [])]
-                                            marker_widths = [1 if str(agg) == str(grenoble_agglo) else 0 for agg in (trace.x if trace.x is not None else [])]
-                                            if marker_colors:
-                                                trace.marker.line.color = marker_colors
-                                                trace.marker.line.width = marker_widths
+                                        order_x_qf = order_x if order_x else list(dict.fromkeys(qf_data[geo_col].tolist()))
+                                        if grenoble_agglo in order_x_qf:
+                                            g_pos_qf = order_x_qf.index(grenoble_agglo)
+                                            fig_qf.add_vrect(x0=g_pos_qf - 0.45, x1=g_pos_qf + 0.45,
+                                                             fillcolor="rgba(255,88,77,0.10)",
+                                                             line_color="#FF584D", line_width=1.5, layer="below")
                                 else:
                                     fig_qf = px.bar(qf_data.sort_values("QF_ord"), x=geo_col, y=metric_key, color="Quotient familial", color_discrete_sequence=color_seq, barmode="stack", labels={geo_col: "", metric_key: label_metric}, height=380)
                                     fig_qf.update_traces(marker_line_width=0)
@@ -2640,7 +2639,7 @@ if vue == "Solidarité et citoyenneté":
                     filter_row_label("Niveau géographique")
                 with f2:
                     mode_eff = st.radio(
-                        "", ["Comparaison Métropoles", "Détail Communal"],
+                        "", ["Comparaison Métropoles", "Comparaison communes métropole de Grenoble"],
                         key="eff_mode", horizontal=True, label_visibility="collapsed"
                     )
                 if mode_eff == "Comparaison Métropoles":
@@ -2750,12 +2749,12 @@ if vue == "Solidarité et citoyenneté":
                                 text="text_display", labels={geo_col:"", "effectif":"Étudiants", "secteur_de_l_etablissement":"Secteur"}, height=400)
                             grenoble_agglo = next((a for a in sec_agg[geo_col].unique() if "Grenoble" in a), None)
                             if grenoble_agglo:
-                                for trace in fig_sec.data:
-                                    marker_colors = ["#FF584D" if str(x) == str(grenoble_agglo) else "#000000" for x in (trace.x if trace.x is not None else [])]
-                                    marker_widths = [1 if str(x) == str(grenoble_agglo) else 0 for x in (trace.x if trace.x is not None else [])]
-                                    if marker_colors:
-                                        trace.marker.line.color = marker_colors
-                                        trace.marker.line.width = marker_widths
+                                order_sec_list = order_sec if order_sec else list(dict.fromkeys(sec_agg[geo_col].tolist()))
+                                if grenoble_agglo in order_sec_list:
+                                    g_pos_sec = order_sec_list.index(grenoble_agglo)
+                                    fig_sec.add_vrect(x0=g_pos_sec - 0.45, x1=g_pos_sec + 0.45,
+                                                     fillcolor="rgba(255,88,77,0.10)",
+                                                     line_color="#FF584D", line_width=1.5, layer="below")
                         else:
                             fig_sec = px.bar(sec_agg, x=geo_col, y="effectif", color="secteur_de_l_etablissement", barmode="stack",
                                 color_discrete_map={"Établissements publics": "#2D6A4F", "Établissements privés": "#95D5B2"},
@@ -2790,12 +2789,12 @@ if vue == "Solidarité et citoyenneté":
                                 text="text_display", labels={geo_col:"", "effectif":"Étudiants", "sexe_de_l_etudiant":"Genre"}, height=400)
                             grenoble_agglo = next((a for a in sex_agg[geo_col].unique() if "Grenoble" in a), None)
                             if grenoble_agglo:
-                                for trace in fig_sex.data:
-                                    marker_colors = ["#FF584D" if str(x) == str(grenoble_agglo) else "#000000" for x in (trace.x if trace.x is not None else [])]
-                                    marker_widths = [1 if str(x) == str(grenoble_agglo) else 0 for x in (trace.x if trace.x is not None else [])]
-                                    if marker_colors:
-                                        trace.marker.line.color = marker_colors
-                                        trace.marker.line.width = marker_widths
+                                order_sex_list = order_sex if order_sex else list(dict.fromkeys(sex_agg[geo_col].tolist()))
+                                if grenoble_agglo in order_sex_list:
+                                    g_pos_sex = order_sex_list.index(grenoble_agglo)
+                                    fig_sex.add_vrect(x0=g_pos_sex - 0.45, x1=g_pos_sex + 0.45,
+                                                     fillcolor="rgba(255,88,77,0.10)",
+                                                     line_color="#FF584D", line_width=1.5, layer="below")
                         else:
                             fig_sex = px.bar(sex_agg, x=geo_col, y="effectif", color="sexe_de_l_etudiant", barmode="group",
                                 color_discrete_map={"Masculin": "#2D6A4F", "Feminin": "#95D5B2"},
@@ -2871,7 +2870,7 @@ if vue == "Solidarité et citoyenneté":
             fs1, fs2 = st.columns([1, 3])
             with fs1: filter_row_label("Niveau géographique")
             with fs2:
-                mode_sante = st.radio("", ["Comparaison Métropoles", "Détail Communal"], key="sante_mode", horizontal=True, label_visibility="collapsed")
+                mode_sante = st.radio("", ["Comparaison Métropoles", "Comparaison communes métropole de Grenoble"], key="sante_mode", horizontal=True, label_visibility="collapsed")
             if mode_sante == "Comparaison Métropoles":
                 sel_metros_sante = st.multiselect("Métropoles à comparer", metros_sante, default=metros_sante, key="sante_metros_multi")
             else:
@@ -2927,7 +2926,7 @@ if vue == "Solidarité et citoyenneté":
 
         if mode_sante == "Comparaison Métropoles" and geojson_metros is not None and sel_metros_sante:
             feats_zoom = [f for f in geojson_metros["features"] if f["properties"].get("METROPOLE") in sel_metros_sante]
-        elif mode_sante == "Détail Communal" and geojson_communes is not None and sel_communes_sante:
+        elif mode_sante == "Comparaison communes métropole de Grenoble" and geojson_communes is not None and sel_communes_sante:
             feats_zoom = [f for f in geojson_communes["features"] if f["properties"].get("DCOE_L_LIB") in sel_communes_sante]
         else:
             feats_zoom = []
@@ -2947,7 +2946,7 @@ if vue == "Solidarité et citoyenneté":
             feats_filtrees = [f for f in geojson_metros["features"] if f["properties"].get("METROPOLE") in sel_metros_sante]
             if feats_filtrees:
                 mapbox_layers.append({"source": {"type": "FeatureCollection", "features": feats_filtrees}, "type": "line", "color": "#2D6A4F", "line": {"width": 2}, "opacity": 0.8})
-        elif mode_sante == "Détail Communal":
+        elif mode_sante == "Comparaison communes métropole de Grenoble":
             if geojson_communes is not None:
                 feats_communes = [f for f in geojson_communes["features"] if f["properties"].get("DCOE_L_LIB") in sel_communes_sante]
                 if feats_communes:
@@ -2993,7 +2992,7 @@ if vue == "Solidarité et citoyenneté":
 
         with extra1:
             if mode_sante == "Comparaison Métropoles":
-                st.markdown("##### Densité par métropole et type", help="Nombre absolu d'établissements identifiés par type de soin.")
+                st.markdown("##### Offre de soins par métropole et type d'établissement", help="Nombre absolu d'établissements identifiés par type de soin.")
                 df_pivot = df_sf.groupby(["metropole", "type_etab"]).size().reset_index(name="count")
                 df_pivot["label"] = df_pivot["type_etab"].map(lambda t: TYPE_LABELS.get(t, t))
                 df_pivot["text_display"] = df_pivot["count"].apply(lambda x: fmt(x))
@@ -3006,6 +3005,11 @@ if vue == "Solidarité et citoyenneté":
                     hovertemplate="<b>%{x}</b><br>%{fullData.name} : <b>%{text}</b><extra></extra>"
                 )
                 for trace in fig_stack.data: trace.name = TYPE_LABELS.get(trace.name, trace.name)
+                if "Grenoble" in order_stack:
+                    g_pos_sante = order_stack.index("Grenoble")
+                    fig_stack.add_vrect(x0=g_pos_sante - 0.45, x1=g_pos_sante + 0.45,
+                                       fillcolor="rgba(255,88,77,0.10)",
+                                       line_color="#FF584D", line_width=1.5, layer="below")
                 fig_stack.update_layout(
                     paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_family="Sora",
                     yaxis=dict(range=[0, y_max_stack * 1.1]),
@@ -3084,8 +3088,8 @@ if vue == "Solidarité et citoyenneté":
             annees_elec = sorted(df_elec_type["Année"].dropna().unique().astype(int))
             fp1, fp2 = st.columns([1, 3])
             with fp1: filter_row_label("Niveau géographique")
-            with fp2: mode_part = st.radio("", ["Comparaison Métropoles", "Détail Communal"], key="part_mode", horizontal=True, label_visibility="collapsed")
-            if mode_part == "Détail Communal":
+            with fp2: mode_part = st.radio("", ["Comparaison Métropoles", "Comparaison communes métropole de Grenoble"], key="part_mode", horizontal=True, label_visibility="collapsed")
+            if mode_part == "Comparaison communes métropole de Grenoble":
                 communes_elec_dispo = sorted(df_elec_type[df_elec_type["metropole"] == "Grenoble"]["Libellé de la commune"].dropna().unique())
                 sel_communes_part = st.multiselect("Communes de Grenoble", communes_elec_dispo, default=communes_elec_dispo[:5], key="part_communes")
             else:
@@ -3147,7 +3151,7 @@ if vue == "Solidarité et citoyenneté":
                 df_part_sorted = df_agg.sort_values("% Participation", ascending=True)
                 df_part_sorted["text_display"] = df_part_sorted["% Participation"].apply(lambda v: f"{v:.1f} %")
                 _part_color_map = COULEURS if mode_part == "Comparaison Métropoles" else None
-                _part_seq = px.colors.sequential.Greens_r if mode_part == "Détail Communal" else None
+                _part_seq = px.colors.sequential.Greens_r if mode_part == "Comparaison communes métropole de Grenoble" else None
                 fig_part = px.bar(
                     df_part_sorted, x="% Participation", y="metropole", orientation="h",
                     color="metropole", color_discrete_map=_part_color_map, color_discrete_sequence=_part_seq,
@@ -3182,6 +3186,11 @@ if vue == "Solidarité et citoyenneté":
                 fig_qual.update_traces(
                     hovertemplate="<b>%{x}</b><br>%{fullData.name} : <b>%{text}</b><extra></extra>"
                 )
+                if mode_part == "Comparaison Métropoles" and "Grenoble" in order_qual:
+                    g_pos_qual = order_qual.index("Grenoble")
+                    fig_qual.add_vrect(x0=g_pos_qual - 0.45, x1=g_pos_qual + 0.45,
+                                      fillcolor="rgba(255,88,77,0.10)",
+                                      line_color="#FF584D", line_width=1.5, layer="below")
                 fig_qual.update_layout(
                     yaxis_range=[0, 100],
                     xaxis=dict(categoryorder="array", categoryarray=order_qual),
@@ -3237,6 +3246,13 @@ if vue == "Solidarité et citoyenneté":
                     hovertemplate="<b>%{y}</b><br>Variation : <b>%{text}</b><extra></extra>"
                 )
                 fig_delta.add_vline(x=0, line_dash="dash", line_color="#888", line_width=1)
+                if mode_part == "Comparaison Métropoles":
+                    entites_delta = df_delta["entite"].tolist()
+                    if "Grenoble" in entites_delta:
+                        g_pos_delta = entites_delta.index("Grenoble")
+                        fig_delta.add_hrect(y0=g_pos_delta - 0.45, y1=g_pos_delta + 0.45,
+                                            fillcolor="rgba(255,88,77,0.10)",
+                                            line_color="#FF584D", line_width=1.5, layer="below")
                 fig_delta.update_layout(
                     showlegend=False,
                     paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
@@ -3264,7 +3280,7 @@ if vue == "Solidarité et citoyenneté":
                 filter_bar("Filtres - Revenus & pauvreté")
                 f1, f2 = st.columns([1, 3])
                 with f1: filter_row_label("Niveau géographique")
-                with f2: mode_filo = st.radio("", ["Comparaison Métropoles", "Détail Communal"], key="filo_mode", horizontal=True, label_visibility="collapsed")
+                with f2: mode_filo = st.radio("", ["Comparaison Métropoles", "Comparaison communes métropole de Grenoble"], key="filo_mode", horizontal=True, label_visibility="collapsed")
                 if mode_filo == "Comparaison Métropoles":
                     sel_entites_filo = st.multiselect("Métropoles", metros_filo, default=metros_filo, key="filo_metros")
                 else:
