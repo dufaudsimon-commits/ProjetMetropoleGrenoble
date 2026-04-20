@@ -1753,9 +1753,9 @@ if vue == "Démographie":
                 # KPI cards
                 kpi_cols = st.columns(len(df_plot_mob))
                 for i, row in df_plot_mob.iterrows():
-                    color_solde   = "#2ecc71" if row["solde"] >= 0 else "#e74c3c"
+                    color_solde   = "#006400" if row["solde"] >= 0 else "#8B0000"
                     val_formatee  = f"{row['solde']:+,d}".replace(",", " ")
-                    kpi_mob_color = COULEURS.get(row['name'], "#888888")
+                    kpi_mob_color = COULEURS.get(row['name'], "#1B4332")
                     with kpi_cols[i]:
                         st.markdown(f"""
                         <div style='display:flex;flex-direction:row;align-items:stretch;border-radius:8px;
@@ -1781,7 +1781,7 @@ if vue == "Démographie":
 
                 c1, c2 = st.columns(2)
                 with c1:
-                    st.markdown("##### 📊 Volume des échanges",
+                    st.markdown("##### Volume des échanges",
                                 help="Barres foncées = entrées, barres claires = sorties. Zone rouge = Grenoble (vue métropoles).")
                     fig_vol = go.Figure()
                     fig_vol.add_trace(go.Bar(
@@ -1805,7 +1805,7 @@ if vue == "Démographie":
                 with c2:
                     st.markdown("##### 📈 Performance nette",
                                 help="Solde = entrées − sorties. Gris foncé = positif, gris clair = négatif. Zone rouge = Grenoble (vue métropoles).")
-                    colors_net = ["#7A7E87" if s >= 0 else "#3A3D44" for s in df_plot_mob["solde"]]
+                    colors_net = ["#006400" if s >= 0 else "#8B0000" for s in df_plot_mob["solde"]]
                     fig_net = go.Figure(go.Bar(
                         x=noms_mob, y=df_plot_mob["solde"],
                         marker_color=colors_net,
