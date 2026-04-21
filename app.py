@@ -1754,11 +1754,9 @@ if vue == "Démographie":
                                                       default=sorted(COMMUNES[met_choice])[:2],
                                                       key="mob_communes")
                     coms_selection = sel_communes_mob
-                    txt_aide_geo = f"Analyse des flux cumulés pour le groupe : {', '.join(sel_communes_mob)}."
                 else:
                     sel_metros_mob = st.multiselect("Métropoles à comparer", TOUTES, default=TOUTES[:3], key="mob_metros")
                     coms_selection = [c for m in sel_metros_mob for c in COMMUNES[m]]
-                    txt_aide_geo = "Comparaison des flux globaux entre les métropoles sélectionnées."
 
                 mob_col1, mob_col2 = st.columns(2)
                 with mob_col1:
@@ -1894,61 +1892,56 @@ if vue == "Démographie":
                     )
 
                 st.markdown("---")
-                st.markdown("#### Analyse géographique des flux", help=txt_aide_geo)
+                st.markdown("#### Analyse géographique des flux", help="Ces graphiques identifient les 10 principaux territoires d'origine (d'où viennent les personnes) et les 10 principales destinations (où vont les personnes) pour le territoire sélectionné.")
 
-                if mode_mob == "Comparaison communes métropole de Grenoble" and len(sel_communes_mob) > 1:
-                    st.info(f"**Analyse de groupe** : Les graphiques affichent les partenaires cumulés pour : {', '.join(sel_communes_mob)}.")
-
-                if mode_mob == "Comparaison communes métropole de Grenoble":
-                    color_top_in  = PALETTE_COMMUNE[0]
-                    color_top_out = PALETTE_COMMUNE[int(len(PALETTE_COMMUNE) * 0.5)]
+                if mode_mob == "Comparaison Métropoles":
+                    selection_unique = len(sel_metros_mob) == 1
                 else:
-                    color_top_in  = PALETTE_METRO[int(len(PALETTE_METRO) * 0.3)]
-                    color_top_out = PALETTE_METRO[int(len(PALETTE_METRO) * 0.7)]
+                    selection_unique = len(sel_communes_mob) == 1
 
-                col_l, col_r = st.columns(2)
-                with col_l:
-                    st.markdown(
-                        f"<h5 style='text-align:center;'> Top 10 provenances ({label_in})</h5>",
-                        unsafe_allow_html=True
-                    )
-                    raw_in = df_mob_filtered[df_mob_filtered[col_dest].isin(coms_selection)]
-                    grouped_in = raw_in.groupby(col_orig)["flux"].sum().reset_index()
-                    top_in = grouped_in.nlargest(10, "flux")
-                    if not top_in.empty:
-                        fig_in = px.bar(top_in, x="flux", y=col_orig, orientation="h",
-                                        color_discrete_sequence=[color_top_in], text_auto=".0f")
-                        fig_in.update_layout(yaxis=dict(categoryorder="total ascending", title=""),
-                                             xaxis=dict(title="Nombre de flux"), height=350)
-                        st.plotly_chart(fig_in, use_container_width=True)
+                if not selection_unique:
+                    if mode_mob == "Comparaison Métropoles":
+                        st.info("L'analyse géographique des flux est disponible uniquement pour **une seule métropole** sélectionnée.")
+                    else:
+                        st.info("L'analyse géographique des flux est disponible uniquement pour **une seule commune** sélectionnée.")
+                else:
+                    if mode_mob == "Comparaison communes métropole de Grenoble":
+                        color_top_in  = PALETTE_COMMUNE[0]
+                        color_top_out = PALETTE_COMMUNE[int(len(PALETTE_COMMUNE) * 0.5)]
+                    else:
+                        color_top_in  = PALETTE_METRO[int(len(PALETTE_METRO) * 0.3)]
+                        color_top_out = PALETTE_METRO[int(len(PALETTE_METRO) * 0.7)]
 
-                with col_r:
-                    st.markdown(
-                        f"<h5 style='text-align:center;'> Top 10 destinations ({label_out})</h5>",
-                        unsafe_allow_html=True
-                    )
-                    raw_out = df_mob_filtered[df_mob_filtered[col_orig].isin(coms_selection)]
-                    grouped_out = raw_out.groupby(col_dest)["flux"].sum().reset_index()
-                    top_out = grouped_out.nlargest(10, "flux")
-                    if not top_out.empty:
-                        fig_out = px.bar(top_out, x="flux", y=col_dest, orientation="h",
-                                         color_discrete_sequence=[color_top_out], text_auto=".0f")
-                        fig_out.update_layout(yaxis=dict(categoryorder="total ascending", title=""),
-                                              xaxis=dict(title="Nombre de flux"), height=350)
-                        st.plotly_chart(fig_out, use_container_width=True)
+                    col_l, col_r = st.columns(2)
+                    with col_l:
+                        st.markdown(
+                            f"<h5 style='text-align:center;'> Top 10 provenances ({label_in})</h5>",
+                            unsafe_allow_html=True
+                        )
+                        raw_in = df_mob_filtered[df_mob_filtered[col_dest].isin(coms_selection)]
+                        grouped_in = raw_in.groupby(col_orig)["flux"].sum().reset_index()
+                        top_in = grouped_in.nlargest(10, "flux")
+                        if not top_in.empty:
+                            fig_in = px.bar(top_in, x="flux", y=col_orig, orientation="h",
+                                            color_discrete_sequence=[color_top_in], text_auto=".0f")
+                            fig_in.update_layout(yaxis=dict(categoryorder="total ascending", title=""),
+                                                 xaxis=dict(title="Nombre de flux"), height=350)
+                            st.plotly_chart(fig_in, use_container_width=True)
 
-                with st.expander("📘 Guide d'interprétation des flux cumulés"):
-                    nom_territoire = "votre sélection" if len(coms_selection) > 1 else coms_selection[0]
-                    st.markdown(f"""
-                    ### Comment lire ces graphiques ?
-                    Lorsque vous analysez **{nom_territoire}**, l'outil regroupe les données pour offrir une vision stratégique.
-                    #### 1. Le principe du "Territoire Unique"
-                    Toutes les communes choisies sont traitées comme un seul bloc cohérent.
-                    #### 2. Fusion et Cumul des données
-                    Les flux venant d'une même ville vers différentes communes de votre zone sont **additionnés**.
-                    #### 3. Filtrage des flux internes
-                    Les déplacements **entre** les communes sélectionnées sont masqués pour ne garder que les échanges avec l'extérieur.
-                    """)
+                    with col_r:
+                        st.markdown(
+                            f"<h5 style='text-align:center;'> Top 10 destinations ({label_out})</h5>",
+                            unsafe_allow_html=True
+                        )
+                        raw_out = df_mob_filtered[df_mob_filtered[col_orig].isin(coms_selection)]
+                        grouped_out = raw_out.groupby(col_dest)["flux"].sum().reset_index()
+                        top_out = grouped_out.nlargest(10, "flux")
+                        if not top_out.empty:
+                            fig_out = px.bar(top_out, x="flux", y=col_dest, orientation="h",
+                                             color_discrete_sequence=[color_top_out], text_auto=".0f")
+                            fig_out.update_layout(yaxis=dict(categoryorder="total ascending", title=""),
+                                                  xaxis=dict(title="Nombre de flux"), height=350)
+                            st.plotly_chart(fig_out, use_container_width=True)
 
 # ==============================================================================
 # ONGLET 4 — MÉNAGES
@@ -2790,7 +2783,7 @@ if vue == "Solidarité et citoyenneté":
             st.markdown("""
                         <div style='background-color: #f1f8f5; padding: 15px; border-radius: 10px; border-left: 5px solid #1C3A27; margin-bottom: 20px;'>
                         <strong>Note sur les données :</strong> Le nombre d'élèves est donné à titre indicatif, certains établissements ne renseignent pas cet effectif.
-                        Les totaux peuvent donc être sous-estimés et ne reflètent pas nécessairement la réalité exacte.
+                        Les totaux peuvent donc être sous-estimés et ne reflètent pas nécessairement la réalité exacte. De plus les données concernent seulement le premier et le second degré.
                         </div>""", unsafe_allow_html=True)
             df_eff_w   = df_eff.copy()
             metros_eff = sorted(df_eff_w["metropole"].dropna().unique())
@@ -3089,6 +3082,11 @@ if vue == "Solidarité et citoyenneté":
                         st.plotly_chart(style(fig_svc, 40), use_container_width=True)
 
                 st.markdown("---")
+                with st.expander("Note méthodologique"):
+                                    st.markdown("""
+                                    - **SEP** (Section d'Enseignement Professionnel) : section rattachée à un lycée général ou technologique qui dispense une formation professionnelle, sans être un lycée professionnel à part entière.
+                                    - **EREA** (Établissement Régional d'Enseignement Adapté) : établissement spécialisé accueillant des élèves en situation de handicap ou en grande difficulté scolaire et sociale, avec un accompagnement pédagogique et éducatif renforcé.
+                                    """)
 
     # ──────────────────────────────────────────────────────────────────────────
     # ONGLET 3 - SANTÉ
