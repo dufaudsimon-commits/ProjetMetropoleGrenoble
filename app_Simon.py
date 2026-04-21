@@ -2536,7 +2536,7 @@ if vue == "Démographie":
                                 "Indice spécialisation": [int(spec[c]) for c in sel_cats],
                             })
                             st.dataframe(table_df.set_index("Catégorie"), use_container_width=True)
-                            
+
 # ==============================================================================
 # SOLIDARITÉ & CITOYENNETÉ
 # ==============================================================================
@@ -2579,7 +2579,7 @@ if vue == "Solidarité et citoyenneté":
                     "Nombre foyers NDURAL": "Foyers aidés – Logement",
                     "Nombre personnes NDURAL": "Personnes concernées – Logement",
                     "Montant total NDURAL": "Montant versé – Logement (€)",
-                    "Nombre foyers NDURINS": "Foyers aidés – Insertion",
+                    "Nombre foyer NDURINS": "Foyers aidés – Insertion",
                     "Nombre personnes NDURINS": "Personnes concernées – Insertion",
                     "Montant total NDURINS": "Montant versé – Insertion (€)",
                 }
