@@ -2431,7 +2431,7 @@ if vue == "Démographie":
 # ==============================================================================
 if vue == "Solidarité et citoyenneté":
     st.markdown('<p class="section-header">Solidarité & citoyenneté</p>', unsafe_allow_html=True)
-    s1, s2, s3, s4 = st.tabs(["🤝 Solidarité", "🎓 Éducation", "🏥 Santé", "🗳️ Participation"])
+    s1, s2, s3, s4 = st.tabs(["🤝 Solidarité", "🎓 Éducation", "🏥 Santé", "🗳️ Participation citoyenne"])
 
     def render_solidarite_kpi(title, value, subtitle, border_color="#1e5631"):
         return f"""
@@ -2679,8 +2679,13 @@ if vue == "Solidarité et citoyenneté":
     # ──────────────────────────────────────────────────────────────────────────
     with s2:
         if df_eff is None or df_eff.empty:
-            st.info("📂 Fichier `education_filtre.csv` introuvable.")
+            st.info("Fichier `education_filtre.csv` introuvable.")
         else:
+            st.markdown("""
+                        <div style='background-color: #f1f8f5; padding: 15px; border-radius: 10px; border-left: 5px solid #1C3A27; margin-bottom: 20px;'>
+                        <strong>Note sur les données :</strong> Le nombre d'élèves est donné à titre indicatif, certains établissements ne renseignent pas cet effectif.
+                        Les totaux peuvent donc être sous-estimés et ne reflètent pas nécessairement la réalité exacte.
+                        </div>""", unsafe_allow_html=True)
             df_eff_w   = df_eff.copy()
             metros_eff = sorted(df_eff_w["metropole"].dropna().unique())
 
@@ -2823,11 +2828,6 @@ if vue == "Solidarité et citoyenneté":
                     )
                     if is_metro:
                         grenoble_agglo = next((a for a in by_entite[geo_col].tolist() if "Grenoble" in str(a)), None)
-                        if grenoble_agglo:
-                            g_pos = by_entite[geo_col].tolist().index(grenoble_agglo)
-                            fig_bar.add_vrect(x0=g_pos - 0.45, x1=g_pos + 0.45,
-                                              fillcolor="rgba(255,88,77,0.10)",
-                                              line_color="#FF584D", line_width=1.5, layer="below")
                     st.plotly_chart(style(fig_bar, 40), use_container_width=True)
 
                 # ── Graphique 2 : Nombre d'établissements par territoire ───────
@@ -2863,11 +2863,6 @@ if vue == "Solidarité et citoyenneté":
                     )
                     if is_metro:
                         grenoble_agglo = next((a for a in by_etab[geo_col].tolist() if "Grenoble" in str(a)), None)
-                        if grenoble_agglo:
-                            g_pos = by_etab[geo_col].tolist().index(grenoble_agglo)
-                            fig_etab.add_vrect(x0=g_pos - 0.45, x1=g_pos + 0.45,
-                                               fillcolor="rgba(255,88,77,0.10)",
-                                               line_color="#FF584D", line_width=1.5, layer="below")
                     st.plotly_chart(style(fig_etab, 40), use_container_width=True)
 
                 st.markdown("---")
@@ -3226,12 +3221,15 @@ if vue == "Solidarité et citoyenneté":
     # ──────────────────────────────────────────────────────────────────────────
     # ONGLET 4 - PARTICIPATION (Élections)
     # ──────────────────────────────────────────────────────────────────────────
-    with s4:
+with s4:
         @st.cache_data
         def charger_elections():
             df_muni_2014 = pd.read_csv("solidarite&citoyennete/data_clean/participation_citoyenne/elections_2014_2020.csv")
             df_muni_2014 = df_muni_2014[df_muni_2014["Année"] == 2014].copy()
             df_muni_2014["Type d'élection"] = "Municipales"
+            df_muni_2020 = pd.read_csv("solidarite&citoyennete/data_clean/participation_citoyenne/elections_2014_2020.csv")
+            df_muni_2020 = df_muni_2020[df_muni_2020["Année"] == 2020].copy()
+            df_muni_2020["Type d'élection"] = "Municipales"
             df_muni_2026 = pd.read_csv("solidarite&citoyennete/data_clean/participation_citoyenne/municipales_2026.csv")
             df_muni_2026["Type d'élection"] = "Municipales"
             df_muni_2026["Libellé de la commune"] = df_muni_2026["Libellé de la commune"].replace("Oissel-sur-Seine", "Oissel")
@@ -3239,7 +3237,7 @@ if vue == "Solidarité et citoyenneté":
             df_p17["Type d'élection"] = "Présidentielles"
             df_p22 = pd.read_csv("solidarite&citoyennete/data_clean/participation_citoyenne/presidentielle_2022.csv")
             df_p22["Type d'élection"] = "Présidentielles"
-            return pd.concat([df_muni_2014, df_muni_2026, df_p17, df_p22], ignore_index=True)
+            return pd.concat([df_muni_2014, df_muni_2020, df_muni_2026, df_p17, df_p22], ignore_index=True)
 
         df_elec = charger_elections()
         DEP_METRO_ELEC = {"Isère": "Grenoble", "Ille-et-Vilaine": "Rennes", "Seine-Maritime": "Rouen", "Loire": "Saint-Étienne", "Hérault": "Montpellier"}
@@ -3249,6 +3247,13 @@ if vue == "Solidarité et citoyenneté":
         tours_elec  = sorted(df_elec["Numéro de tour"].dropna().unique().astype(int))
         metros_elec = sorted(df_elec["metropole"].dropna().unique())
 
+        st.markdown("""
+                    <div style='background-color: #f1f8f5; padding: 15px; border-radius: 10px; border-left: 5px solid #1C3A27; margin-bottom: 20px;'>
+                    <strong>Note sur les données :</strong> Les élections municipales de 2020 se sont tenues en pleine crise sanitaire COVID-19,
+                    ce qui a fortement impacté la participation. Les taux de participation sont donc exceptionnellement bas
+                    et ne reflètent pas le comportement électoral habituel de ces territoires. 
+                    </div>""", unsafe_allow_html=True)
+        
         with st.container():
             filter_bar("Filtres - Participation citoyenne")
             ft1, ft2 = st.columns([1, 3])
