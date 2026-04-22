@@ -1658,7 +1658,7 @@ if vue == "Démographie":
                     p_sen = pop_tranches(df_c, TRANCHES_SEN)
                     pct_m25 = p_m25 / tot * 100 if tot > 0 else np.nan
                     pct_sen = p_sen / tot * 100 if tot > 0 else np.nan
-                    kpi_col_comm = PALETTE_COMMUNE[int(i * (len(PALETTE_COMMUNE)-1) / max(n_comm_age-1,1))]
+                    kpi_col_comm = PALETTE_COMMUNE[i % len(PALETTE_COMMUNE)]
                     with kpi_cols[i]:
                         st.markdown(f"**{comm}**")
                         for title, value in [("Moins de 25 ans", pct_m25), ("65 ans et +", pct_sen)]:
@@ -1679,10 +1679,8 @@ if vue == "Démographie":
                     help="Chaque barre horizontale représente une tranche d'âge quinquennale (ex : 0-4 ans, 5-9 ans…). Les hommes sont à gauche, les femmes à droite. La largeur de chaque barre est proportionnelle au nombre de personnes dans cette tranche. Une base large = beaucoup de jeunes. Un sommet large = fort vieillissement. Une forme en 'toupie' (ventre au milieu) = population en âge de travailler dominante."
                 )
 
-                comm_colors_h = [PALETTE_COMMUNE[int(i * (len(PALETTE_COMMUNE)-1) / max(n_comm_age-1,1))]
-                                 for i in range(n_comm_age)]
-                comm_colors_f = [PALETTE_COMMUNE[min(int(i * (len(PALETTE_COMMUNE)-1) / max(n_comm_age-1,1)) + 2, len(PALETTE_COMMUNE)-1)]
-                                 for i in range(n_comm_age)]
+                comm_colors_h = ["#2D6A4F"] * n_comm_age
+                comm_colors_f = ["#74C69D"] * n_comm_age
 
                 ncols = min(len(communes_age), 3)
                 rows_pyr_c = [communes_age[i:i+ncols] for i in range(0, len(communes_age), ncols)]
@@ -2548,21 +2546,24 @@ if vue == "Démographie":
 
                         v1, v2 = entities_csp[0]["data"][sel_cats], entities_csp[1]["data"][sel_cats]
                         t1_total, t2_total = v1.sum(), v2.sum()
-                        spec = ((v1 / t1_total) / (v2 / t2_total) * 100).fillna(100)
-                        fig_spec = px.bar(x=sel_cats, y=spec, color=spec, color_continuous_scale="RdYlGn",
-                                          title=f"Spécialisation : {t1_name} / {t2_name}")
+                        with np.errstate(divide='ignore', invalid='ignore'):
+                            raw = ((v1 / t1_total) / (v2 / t2_total) * 100).astype(float)
+                            spec = pd.Series(np.where(np.isfinite(raw.values), raw.values, np.nan), index=raw.index)
+                        spec_plot = spec.fillna(0)
+                        fig_spec = px.bar(x=sel_cats, y=spec_plot, color=spec_plot, color_continuous_scale="RdYlGn",
+                                        title=f"Spécialisation : {t1_name} / {t2_name}")
                         fig_spec.add_hline(y=100, line_dash="dash", line_color="black")
                         fig_spec.update_layout(height=450, coloraxis_showscale=False, yaxis_title="Indice (Base 100)")
-                        st.plotly_chart(fig_spec, use_container_width=True)
+                        st.plotly_chart(fig_spec, width='stretch')
 
                         with st.expander("Voir le tableau récapitulatif (Effectifs et Indice)", expanded=True):
                             table_df = pd.DataFrame({
                                 "Catégorie": sel_cats,
                                 f"{t1_name} (Territoire 1 - Eff.)": [f"{int(v1[c]):,d}".replace(",", " ") for c in sel_cats],
                                 f"{t2_name} (Territoire 2 - Eff.)": [f"{int(v2[c]):,d}".replace(",", " ") for c in sel_cats],
-                                "Indice spécialisation": [int(spec[c]) for c in sel_cats],
+                                "Indice spécialisation": [str(int(spec[c])) if pd.notna(spec[c]) else "N/D" for c in sel_cats],
                             })
-                            st.dataframe(table_df.set_index("Catégorie"), use_container_width=True)
+                            st.dataframe(table_df.set_index("Catégorie"), width='stretch')
 
 # ==============================================================================
 # SOLIDARITÉ & CITOYENNETÉ
@@ -2739,7 +2740,7 @@ if vue == "Solidarité et citoyenneté":
                                     trace.customdata = [[trace.name]] * n
                                     trace.hovertemplate = (
                                         "<b>%{x}</b><br>"
-                                        "QF : <b>%{customdata[0]}</b><br>"
+                                        "Tranche : <b>%{customdata[0]}</b><br>"
                                         + label_metric + " : <b>%{y:,.0f}</b><extra></extra>"
                                     )
                                 fig_qf.update_layout(
@@ -2757,7 +2758,7 @@ if vue == "Solidarité et citoyenneté":
                                         y=0.5,
                                         xanchor="left",
                                         x=1.02,
-                                        title="QF"
+                                        title="Tranche"
                                     ),
                                     margin=dict(t=40, r=40, b=80)
                                 )
