@@ -1536,9 +1536,9 @@ if vue == "Démographie":
                         "Chaque tranche d'âge quinquennale est représentée par deux barres : les hommes (à gauche) et les femmes (à droite), "
                         "dont la longueur est proportionnelle à l'effectif concerné.\n\n"
                         "**Formes caractéristiques :**\n"
-                        "- **Base large, sommet étroit** (forme triangulaire) : territoire jeune avec une natalité élevée — profil plutôt rural ou familial.\n"
-                        "- **Sommet large, base étroite** (forme d'urne) : territoire vieillissant avec peu de jeunes — souvent lié à un exode des familles ou à une faible natalité historique.\n"
-                        "- **Ventre large au milieu** (toupie) : forte concentration d'actifs (25–54 ans) — territoire attractif économiquement.\n"
+                        "- **Base large, sommet étroit** (forme triangulaire) : territoire jeune avec une natalité élevée - profil plutôt familial.\n"
+                        "- **Sommet large, base étroite** (forme d'urne) : territoire vieillissant avec peu de jeunes - souvent lié à un exode des familles ou à une faible natalité historique.\n"
+                        "- **Ventre large au milieu** (toupie) : forte concentration d'actifs (25–54 ans) - territoire attractif économiquement.\n"
                         "- **Asymétrie hommes/femmes** : visible surtout chez les personnes âgées où les femmes ont une espérance de vie plus longue.\n\n"
                         "Comparer deux pyramides côte à côte permet d'identifier rapidement quel territoire vieillit davantage et d'anticiper les besoins futurs (crèches, Ehpad, services de santé)."
                     )
@@ -1586,8 +1586,8 @@ if vue == "Démographie":
 
                 with st.expander("💡 Comment interpréter ces courbes d'évolution ?"):
                     st.write(
-                        "Ces graphiques montrent comment la composition par âge de chaque territoire a évolué entre 2011 et 2022.\n\n"
-                        "**Part des moins de 25 ans** : une courbe qui descend indique que la proportion de jeunes diminue — soit parce que les familles quittent le territoire, soit parce que la natalité baisse, soit parce que d'autres tranches d'âge progressent plus vite. "
+                        "Ces graphiques montrent comment la composition par âge de chaque territoire a évolué entre 2011 et 2022. Attention les ordonnées ne commencent pas à 0 car l'objectif est d'observer une évolution.\n\n"
+                        "**Part des moins de 25 ans** : une courbe qui descend indique que la proportion de jeunes diminue - soit parce que les familles quittent le territoire, soit parce que la natalité baisse, soit parce que d'autres tranches d'âge progressent plus vite. "
                         "Une courbe stable ou montante signale un territoire qui maintient ou renforce son attractivité pour les familles avec enfants.\n\n"
                         "**Part des 65 ans et plus** : une courbe qui monte = vieillissement progressif du territoire. "
                         "Ce phénomène est naturel dans la plupart des territoires français, mais la vitesse de vieillissement varie selon l'attractivité économique et résidentielle. "
@@ -1657,9 +1657,9 @@ if vue == "Démographie":
                         "Chaque tranche d'âge quinquennale est représentée par deux barres : les hommes (à gauche) et les femmes (à droite), "
                         "dont la longueur est proportionnelle à l'effectif concerné.\n\n"
                         "**Formes caractéristiques :**\n"
-                        "- **Base large, sommet étroit** (forme triangulaire) : territoire jeune avec une natalité élevée — profil plutôt rural ou familial.\n"
-                        "- **Sommet large, base étroite** (forme d'urne) : territoire vieillissant avec peu de jeunes — souvent lié à un exode des familles ou à une faible natalité historique.\n"
-                        "- **Ventre large au milieu** (toupie) : forte concentration d'actifs (25–54 ans) — territoire attractif économiquement.\n"
+                        "- **Base large, sommet étroit** (forme triangulaire) : territoire jeune avec une natalité élevée - profil plutôt familial.\n"
+                        "- **Sommet large, base étroite** (forme d'urne) : territoire vieillissant avec peu de jeunes - souvent lié à un exode des familles ou à une faible natalité historique.\n"
+                        "- **Ventre large au milieu** (toupie) : forte concentration d'actifs (25-54 ans) - territoire attractif économiquement.\n"
                         "- **Asymétrie hommes/femmes** : visible surtout chez les personnes âgées où les femmes ont une espérance de vie plus longue.\n\n"
                         "Comparer deux pyramides côte à côte permet d'identifier rapidement quel territoire vieillit davantage et d'anticiper les besoins futurs (crèches, Ehpad, services de santé)."
                     )
@@ -1707,8 +1707,8 @@ if vue == "Démographie":
 
                 with st.expander("💡 Comment interpréter ces courbes d'évolution ?"):
                     st.write(
-                        "Ces graphiques montrent comment la composition par âge de chaque territoire a évolué entre 2011 et 2022.\n\n"
-                        "**Part des moins de 25 ans** : une courbe qui descend indique que la proportion de jeunes diminue — soit parce que les familles quittent le territoire, soit parce que la natalité baisse, soit parce que d'autres tranches d'âge progressent plus vite. "
+                        "Ces graphiques montrent comment la composition par âge de chaque territoire a évolué entre 2011 et 2022. Attention les ordonnées ne commencent pas à 0 car l'objectif est d'observer une évolution.\n\n"
+                        "**Part des moins de 25 ans** : une courbe qui descend indique que la proportion de jeunes diminue - soit parce que les familles quittent le territoire, soit parce que la natalité baisse, soit parce que d'autres tranches d'âge progressent plus vite. "
                         "Une courbe stable ou montante signale un territoire qui maintient ou renforce son attractivité pour les familles avec enfants.\n\n"
                         "**Part des 65 ans et plus** : une courbe qui monte = vieillissement progressif du territoire. "
                         "Ce phénomène est naturel dans la plupart des territoires français, mais la vitesse de vieillissement varie selon l'attractivité économique et résidentielle. "
@@ -1881,11 +1881,11 @@ if vue == "Démographie":
                     st.write(
                         "**Volume des échanges** : ce graphique compare les flux entrants (barres foncées) et sortants (barres claires) pour chaque territoire. "
                         "Il faut lire les deux barres ensemble pour comprendre la dynamique :\n"
-                        "- **Barres élevées et équilibrées** : le territoire est un pôle d'échange ou de transit — beaucoup de personnes entrent et sortent, mais peu restent. Typique d'une ville-étape ou d'un grand pôle d'emploi avec une forte rotation.\n"
+                        "- **Barres élevées et équilibrées** : le territoire est un pôle d'échange ou de transit - beaucoup de personnes entrent et sortent, mais peu restent. Typique d'une ville-étape ou d'un grand pôle d'emploi avec une forte rotation.\n"
                         "- **Forte barre entrante > sortante** : territoire très attractif qui capte plus qu'il ne perd.\n"
-                        "- **Forte barre sortante > entrante** : territoire d'émission — les habitants partent davantage qu'ils n'arrivent (souvent une commune résidentielle dont les actifs travaillent ailleurs).\n\n"
+                        "- **Forte barre sortante > entrante** : territoire d'émission - les habitants partent davantage qu'ils n'arrivent (souvent une commune résidentielle dont les actifs travaillent ailleurs).\n\n"
                         "**Performance nette (solde)** : c'est la synthèse en un seul chiffre. "
-                        "Une barre verte (positive) signifie que le territoire gagne des flux nets — il est attractif. "
+                        "Une barre verte (positive) signifie que le territoire gagne des flux nets - il est attractif. "
                         "Une barre rouge (négative) signifie qu'il en perd. "
                         "Ce graphique permet de classer rapidement les territoires du plus au moins attractif pour la thématique sélectionnée (résidentielle, professionnelle ou scolaire)."
                     )
@@ -1943,7 +1943,7 @@ if vue == "Démographie":
                             st.plotly_chart(fig_out, use_container_width=True)
 
 # ==============================================================================
-# ONGLET 4 — MÉNAGES
+# ONGLET 4 - MÉNAGES
 # ==============================================================================
 if vue == "Démographie":
     with tab4:
@@ -2089,7 +2089,7 @@ if vue == "Démographie":
                                  "#C8CACF", "#DFE0E2", "#E8E8EB"]
 
             # ════════════════════════════════════════════════════════════════
-            # THÈME 1 — TYPE & TAILLE DE MÉNAGE
+            # THÈME 1 - TYPE & TAILLE DE MÉNAGE
             # ════════════════════════════════════════════════════════════════
             if "Type" in theme_men:
                 cols_age = [c for c in df_men_age.columns if c.startswith("Menages_")]
@@ -2152,7 +2152,7 @@ if vue == "Démographie":
 
                 with c1:
                     st.markdown(
-                        "##### Composition des ménages — volume",
+                        "##### Composition des ménages - volume",
                         help="Nombre absolu de foyers par type de composition familiale (personne seule, couple sans enfant, couple avec enfant(s), famille monoparentale, autre). Utile pour dimensionner les besoins réels en logements adaptés (studios, T3/T4, etc.) et en équipements (crèches, écoles)."
                     )
                     if not df_type.empty:
@@ -2165,7 +2165,7 @@ if vue == "Démographie":
 
                 with c2:
                     st.markdown(
-                        "##### Composition des ménages — structure (%)",
+                        "##### Composition des ménages - structure (%)",
                         help="Répartition en pourcentage (base 100% par territoire). Neutralise l'effet de taille pour comparer la 'sociologie' de territoires de populations très différentes. Une forte part de personnes seules caractérise les centres-villes étudiants ou vieillissants. Une forte part de couples avec enfants indique un profil périurbain ou résidentiel familial."
                     )
                     if not df_type.empty:
@@ -2198,7 +2198,7 @@ if vue == "Démographie":
                     )
 
             # ════════════════════════════════════════════════════════════════
-            # THÈME 2 — CSP DU CHEF DE MÉNAGE
+            # THÈME 2 - CSP DU CHEF DE MÉNAGE
             # ════════════════════════════════════════════════════════════════
             else:
                 cols_csp = [c for c in df_men_csp.columns if c.startswith("Menages_")]
@@ -2327,7 +2327,7 @@ if vue == "Démographie":
                         "- **Ouvriers** : qualifiés et peu qualifiés, conducteurs, ouvriers agricoles. "
                         "Historiquement, les ménages ouvriers ont plus d'enfants que la moyenne.\n"
                         "- **Retraités / Inactifs** : retraités de toutes catégories + chômeurs n'ayant jamais travaillé. "
-                        "Souvent la catégorie majoritaire dans les communes vieillissantes — indicateur fort du besoin en services gériatriques.\n\n"
+                        "Souvent la catégorie majoritaire dans les communes vieillissantes - indicateur fort du besoin en services gériatriques.\n\n"
                         "**Taille moyenne par CSP** : les différences révèlent les modes de vie associés à chaque catégorie. "
                         "Les ouvriers et agricoles ont historiquement des familles plus nombreuses ; "
                         "les retraités et employés vivent plus souvent seuls ou en couple sans enfant. "
@@ -2481,7 +2481,7 @@ if vue == "Démographie":
                             "Il est utile pour évaluer le poids économique d'une catégorie : "
                             "un grand nombre d'ouvriers implique des besoins en logements abordables, en transports et en formations industrielles ; "
                             "un grand nombre de cadres signale un territoire à fort potentiel d'innovation mais avec des tensions sur l'immobilier. "
-                            "Attention : ce graphique est sensible à la taille du territoire — une grande métropole aura toujours plus d'effectifs absolus qu'une petite commune.\n\n"
+                            "Attention : ce graphique est sensible à la taille du territoire - une grande métropole aura toujours plus d'effectifs absolus qu'une petite commune.\n\n"
                             "**Profil structurel en radar (%)** : ce graphique neutralise l'effet de taille en montrant la part relative de chaque catégorie dans la population active. "
                             "Plus le polygone est étendu sur un axe, plus cette catégorie est surreprésentée par rapport aux autres. "
                             "Deux territoires avec des polygones de forme similaire ont des structures socio-professionnelles proches, même si leurs populations totales sont très différentes. "
