@@ -240,10 +240,10 @@ DIP_MAP = {
 }
 
 LABEL_TRANCHE = {
-    "01":"0–4","02":"5–9","03":"10–14","04":"15–19","05":"20–24",
-    "06":"25–29","07":"30–34","08":"35–39","09":"40–44","10":"45–49",
-    "11":"50–54","12":"55–59","13":"60–64","14":"65–69","15":"70–74",
-    "16":"75–79","17":"80–84","18":"85–89","19":"90–94","20":"95+",
+    "01":"0-4","02":"5-9","03":"10-14","04":"15-19","05":"20-24",
+    "06":"25-29","07":"30-34","08":"35-39","09":"40-44","10":"45-49",
+    "11":"50-54","12":"55-59","13":"60-64","14":"65-69","15":"70-74",
+    "16":"75-79","17":"80-84","18":"85-89","19":"90-94","20":"95+",
 }
 TRANCHES_JEUNES  = ["01","02","03","04"]
 TRANCHES_ACTIFS  = ["05","06","07","08","09","10","11","12","13"]
@@ -1101,8 +1101,8 @@ if vue == "Démographie":
             r2c1, r2c2 = st.columns(2)
             with r2c1:
                 st.subheader(
-                    "Soldes naturel et migratoire (%/an, 2016–2022)",
-                    help="Décompose la variation démographique en deux composantes annuelles moyennes sur 2016–2022 :\n• Solde naturel = (naissances − décès) / population\n• Solde migratoire = (arrivées − départs) / population\n• Variation totale = somme des deux\nUn solde positif = le territoire gagne des habitants par ce canal."
+                    "Soldes naturel et migratoire (%/an, 2016-2022)",
+                    help="Décompose la variation démographique en deux composantes annuelles moyennes sur 2016-2022 :\n• Solde naturel = (naissances − décès) / population\n• Solde migratoire = (arrivées − départs) / population\n• Variation totale = somme des deux\nUn solde positif = le territoire gagne des habitants par ce canal."
                 )
                 rows_comp_c = []
                 for comm in sel_communes_pop:
@@ -1292,8 +1292,8 @@ if vue == "Démographie":
             r2c1, r2c2 = st.columns(2)
             with r2c1:
                 st.subheader(
-                    "Soldes naturel et migratoire (%/an, 2016–2022)",
-                    help="Décompose la variation démographique en deux composantes annuelles moyennes sur 2016–2022 :\n• Solde naturel = (naissances − décès) / population\n• Solde migratoire = (arrivées − départs) / population\n• Variation totale = somme des deux\nUn solde positif = le territoire gagne des habitants par ce canal."
+                    "Soldes naturel et migratoire (%/an, 2016-2022)",
+                    help="Décompose la variation démographique en deux composantes annuelles moyennes sur 2016-2022 :\n• Solde naturel = (naissances − décès) / population\n• Solde migratoire = (arrivées − départs) / population\n• Variation totale = somme des deux\nUn solde positif = le territoire gagne des habitants par ce canal."
                 )
                 rows_comp = []
                 for m in sel:
@@ -1446,14 +1446,58 @@ if vue == "Démographie":
                     t = f"{i:02d}"
                     ch_col = f"ageq_rec{t}s1rpop2016"
                     cf_col = f"ageq_rec{t}s2rpop2016"
-                    vals_h.append(-pd.to_numeric(df_src[ch_col], errors="coerce").fillna(0).sum() if ch_col in df_src.columns else 0)
+                    # ── Hommes : valeurs positives, décalées à gauche via base ──
+                    h_val = pd.to_numeric(df_src[ch_col], errors="coerce").fillna(0).sum() if ch_col in df_src.columns else 0
+                    vals_h.append(float(h_val))
                     vals_f.append(pd.to_numeric(df_src[cf_col], errors="coerce").fillna(0).sum() if cf_col in df_src.columns else 0)
+
                 fig = go.Figure()
-                fig.add_trace(go.Bar(y=labels, x=vals_h, name="Hommes", orientation="h", marker_color=color_h))
-                fig.add_trace(go.Bar(y=labels, x=vals_f, name="Femmes", orientation="h", marker_color=color_f))
-                fig.update_layout(barmode="relative", bargap=0.06, legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.02),
-                                  yaxis_title="Tranche d'âge (ans)", xaxis_title="Population",
-                                  xaxis=dict(tickformat="~s"), title=dict(text=label_entity, font_size=13), height=480)
+
+                # Barre Hommes : positive, ancrée à gauche via base=-vals_h
+                fig.add_trace(go.Bar(
+                    y=labels,
+                    x=vals_h,
+                    base=[-v for v in vals_h],   # décale chaque barre vers la gauche
+                    name="Hommes",
+                    orientation="h",
+                    marker_color=color_h,
+                    hovertemplate="<b>Hommes</b><br>Tranche : %{y}<br>Population : %{x:,.0f}<extra></extra>"
+                ))
+
+                # Barre Femmes : positive, part de 0 vers la droite
+                fig.add_trace(go.Bar(
+                    y=labels,
+                    x=vals_f,
+                    name="Femmes",
+                    orientation="h",
+                    marker_color=color_f,
+                    hovertemplate="<b>Femmes</b><br>Tranche : %{y}<br>Population : %{x:,.0f}<extra></extra>"
+                ))
+
+                # Calcul de la plage symétrique pour l'axe X
+                max_val = max(max(vals_h, default=0), max(vals_f, default=0))
+
+                fig.update_layout(
+                    barmode="overlay",
+                    bargap=0.06,
+                    legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.02),
+                    yaxis_title="Tranche d'âge (ans)",
+                    xaxis_title="Population",
+                    xaxis=dict(
+                        range=[-max_val * 1.1, max_val * 1.1],
+                        tickformat="~s",
+                        tickvals=[-max_val, -max_val/2, 0, max_val/2, max_val],
+                        ticktext=[
+                            f"{max_val:,.0f}",
+                            f"{max_val/2:,.0f}",
+                            "0",
+                            f"{max_val/2:,.0f}",
+                            f"{max_val:,.0f}"
+                        ]
+                    ),
+                    title=dict(text=label_entity, font_size=13),
+                    height=480
+                )
                 return fig
 
             with st.container():
@@ -1511,7 +1555,7 @@ if vue == "Démographie":
                 st.markdown("---")
                 st.subheader(
                     "Pyramides des âges comparées",
-                    help="Chaque barre horizontale représente une tranche d'âge quinquennale (ex : 0–4 ans, 5–9 ans…). Les hommes sont à gauche, les femmes à droite. La largeur de chaque barre est proportionnelle au nombre de personnes dans cette tranche. Une base large = beaucoup de jeunes. Un sommet large = fort vieillissement. Une forme en 'toupie' (ventre au milieu) = population en âge de travailler dominante."
+                    help="Chaque barre horizontale représente une tranche d'âge quinquennale (ex : 0-4 ans, 5-9 ans…). Les hommes sont à gauche, les femmes à droite. La largeur de chaque barre est proportionnelle au nombre de personnes dans cette tranche. Une base large = beaucoup de jeunes. Un sommet large = fort vieillissement. Une forme en 'toupie' (ventre au milieu) = population en âge de travailler dominante."
                 )
 
                 n_m = len(sel_metros_age)
@@ -1538,7 +1582,7 @@ if vue == "Démographie":
                         "**Formes caractéristiques :**\n"
                         "- **Base large, sommet étroit** (forme triangulaire) : territoire jeune avec une natalité élevée - profil plutôt familial.\n"
                         "- **Sommet large, base étroite** (forme d'urne) : territoire vieillissant avec peu de jeunes - souvent lié à un exode des familles ou à une faible natalité historique.\n"
-                        "- **Ventre large au milieu** (toupie) : forte concentration d'actifs (25–54 ans) - territoire attractif économiquement.\n"
+                        "- **Ventre large au milieu** (toupie) : forte concentration d'actifs (25-54 ans) - territoire attractif économiquement.\n"
                         "- **Asymétrie hommes/femmes** : visible surtout chez les personnes âgées où les femmes ont une espérance de vie plus longue.\n\n"
                         "Comparer deux pyramides côte à côte permet d'identifier rapidement quel territoire vieillit davantage et d'anticiper les besoins futurs (crèches, Ehpad, services de santé)."
                     )
@@ -1632,7 +1676,7 @@ if vue == "Démographie":
                 st.markdown("---")
                 st.subheader(
                     "Pyramides des âges",
-                    help="Chaque barre horizontale représente une tranche d'âge quinquennale (ex : 0–4 ans, 5–9 ans…). Les hommes sont à gauche, les femmes à droite. La largeur de chaque barre est proportionnelle au nombre de personnes dans cette tranche. Une base large = beaucoup de jeunes. Un sommet large = fort vieillissement. Une forme en 'toupie' (ventre au milieu) = population en âge de travailler dominante."
+                    help="Chaque barre horizontale représente une tranche d'âge quinquennale (ex : 0-4 ans, 5-9 ans…). Les hommes sont à gauche, les femmes à droite. La largeur de chaque barre est proportionnelle au nombre de personnes dans cette tranche. Une base large = beaucoup de jeunes. Un sommet large = fort vieillissement. Une forme en 'toupie' (ventre au milieu) = population en âge de travailler dominante."
                 )
 
                 comm_colors_h = [PALETTE_COMMUNE[int(i * (len(PALETTE_COMMUNE)-1) / max(n_comm_age-1,1))]
@@ -1730,9 +1774,9 @@ if vue == "Démographie":
             st.markdown("""
                 <div style='background-color: #f1f8f5; padding: 15px; border-radius: 10px; border-left: 5px solid #1C3A27; margin-bottom: 20px; font-size: 14px;'>
                     <strong>Comprendre les thématiques :</strong><br>
-                    • 🏠 <b>Migrations</b> : Analyse les changements de domicile sur un an.<br>
-                    • 💼 <b>Professionnelle</b> : Analyse les flux domicile-travail des actifs.<br>
-                    • 🎓 <b>Scolaire</b> : Analyse le trajet entre lieu de résidence et lieu d'études.
+                    • 🏠 <b>Migrations</b> : Analyse les changements de domicile observés sur un an.<br>
+                    • 💼 <b>Professionnelle</b> : Analyse les déplacements domicile-travail des actifs ayant un emploi ; il s’agit de mobilités quotidiennes ou habituelles, et non de déménagements.<br>
+                    • 🎓 <b>Scolaire</b> : Analyse les déplacements entre le lieu de résidence et le lieu d’études ; cela concerne les personnes scolarisées de 2 ans ou plus, de l’école maternelle à l’enseignement supérieur.
                 </div>""", unsafe_allow_html=True)
 
             with st.container():
@@ -2316,22 +2360,18 @@ if vue == "Démographie":
 
                 with st.expander("💡 Guide d'interprétation des CSP"):
                     st.write(
-                        "La **catégorie socio-professionnelle (CSP)** affichée est celle de la personne de référence du ménage (chef de foyer). "
-                        "Les 7 grandes catégories regroupent les 30+ sous-catégories de l'INSEE :\n\n"
-                        "- **Cadres & Prof. sup.** : ingénieurs, médecins, cadres admin./commerciaux, artistes. "
-                        "Fort pouvoir d'achat, ménages souvent bi-actifs avec enfants. La présence élevée de cette catégorie signale un pôle économique attractif ou une zone résidentielle favorisée.\n"
-                        "- **Prof. intermédiaires** : infirmiers, techniciens, enseignants du 1er/2nd degré, agents de maîtrise. "
-                        "Catégorie pivot du tissu social, souvent bien représentée dans les villes moyennes dynamiques.\n"
-                        "- **Employés** : agents de la fonction publique, employés de commerce et de services, agents de sécurité. "
-                        "Ménages plus souvent petits (personnes seules ou couples sans enfant).\n"
-                        "- **Ouvriers** : qualifiés et peu qualifiés, conducteurs, ouvriers agricoles. "
-                        "Historiquement, les ménages ouvriers ont plus d'enfants que la moyenne.\n"
-                        "- **Retraités / Inactifs** : retraités de toutes catégories + chômeurs n'ayant jamais travaillé. "
-                        "Souvent la catégorie majoritaire dans les communes vieillissantes - indicateur fort du besoin en services gériatriques.\n\n"
-                        "**Taille moyenne par CSP** : les différences révèlent les modes de vie associés à chaque catégorie. "
-                        "Les ouvriers et agricoles ont historiquement des familles plus nombreuses ; "
-                        "les retraités et employés vivent plus souvent seuls ou en couple sans enfant. "
-                        "Comparer les tailles entre territoires pour une même CSP révèle des différences culturelles ou sociales locales."
+                        "La **catégorie socio-professionnelle (CSP)** affichée est celle de la **personne de référence du ménage** (d’après la nomenclature PCS 2020 de l’INSEE). "
+                        "Les 7 grandes catégories regroupent les 30+ sous-catégories de la profession de cette personne.\n\n"
+                        
+                        "- **Cadres & Prof. sup.** : emplois à haut niveau de qualification et de revenus, souvent associés à des ménages bi‑actifs et plus aisés.\n"
+                        "- **Prof. intermédiaires** : ingénieurs, enseignants, techniciens, cadres moyens - cœur du tissu urbain et des services publics.\n"
+                        "- **Employés** : agents de service, de bureau, de la fonction publique, sécurité ; souvent des ménages plus petits.\n"
+                        "- **Ouvriers** : ouvriers, conducteurs, ouvriers agricoles, souvent dans des ménages plus nombreux.\n"
+                        "- **Retraités / Inactifs** : retraités et chômeurs longue durée, en général majoritaires dans les communes vieillissantes.\n\n"
+                        
+                        "La **taille moyenne par CSP** renvoie à des modes de vie typiques : ouvriers et agriculteurs ont souvent plus d’enfants, "
+                        "tandis que retraités et employés vivent plus souvent seuls ou en couple sans enfant. "
+                        "Comparer ces tailles entre territoires pour une même CSP met en évidence des différences sociales locales."
                     )
 
 # ==============================================================================
@@ -2363,7 +2403,7 @@ if vue == "Démographie":
                 with csp_row1_c1:
                     theme_analyse = st.selectbox("Thématique",
                         ["Secteurs d'activité (CSP)", "Niveau de diplôme"], key="csp_theme",
-                        help="**Secteurs d'activité (CSP)** : répartition des actifs 25–54 ans par catégorie socio-professionnelle.\n\n**Niveau de diplôme** : répartition des actifs 25–54 ans par niveau d'études atteint.")
+                        help="**Secteurs d'activité (CSP)** : répartition des actifs 25-54 ans par catégorie socio-professionnelle.\n\n**Niveau de diplôme** : répartition des actifs 25-54 ans par niveau d'études atteint.")
 
                 current_df_csp  = df_csp_new if theme_analyse == "Secteurs d'activité (CSP)" else df_dip_new
                 current_map_csp = CSP_MAP_NEW if theme_analyse == "Secteurs d'activité (CSP)" else DIP_MAP
@@ -2436,7 +2476,7 @@ if vue == "Démographie":
                     with c1:
                         st.subheader(
                             "Répartition en volume",
-                            help="Nombre réel d'actifs 25–54 ans par catégorie (CSP ou niveau de diplôme). Permet de comparer les effectifs absolus et de dimensionner les besoins en formation, en emploi ou en services. Une catégorie très représentée en volume a un poids économique réel important sur le territoire."
+                            help="Nombre réel d'actifs 25-54 ans par catégorie (CSP ou niveau de diplôme). Permet de comparer les effectifs absolus et de dimensionner les besoins en formation, en emploi ou en services. Une catégorie très représentée en volume a un poids économique réel important sur le territoire."
                         )
                         fig_bar_csp = go.Figure()
                         for i, ent in enumerate(entities_csp):
@@ -2556,18 +2596,18 @@ if vue == "Solidarité et citoyenneté":
                     "Nombre foyers NDUR": "Foyers aidés (toutes aides)",
                     "Nombre personnes NDUR": "Personnes concernées (toutes aides)",
                     "Montant total NDUR": "Montant total versé (€)",
-                    "Nombre foyers NDURPAJE": "Foyers aidés – Jeunes enfants",
-                    "Nombre personnes NDURPAJE": "Personnes concernées – Jeunes enfants",
-                    "Montant total NDURPAJE": "Montant versé – Jeunes enfants (€)",
-                    "Nombre foyers NDUREJ": "Foyers aidés – Enfance & jeunesse",
-                    "Nombre personnes NDUREJ": "Personnes concernées – Enfance & jeunesse",
-                    "Montant total NDUREJ": "Montant versé – Enfance & jeunesse (€)",
-                    "Nombre foyers NDURAL": "Foyers aidés – Logement",
-                    "Nombre personnes NDURAL": "Personnes concernées – Logement",
-                    "Montant total NDURAL": "Montant versé – Logement (€)",
-                    "Nombre foyers NDURINS": "Foyers aidés – Insertion",
-                    "Nombre personnes NDURINS": "Personnes concernées – Insertion",
-                    "Montant total NDURINS": "Montant versé – Insertion (€)",
+                    "Nombre foyers NDURPAJE": "Foyers aidés - Jeunes enfants",
+                    "Nombre personnes NDURPAJE": "Personnes concernées - Jeunes enfants",
+                    "Montant total NDURPAJE": "Montant versé - Jeunes enfants (€)",
+                    "Nombre foyers NDUREJ": "Foyers aidés - Enfance & jeunesse",
+                    "Nombre personnes NDUREJ": "Personnes concernées - Enfance & jeunesse",
+                    "Montant total NDUREJ": "Montant versé - Enfance & jeunesse (€)",
+                    "Nombre foyers NDURAL": "Foyers aidés - Logement",
+                    "Nombre personnes NDURAL": "Personnes concernées - Logement",
+                    "Montant total NDURAL": "Montant versé - Logement (€)",
+                    "Nombre foyers NDURINS": "Foyers aidés - Insertion",
+                    "Nombre personnes NDURINS": "Personnes concernées - Insertion",
+                    "Montant total NDURINS": "Montant versé - Insertion (€)",
                 }
                 available_metrics = {k: v for k, v in ALL_METRIC_LABELS.items() if k in df_caf.columns}
                 if not available_metrics:
