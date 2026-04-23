@@ -26,6 +26,8 @@ st.set_page_config(
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
+
+
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap');
@@ -221,6 +223,129 @@ COULEURS = {
 
 TOUTES = list(COMMUNES.keys())
 
+# ── Sélection partagée des métropoles entre tous les onglets ──────────────────
+if "shared_metros" not in st.session_state:
+    st.session_state.shared_metros = list(TOUTES)
+
+# Clés widget par thématique
+METRO_KEYS_DEMO = [
+    ("sel_t1",   TOUTES),
+    ("age_metros", TOUTES),
+    ("mob_metros", TOUTES),
+    ("men_metros", TOUTES),
+    ("csp_metros", TOUTES),
+]
+METRO_KEYS_SOLID = [
+    ("caf_agglos",         None),
+    ("eff_metros",         None),
+    ("sante_metros_multi", None),
+    ("part_metros",        None),
+]
+
+if "shared_metros_demo" not in st.session_state:
+    st.session_state.shared_metros_demo = list(TOUTES)
+if "shared_metros_solid" not in st.session_state:
+    st.session_state.shared_metros_solid = list(TOUTES)
+
+def _propagate(key, widget_keys, shared_key):
+    new_val = list(st.session_state[key])
+    st.session_state[shared_key] = new_val
+    for wkey, options in widget_keys:
+        if wkey == key:
+            continue
+        if options is not None:
+            filtered = [m for m in new_val if m in options]
+            st.session_state[wkey] = filtered if filtered else list(options)
+        else:
+            st.session_state[wkey] = new_val
+
+def sync_metros_demo(key):
+    _propagate(key, METRO_KEYS_DEMO, "shared_metros_demo")
+
+def sync_metros_solid(key):
+    _propagate(key, METRO_KEYS_SOLID, "shared_metros_solid")
+
+def shared_default_demo(options):
+    current = st.session_state.get("shared_metros_demo", list(TOUTES))
+    filtered = [m for m in current if m in options]
+    return filtered if filtered else list(options)
+
+def shared_default_solid(options):
+    current = st.session_state.get("shared_metros_solid", list(TOUTES))
+    filtered = [m for m in current if m in options]
+    return filtered if filtered else list(options)
+
+# ── Sélection partagée des COMMUNES entre onglets ────────────────────────────
+COMMUNES_GRENOBLE = sorted(COMMUNES["Grenoble"])
+
+COMMUNE_KEYS_DEMO = [
+    ("pop_communes", COMMUNES_GRENOBLE),
+    ("age_communes", COMMUNES_GRENOBLE),
+    ("mob_communes", COMMUNES_GRENOBLE),
+    ("men_communes", COMMUNES_GRENOBLE),
+    ("csp_communes", COMMUNES_GRENOBLE),
+]
+COMMUNE_KEYS_SOLID = [
+    ("caf_communes",      None),
+    ("eff_communes",      None),
+    ("sante_communes_t1", None),
+    ("part_communes",     None),
+]
+
+_DEFAULT_COMMUNES = COMMUNES_GRENOBLE[:5]
+
+if "shared_communes_demo" not in st.session_state:
+    st.session_state.shared_communes_demo = _DEFAULT_COMMUNES[:]
+if "shared_communes_solid" not in st.session_state:
+    st.session_state.shared_communes_solid = _DEFAULT_COMMUNES[:]
+
+def _propagate_communes(key, widget_keys, shared_key):
+    new_val = list(st.session_state[key])
+    st.session_state[shared_key] = new_val
+    for wkey, options in widget_keys:
+        if wkey == key:
+            continue
+        if options is not None:
+            filtered = [c for c in new_val if c in options]
+            st.session_state[wkey] = filtered if filtered else list(options[:2])
+        else:
+            st.session_state[wkey] = new_val
+
+def sync_communes_demo(key):
+    _propagate_communes(key, COMMUNE_KEYS_DEMO, "shared_communes_demo")
+
+def sync_communes_solid(key):
+    """Stocke des noms de référence dans shared_communes_solid et propage vers les autres widgets."""
+    raw_val = list(st.session_state[key])
+    # Convertir les noms source → noms de référence
+    ref_val = [source_to_ref(v) for v in raw_val]
+    st.session_state["shared_communes_solid"] = ref_val
+    # Propager vers les autres clés — on stocke les refs, shared_default_communes_solid fera la conv
+    for wkey, _ in COMMUNE_KEYS_SOLID:
+        if wkey == key:
+            continue
+        st.session_state[wkey] = ref_val
+
+def shared_default_communes_demo(options):
+    current = st.session_state.get("shared_communes_demo", _DEFAULT_COMMUNES)
+    filtered = [c for c in current if c in options]
+    return filtered if filtered else list(options[:2])
+
+def shared_default_communes_solid(options, widget_key=None):
+    """Retourne les options correspondant aux noms de référence stockés, dans le format de la source.
+    Si widget_key est fourni, pré-écrit la valeur convertie dans session_state pour que Streamlit
+    l'utilise directement (contourne la limitation du paramètre default)."""
+    current_refs = st.session_state.get("shared_communes_solid", _DEFAULT_COMMUNES)
+    # Normaliser les refs stockées (elles peuvent être dans n'importe quel format)
+    normalized_current = [source_to_ref(v) for v in current_refs]
+    result = refs_to_source_list(normalized_current, options)
+    if not result:
+        result = list(options[:5]) if len(options) >= 5 else list(options)
+    # Pré-écrire dans session_state pour forcer Streamlit à afficher la bonne valeur
+    if widget_key is not None:
+        st.session_state[widget_key] = result
+    return result
+
 DEP_MAP = {
     "Grenoble": "38", "Rennes": "35", "Rouen": "76",
     "Saint-Étienne": "42", "Montpellier": "34",
@@ -374,6 +499,40 @@ def normalize_name(text):
             .encode("ascii", "ignore").decode("utf-8").lower().strip())
 
 normalize_csp_name = normalize_name
+
+def norm_commune(text):
+    """Normalisation pour comparaison de noms de communes :
+    sans accents, minuscules, tirets et apostrophes → espaces, espaces multiples nettoyés."""
+    if pd.isna(text):
+        return ""
+    s = unicodedata.normalize("NFKD", str(text)).encode("ascii", "ignore").decode("utf-8")
+    s = s.lower().replace("-", " ").replace("'", " ").replace("'", " ")
+    return " ".join(s.split())
+
+# Table de correspondance : norm → nom de référence (COMMUNES["Grenoble"])
+# Construite une seule fois, utilisée par tous les onglets Solidarité
+_NORM_TO_REF = {norm_commune(c): c for c in COMMUNES["Grenoble"]}
+
+def source_to_ref(name):
+    """Convertit un nom de commune source (n'importe quel format) vers le nom de référence."""
+    return _NORM_TO_REF.get(norm_commune(name), name)
+
+def ref_to_source(ref_name, source_options):
+    """Trouve dans source_options le nom correspondant au nom de référence ref_name."""
+    norm_ref = norm_commune(ref_name)
+    for opt in source_options:
+        if norm_commune(opt) == norm_ref:
+            return opt
+    return None
+
+def refs_to_source_list(ref_names, source_options):
+    """Convertit une liste de noms de référence vers les noms trouvés dans source_options."""
+    result = []
+    for r in ref_names:
+        match = ref_to_source(r, source_options)
+        if match is not None:
+            result.append(match)
+    return result
 
 @st.cache_data
 def load_generic_data(file_paths_dict, mapping_dict):
@@ -996,11 +1155,12 @@ if vue == "Démographie":
                     key="pop_mode", horizontal=True, label_visibility="collapsed"
                 )
             if mode_pop == "Comparaison Métropoles":
-                sel = st.multiselect("Métropoles à comparer", TOUTES, default=TOUTES, key="sel_t1")
+                sel = st.multiselect("Métropoles à comparer", TOUTES, default=shared_default_demo(TOUTES), key="sel_t1", on_change=sync_metros_demo, args=("sel_t1",))
             else:
                 sel_communes_pop = st.multiselect(
                     "Communes de Grenoble-Alpes Métropole", sorted(COMMUNES["Grenoble"]),
-                    default=sorted(COMMUNES["Grenoble"])[:2], key="pop_communes",
+                    default=shared_default_communes_demo(sorted(COMMUNES["Grenoble"])), key="pop_communes",
+                    on_change=sync_communes_demo, args=("pop_communes",),
                 )
             st.markdown('</div>', unsafe_allow_html=True)
             st.markdown("---")
@@ -1510,12 +1670,13 @@ if vue == "Démographie":
                         ["Comparaison Métropoles", "Comparaison communes Grenoble-Alpes Métropole"],
                         key="age_mode", horizontal=True, label_visibility="collapsed")
                 if mode_age == "Comparaison Métropoles":
-                    sel_metros_age = st.multiselect("Métropoles à comparer", TOUTES, default=TOUTES, key="age_metros")
+                    sel_metros_age = st.multiselect("Métropoles à comparer", TOUTES, default=shared_default_demo(TOUTES), key="age_metros", on_change=sync_metros_demo, args=("age_metros",))
                 else:
                     sel_communes_age = st.multiselect("Communes de Grenoble-Alpes Métropole",
                                                       sorted(COMMUNES["Grenoble"]),
-                                                      default=sorted(COMMUNES["Grenoble"])[:2],
-                                                      key="age_communes")
+                                                      default=shared_default_communes_demo(sorted(COMMUNES["Grenoble"])),
+                                                      key="age_communes",
+                                                      on_change=sync_communes_demo, args=("age_communes",))
                 annee_age = st.selectbox("Année", annees_dispo, index=len(annees_dispo)-1, key="an_age")
                 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1792,11 +1953,12 @@ if vue == "Démographie":
                     met_choice = "Grenoble"
                     sel_communes_mob = st.multiselect("Communes de Grenoble-Alpes Métropole",
                                                       sorted(COMMUNES[met_choice]),
-                                                      default=sorted(COMMUNES[met_choice])[:2],
-                                                      key="mob_communes")
+                                                      default=shared_default_communes_demo(sorted(COMMUNES[met_choice])),
+                                                      key="mob_communes",
+                                                      on_change=sync_communes_demo, args=("mob_communes",))
                     coms_selection = sel_communes_mob
                 else:
-                    sel_metros_mob = st.multiselect("Métropoles à comparer", TOUTES, default=TOUTES[:3], key="mob_metros")
+                    sel_metros_mob = st.multiselect("Métropoles à comparer", TOUTES, default=shared_default_demo(TOUTES), key="mob_metros", on_change=sync_metros_demo, args=("mob_metros",))
                     coms_selection = [c for m in sel_metros_mob for c in COMMUNES[m]]
 
                 mob_col1, mob_col2 = st.columns(2)
@@ -2086,12 +2248,13 @@ if vue == "Démographie":
                 if mode_men == "Comparaison communes Grenoble-Alpes Métropole":
                     sel_communes_men = st.multiselect("Communes de Grenoble-Alpes Métropole",
                                                       sorted(COMMUNES["Grenoble"]),
-                                                      default=sorted(COMMUNES["Grenoble"])[:3],
-                                                      key="men_communes")
+                                                      default=shared_default_communes_demo(sorted(COMMUNES["Grenoble"])),
+                                                      key="men_communes",
+                                                      on_change=sync_communes_demo, args=("men_communes",))
                     selection_men = sel_communes_men
                 else:
-                    sel_metros_men = st.multiselect("Métropoles à comparer", TOUTES, default=TOUTES[:3],
-                                                    key="men_metros")
+                    sel_metros_men = st.multiselect("Métropoles à comparer", TOUTES, default=shared_default_demo(TOUTES),
+                                                    key="men_metros", on_change=sync_metros_demo, args=("men_metros",))
                     selection_men = sel_metros_men
 
                 theme_men = st.selectbox("Thématique d'analyse",
@@ -2414,12 +2577,13 @@ if vue == "Démographie":
                 if mode_analyse == "Comparaison communes Grenoble-Alpes Métropole":
                     clist = sorted(COMMUNES["Grenoble"])
                     sel_communes_csp = st.multiselect("Communes de Grenoble-Alpes Métropole", clist,
-                                                      default=["Grenoble", "Meylan"], key="csp_communes",
-                                                      help="Sélectionnez les communes à analyser.")
+                                                      default=shared_default_communes_demo(clist), key="csp_communes",
+                                                      help="Sélectionnez les communes à analyser.",
+                                                      on_change=sync_communes_demo, args=("csp_communes",))
                     entities_names = sel_communes_csp
                 else:
-                    sel_metros_csp = st.multiselect("Métropoles", TOUTES, default=["Grenoble", "Rouen"],
-                                                    key="csp_metros", help="Sélectionnez les métropoles à comparer.")
+                    sel_metros_csp = st.multiselect("Métropoles", TOUTES, default=shared_default_demo(TOUTES),
+                                                    key="csp_metros", help="Sélectionnez les métropoles à comparer.", on_change=sync_metros_demo, args=("csp_metros",))
                     entities_names = sel_metros_csp
 
                 sel_cats = st.multiselect("Catégories à afficher",
@@ -2631,10 +2795,10 @@ if vue == "Solidarité et citoyenneté":
                                 key="caf_mode", horizontal=True, label_visibility="collapsed"
                             )
                         if mode_caf == "Comparaison Métropoles":
-                            sel_entites_caf = st.multiselect("Métropoles à comparer", agglos_caf, default=agglos_caf, key="caf_agglos")
+                            sel_entites_caf = st.multiselect("Métropoles à comparer", agglos_caf, default=shared_default_solid(agglos_caf), key="caf_agglos", on_change=sync_metros_solid, args=("caf_agglos",))
                         else:
                             communes_gre_caf = sorted(df_caf[df_caf["Agglomeration"] == gre_agglo]["Nom_Commune"].dropna().unique()) if "Nom_Commune" in df_caf.columns else []
-                            sel_entites_caf = st.multiselect("Communes de Grenoble-Alpes Métropole", communes_gre_caf, default=communes_gre_caf[:5] if communes_gre_caf else [], key="caf_communes")
+                            sel_entites_caf = st.multiselect("Communes de Grenoble-Alpes Métropole", communes_gre_caf, default=shared_default_communes_solid(communes_gre_caf, "caf_communes"), key="caf_communes", on_change=sync_communes_solid, args=("caf_communes",))
                         MEASURE_TYPES = {
                             "Nombre foyers":  "Foyers aidés",
                             "Nombre personnes": "Personnes concernées",
@@ -2885,7 +3049,7 @@ if vue == "Solidarité et citoyenneté":
                 if mode_eff == "Comparaison Métropoles":
                     sel_entites_eff = st.multiselect(
                         "Métropoles à comparer", metros_eff,
-                        default=metros_eff, key="eff_metros"
+                        default=shared_default_solid(metros_eff), key="eff_metros", on_change=sync_metros_solid, args=("eff_metros",)
                     )
                 else:
                     communes_gre = sorted(
@@ -2893,8 +3057,9 @@ if vue == "Solidarité et citoyenneté":
                     )
                     sel_entites_eff = st.multiselect(
                         "Communes de Grenoble-Alpes Métropole", communes_gre,
-                        default=communes_gre[:5] if communes_gre else [],
-                        key="eff_communes"
+                        default=shared_default_communes_solid(communes_gre, "eff_communes"),
+                        key="eff_communes",
+                        on_change=sync_communes_solid, args=("eff_communes",)
                     )
                 natures_dispo = sorted(df_eff_w["libelle_nature"].dropna().unique())
                 c1, c2 = st.columns([1, 1])
@@ -3211,10 +3376,10 @@ if vue == "Solidarité et citoyenneté":
             with fs2:
                 mode_sante = st.radio("", ["Comparaison Métropoles", "Comparaison communes Grenoble-Alpes Métropole"], key="sante_mode", horizontal=True, label_visibility="collapsed")
             if mode_sante == "Comparaison Métropoles":
-                sel_metros_sante = st.multiselect("Métropoles à comparer", metros_sante, default=metros_sante, key="sante_metros_multi")
+                sel_metros_sante = st.multiselect("Métropoles à comparer", metros_sante, default=shared_default_solid(metros_sante), key="sante_metros_multi", on_change=sync_metros_solid, args=("sante_metros_multi",))
             else:
                 communes_sante_dispo = sorted(df_sante[df_sante["metropole"] == "Grenoble"]["commune"].dropna().unique())
-                sel_communes_sante = st.multiselect("Communes de Grenoble-Alpes Métropole", communes_sante_dispo, default=communes_sante_dispo[:5], key="sante_communes_t1")
+                sel_communes_sante = st.multiselect("Communes de Grenoble-Alpes Métropole", communes_sante_dispo, default=shared_default_communes_solid(communes_sante_dispo, "sante_communes_t1"), key="sante_communes_t1", on_change=sync_communes_solid, args=("sante_communes_t1",))
             sel_types_sante = st.multiselect("Type d'établissement", options=types_sante, default=types_sante, format_func=lambda t: TYPE_LABELS.get(t, t), key="sante_types_t1")
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -3440,9 +3605,9 @@ if vue == "Solidarité et citoyenneté":
                 with fp2: mode_part = st.radio("", ["Comparaison Métropoles", "Comparaison communes Grenoble-Alpes Métropole"], key="part_mode", horizontal=True, label_visibility="collapsed")
                 if mode_part == "Comparaison communes Grenoble-Alpes Métropole":
                     communes_elec_dispo = sorted(df_elec_type[df_elec_type["metropole"] == "Grenoble"]["Libellé de la commune"].dropna().unique())
-                    sel_communes_part = st.multiselect("Communes de Grenoble-Alpes Métropole", communes_elec_dispo, default=communes_elec_dispo[:5], key="part_communes")
+                    sel_communes_part = st.multiselect("Communes de Grenoble-Alpes Métropole", communes_elec_dispo, default=shared_default_communes_solid(communes_elec_dispo, "part_communes"), key="part_communes", on_change=sync_communes_solid, args=("part_communes",))
                 else:
-                    sel_metros_part = st.multiselect("Métropoles à comparer", metros_elec, default=metros_elec, key="part_metros")
+                    sel_metros_part = st.multiselect("Métropoles à comparer", metros_elec, default=shared_default_solid(metros_elec), key="part_metros", on_change=sync_metros_solid, args=("part_metros",))
                 fc1, fc2 = st.columns(2)
                 with fc1:
                     label_annee = "Année (Municipales)" if type_election == "Municipales" else "Année (Présidentielles)"
